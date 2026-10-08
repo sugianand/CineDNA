@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search, Sparkles } from 'lucide-react'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL || ''
 
 function App() {
   const [query, setQuery] = useState('Like Interstellar, but darker and less complicated')
@@ -21,7 +21,7 @@ function App() {
     setError('')
 
     try {
-      const res = await fetch(`${API}/search`, {
+      const res = await fetch(`${API}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, limit: 6 }),
@@ -30,7 +30,7 @@ function App() {
       if (!res.ok) throw new Error('Search failed')
       setResponse(await res.json())
     } catch (err) {
-      setError('Could not reach the CineDNA API. Make sure FastAPI is running on port 8000.')
+      setError('Movie search is temporarily unavailable. Please try again in a moment.')
     } finally {
       setLoading(false)
     }
@@ -39,14 +39,14 @@ function App() {
   return (
     <main className="app-shell">
       <section className="hero">
-        <div className="eyebrow"><Sparkles size={16} /> AI MOVIE GENOME ENGINE</div>
+        <div className="eyebrow"><Sparkles size={16} /> MOVIE GENOME ENGINE</div>
         <h1>CineDNA</h1>
         <p>Search movies by how they feel, not just by genre.</p>
 
         <form onSubmit={searchMovies} className="search-box">
           <Search size={20} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} />
-          <button disabled={loading}>{loading ? 'Analyzing…' : 'Find movies'}</button>
+          <input value={query} aria-label="Describe the movie you want" onChange={(e) => setQuery(e.target.value)} />
+          <button disabled={loading || !query.trim()}>{loading ? 'Analyzing…' : 'Find movies'}</button>
         </form>
 
         <div className="examples">
@@ -60,7 +60,7 @@ function App() {
       {response && (
         <section className="results">
           <div className="intent-card">
-            <span>AI interpretation</span>
+            <span>How we interpreted your search</span>
             <p>{response.intent.explanation}</p>
           </div>
 

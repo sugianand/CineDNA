@@ -1,5 +1,9 @@
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.data.movies import MOVIES
 from app.models import SearchRequest, SearchResponse, SearchResult
@@ -8,25 +12,33 @@ from app.services.scoring import rank_movies
 
 app = FastAPI(title="CineDNA API", version="0.1.0")
 
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
+@app.get("/api/health")
 @app.get("/health")
 def health():
     return {"status": "ok", "movies": len(MOVIES)}
 
 
+@app.get("/api/movies")
 @app.get("/movies")
 def list_movies():
     return MOVIES
 
 
+@app.post("/api/search", response_model=SearchResponse)
 @app.post("/search", response_model=SearchResponse)
 def search_movies(request: SearchRequest):
     intent = parse_search_intent(request.query, MOVIES)
@@ -47,3 +59,12 @@ def search_movies(request: SearchRequest):
         results=results,
         ai_provider="rule-based-v0.1",
     )
+
+
+frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if frontend_dist.is_dir():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        return {"name": "CineDNA API", "status": "online", "docs": "/docs"}

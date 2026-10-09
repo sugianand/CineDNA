@@ -34,9 +34,43 @@ THEME_VOCAB = {
 NEGATION_PREFIX = r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not)"
 
 
+def _normalize_title(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _contains_title(query: str, title: str) -> bool:
+    normalized_title = _normalize_title(title)
+    return bool(normalized_title) and f" {normalized_title} " in f" {query} "
+
+
+def _title_base(title: str) -> str:
+    return re.split(r":|\s[-–—]\s", title, maxsplit=1)[0].strip()
+
+
 def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
-    lowered = query.lower()
-    return [movie for movie in movies if movie.title.lower() in lowered]
+    normalized_query = _normalize_title(query)
+    exact_matches = [
+        movie
+        for movie in movies
+        if any(
+            _contains_title(normalized_query, candidate)
+            for candidate in (movie.title, movie.original_title or "")
+        )
+    ]
+    if exact_matches:
+        return exact_matches
+
+    base_matches: Dict[str, List[MovieDNA]] = {}
+    for movie in movies:
+        base = _title_base(movie.title)
+        if base != movie.title and len(_normalize_title(base)) >= 4:
+            base_matches.setdefault(_normalize_title(base), []).append(movie)
+
+    return [
+        candidates[0]
+        for base, candidates in base_matches.items()
+        if len(candidates) == 1 and _contains_title(normalized_query, base)
+    ]
 
 
 def _apply_modifier(query: str, keyword: str, current: int) -> int:

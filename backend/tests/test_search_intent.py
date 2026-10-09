@@ -7,6 +7,43 @@ from app.services.scoring import score_movie
 
 
 class SearchIntentTests(unittest.TestCase):
+    def test_reference_movie_matches_unique_title_before_subtitle(self):
+        intent = parse_search_intent(
+            "Something like Dune but funnier",
+            MOVIES,
+        )
+
+        dune = next(movie for movie in MOVIES if movie.title == "Dune: Part Two")
+        self.assertEqual(intent.reference_titles, ["Dune: Part Two"])
+        self.assertEqual(intent.target_dimensions["visual_spectacle"], dune.dimensions["visual_spectacle"])
+        self.assertGreater(intent.target_dimensions["humor"], dune.dimensions["humor"])
+
+    def test_ambiguous_franchise_base_is_not_silently_selected(self):
+        franchise_movies = [
+            MovieDNA(
+                title="Example: Part One",
+                year=2025,
+                country="USA",
+                genres=["Drama"],
+                themes=[],
+                dimensions={"darkness": 20},
+                summary="First test movie.",
+            ),
+            MovieDNA(
+                title="Example: Part Two",
+                year=2026,
+                country="USA",
+                genres=["Drama"],
+                themes=[],
+                dimensions={"darkness": 80},
+                summary="Second test movie.",
+            ),
+        ]
+
+        intent = parse_search_intent("Something like Example", franchise_movies)
+
+        self.assertEqual(intent.reference_titles, [])
+
     def test_negated_preferences_are_excluded(self):
         intent = parse_search_intent(
             "A mystery without romance and no horror",

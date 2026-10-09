@@ -10,6 +10,10 @@ class MovieDNA(BaseModel):
     themes: List[str]
     dimensions: Dict[str, int]
     summary: str
+    source: str = "cinedna"
+    source_id: Optional[str] = None
+    original_title: Optional[str] = None
+    poster_url: Optional[str] = None
 
 
 class SearchRequest(BaseModel):

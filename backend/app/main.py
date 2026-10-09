@@ -6,11 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.data.movies import MOVIES
-from app.models import SearchRequest, SearchResponse, SearchResult
+from app.models import SearchIntent, SearchRequest, SearchResponse, SearchResult
 from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
+from app.services.tmdb import (
+    looks_like_title_query,
+    search_tmdb_movies,
+    title_match_score,
+    tmdb_is_configured,
+)
 
-app = FastAPI(title="CineDNA API", version="0.1.0")
+app = FastAPI(title="CineDNA API", version="0.2.0")
 
 allowed_origins = [
     origin.strip()
@@ -29,7 +35,11 @@ app.add_middleware(
 @app.get("/api/health")
 @app.get("/health")
 def health():
-    return {"status": "ok", "movies": len(MOVIES)}
+    return {
+        "status": "ok",
+        "movies": len(MOVIES),
+        "tmdb_enabled": tmdb_is_configured(),
+    }
 
 
 @app.get("/api/movies")
@@ -41,6 +51,29 @@ def list_movies():
 @app.post("/api/search", response_model=SearchResponse)
 @app.post("/search", response_model=SearchResponse)
 def search_movies(request: SearchRequest):
+    if tmdb_is_configured() and looks_like_title_query(request.query):
+        external_movies = search_tmdb_movies(request.query, request.limit)
+        if external_movies:
+            intent = SearchIntent(
+                target_dimensions={},
+                explanation="Matched your title against TMDB's movie catalog, including alternate and translated titles.",
+            )
+            results = [
+                SearchResult(
+                    movie=movie,
+                    score=title_match_score(request.query, movie),
+                    why="Title match from the TMDB catalog. Open the movie to inspect its generated CineDNA profile.",
+                )
+                for movie in external_movies
+            ]
+            results.sort(key=lambda item: item.score, reverse=True)
+            return SearchResponse(
+                query=request.query,
+                intent=intent,
+                results=results,
+                ai_provider="tmdb-catalog+heuristic-dna",
+            )
+
     intent = parse_search_intent(request.query, MOVIES)
     ranked = rank_movies(MOVIES, intent, request.limit)
 

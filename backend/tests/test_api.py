@@ -1,8 +1,10 @@
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models import MovieDNA
 
 
 class CineDNAAPITests(unittest.TestCase):
@@ -14,6 +16,7 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
         self.assertGreater(response.json()["movies"], 0)
+        self.assertIn("tmdb_enabled", response.json())
 
     def test_search_returns_ranked_movies(self):
         response = self.client.post(
@@ -31,6 +34,48 @@ class CineDNAAPITests(unittest.TestCase):
     def test_empty_search_rejected(self):
         response = self.client.post("/api/search", json={"query": ""})
         self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_title_search_uses_tmdb_catalog(self, _configured, search_tmdb):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Baahubali: The Beginning",
+                original_title="బాహుబలి:ద బిగినింగ్",
+                year=2015,
+                country="India",
+                genres=["Action", "Drama"],
+                themes=["power", "family"],
+                dimensions={"action": 90, "visual_spectacle": 95},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="256040",
+                poster_url="https://image.tmdb.org/t/p/w500/example.jpg",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Baahubali", "limit": 5},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["ai_provider"], "tmdb-catalog+heuristic-dna")
+        self.assertEqual(body["results"][0]["movie"]["title"], "Baahubali: The Beginning")
+        self.assertEqual(body["results"][0]["movie"]["source"], "tmdb")
+
+    def test_vibe_query_does_not_require_tmdb(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "dark Indian mystery with huge plot twists", "limit": 3},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -7,6 +7,47 @@ from app.services.scoring import rank_movies, score_movie
 
 
 class SearchIntentTests(unittest.TestCase):
+    def test_compound_genre_matches_requested_theme(self):
+        psychological_thriller = MovieDNA(
+            title="Mind Game",
+            year=2026,
+            country="USA",
+            genres=["Psychological Thriller"],
+            themes=[],
+            dimensions={},
+            summary="A test psychological thriller.",
+        )
+        drama = MovieDNA(
+            title="Quiet Day",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={},
+            summary="A test drama.",
+        )
+        intent = SearchIntent(target_dimensions={}, include_themes=["thriller"])
+
+        self.assertGreater(
+            score_movie(psychological_thriller, intent),
+            score_movie(drama, intent),
+        )
+
+    def test_excluded_compound_genre_is_removed_from_ranking(self):
+        intent = parse_search_intent("A dark mystery with no thriller", MOVIES)
+
+        ranked = rank_movies(MOVIES, intent, limit=20)
+        ranked_titles = {movie.title for movie, _score in ranked}
+
+        self.assertNotIn("Shutter Island", ranked_titles)
+        self.assertNotIn("Drishyam", ranked_titles)
+        self.assertTrue(
+            all(
+                "thriller" not in " ".join(movie.genres).lower()
+                for movie, _score in ranked
+            )
+        )
+
     def test_reference_movie_is_excluded_from_recommendations(self):
         intent = parse_search_intent("Like 3 Idiots", MOVIES)
 

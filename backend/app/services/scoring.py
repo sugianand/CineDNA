@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from math import sqrt
 from typing import Dict, Iterable, List, Tuple
 
@@ -22,6 +23,22 @@ DIMENSION_WEIGHTS = {
     "dialogue_density": 0.7,
     "rewatchability": 0.7,
 }
+
+
+def _normalize_term(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
+
+
+def _matching_preferences(movie: MovieDNA, preferences: Iterable[str]) -> set[str]:
+    movie_terms = [_normalize_term(term) for term in movie.themes + movie.genres]
+    matches = set()
+    for preference in preferences:
+        normalized = _normalize_term(preference)
+        if normalized and any(
+            f" {normalized} " in f" {movie_term} " for movie_term in movie_terms
+        ):
+            matches.add(normalized)
+    return matches
 
 
 def _dimension_similarity(movie: MovieDNA, target: Dict[str, int]) -> float:
@@ -48,20 +65,19 @@ def _dimension_similarity(movie: MovieDNA, target: Dict[str, int]) -> float:
 
 
 def _theme_similarity(movie: MovieDNA, intent: SearchIntent) -> float:
-    movie_terms = {term.lower() for term in movie.themes + movie.genres}
-    include = {term.lower() for term in intent.include_themes}
-    exclude = {term.lower() for term in intent.exclude_themes}
+    include = {_normalize_term(term) for term in intent.include_themes}
+    exclude = {_normalize_term(term) for term in intent.exclude_themes}
 
     if not include and not exclude:
         return 0.5
 
-    excluded = len(movie_terms & exclude)
+    excluded = len(_matching_preferences(movie, exclude))
     exclusion_score = 1.0 - (excluded / max(1, len(exclude))) if exclude else 1.0
 
     if not include:
         return max(0.0, min(1.0, exclusion_score))
 
-    included = len(movie_terms & include)
+    included = len(_matching_preferences(movie, include))
     include_score = included / len(include)
 
     return max(0.0, min(1.0, include_score * 0.8 + exclusion_score * 0.2))
@@ -95,6 +111,7 @@ def rank_movies(
         (movie, score_movie(movie, intent))
         for movie in movies
         if movie.title.casefold() not in reference_titles
+        and not _matching_preferences(movie, intent.exclude_themes)
     ]
     ranked.sort(key=lambda item: item[1], reverse=True)
     return ranked[:limit]

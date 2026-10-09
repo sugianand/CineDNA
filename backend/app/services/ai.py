@@ -23,6 +23,17 @@ DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "rewatchability": ("rewatchable", "rewatch"),
 }
 
+NEGATED_THEME_ALIASES = {
+    "mysterious": "mystery",
+    "detective": "mystery",
+    "whodunit": "mystery",
+    "romantic": "romance",
+    "love story": "romance",
+    "funny": "comedy",
+    "humor": "comedy",
+    "hilarious": "comedy",
+}
+
 THEME_VOCAB = {
     "family", "time", "space", "survival", "identity", "memory", "guilt", "reality",
     "morality", "justice", "crime", "deception", "murder", "greed", "friendship",
@@ -143,6 +154,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         current = target.get(dimension, 75)
         if _is_negated(lowered, matched):
             current = 10
+            if excluded_theme := NEGATED_THEME_ALIASES.get(matched):
+                exclude_themes.append(excluded_theme)
         else:
             current = _apply_modifier(lowered, matched, current)
 

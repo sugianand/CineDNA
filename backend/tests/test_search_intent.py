@@ -129,6 +129,37 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("romance", intent.include_themes)
         self.assertEqual(intent.target_dimensions["romance"], 10)
 
+    def test_negated_trait_aliases_exclude_matching_genres(self):
+        intent = parse_search_intent(
+            "Something mysterious but not romantic and not funny",
+            MOVIES,
+        )
+        romantic_comedy = MovieDNA(
+            title="Date Night",
+            year=2026,
+            country="USA",
+            genres=["Romantic Comedy"],
+            themes=[],
+            dimensions={"mystery": 70, "romance": 80, "humor": 80},
+            summary="A test romantic comedy.",
+        )
+        mystery_drama = MovieDNA(
+            title="Hidden Clue",
+            year=2026,
+            country="USA",
+            genres=["Mystery", "Drama"],
+            themes=[],
+            dimensions={"mystery": 70, "romance": 10, "humor": 10},
+            summary="A test mystery drama.",
+        )
+
+        ranked = rank_movies([romantic_comedy, mystery_drama], intent, limit=2)
+
+        self.assertEqual(intent.exclude_themes, ["comedy", "romance"])
+        self.assertEqual(intent.target_dimensions["romance"], 10)
+        self.assertEqual(intent.target_dimensions["humor"], 10)
+        self.assertEqual([movie.title for movie, _score in ranked], ["Hidden Clue"])
+
     def test_exclusion_only_query_penalizes_matching_movies(self):
         intent = SearchIntent(
             target_dimensions={},

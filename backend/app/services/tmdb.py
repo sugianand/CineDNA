@@ -60,6 +60,10 @@ def _clamp(value: int) -> int:
     return max(0, min(100, value))
 
 
+def _contains_term(text: str, term: str) -> bool:
+    return bool(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text, re.IGNORECASE))
+
+
 def _dimensions_for(genres: List[str], overview: str, rating: float) -> Dict[str, int]:
     dimensions = {
         "emotional_intensity": 50,
@@ -99,7 +103,6 @@ def _dimensions_for(genres: List[str], overview: str, rating: float) -> Dict[str
         for trait, delta in boosts.get(genre, {}).items():
             dimensions[trait] = _clamp(dimensions[trait] + delta)
 
-    lowered = overview.lower()
     text_boosts = {
         "family": ("emotional_intensity", 12),
         "murder": ("darkness", 14),
@@ -112,20 +115,19 @@ def _dimensions_for(genres: List[str], overview: str, rating: float) -> Dict[str
         "survival": ("pacing", 10),
     }
     for word, (trait, delta) in text_boosts.items():
-        if word in lowered:
+        if _contains_term(overview, word):
             dimensions[trait] = _clamp(dimensions[trait] + delta)
 
     return dimensions
 
 
 def _themes_for(overview: str, genres: List[str]) -> List[str]:
-    lowered = overview.lower()
     vocabulary = (
         "family", "love", "revenge", "war", "crime", "murder", "identity",
         "friendship", "survival", "power", "justice", "greed", "destiny",
         "history", "memory", "truth",
     )
-    themes = [theme for theme in vocabulary if theme in lowered]
+    themes = [theme for theme in vocabulary if _contains_term(overview, theme)]
     if len(themes) < 3:
         themes.extend(genre.lower() for genre in genres[:3])
     return list(dict.fromkeys(themes))[:6]

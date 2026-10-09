@@ -34,13 +34,17 @@ THEME_VOCAB = {
 NEGATION_PREFIX = r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not)"
 
 
-def _normalize_title(value: str) -> str:
+def _normalize_text(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
 
 
+def _contains_term(query: str, term: str) -> bool:
+    normalized_term = _normalize_text(term)
+    return bool(normalized_term) and f" {normalized_term} " in f" {query} "
+
+
 def _contains_title(query: str, title: str) -> bool:
-    normalized_title = _normalize_title(title)
-    return bool(normalized_title) and f" {normalized_title} " in f" {query} "
+    return _contains_term(query, title)
 
 
 def _title_base(title: str) -> str:
@@ -48,7 +52,7 @@ def _title_base(title: str) -> str:
 
 
 def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
-    normalized_query = _normalize_title(query)
+    normalized_query = _normalize_text(query)
     exact_matches = [
         movie
         for movie in movies
@@ -63,8 +67,8 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
     base_matches: Dict[str, List[MovieDNA]] = {}
     for movie in movies:
         base = _title_base(movie.title)
-        if base != movie.title and len(_normalize_title(base)) >= 4:
-            base_matches.setdefault(_normalize_title(base), []).append(movie)
+        if base != movie.title and len(_normalize_text(base)) >= 4:
+            base_matches.setdefault(_normalize_text(base), []).append(movie)
 
     return [
         candidates[0]
@@ -74,7 +78,7 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
 
 
 def _apply_modifier(query: str, keyword: str, current: int) -> int:
-    escaped = re.escape(keyword)
+    escaped = re.escape(_normalize_text(keyword))
     less_patterns = (
         rf"less\s+{escaped}",
         rf"not\s+(?:too\s+)?{escaped}",
@@ -100,7 +104,7 @@ def _is_negated(query: str, term: str) -> bool:
 
 
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
-    lowered = " ".join(query.lower().split())
+    lowered = _normalize_text(query)
     references = _find_reference_movies(lowered, movies)
 
     if references:
@@ -112,13 +116,16 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     exclude_themes: List[str] = []
     preferred_countries: List[str] = []
 
-    if any(word in lowered for word in ("indian", "bollywood", "hindi")):
+    if any(_contains_term(lowered, word) for word in ("indian", "bollywood", "hindi")):
         preferred_countries.append("India")
-    if any(word in lowered for word in ("american", "hollywood", "us movie", "u.s.")):
+    if any(
+        _contains_term(lowered, word)
+        for word in ("american", "hollywood", "us movie", "u.s.")
+    ):
         preferred_countries.append("USA")
 
     for theme in THEME_VOCAB:
-        if theme not in lowered:
+        if not _contains_term(lowered, theme):
             continue
         if _is_negated(lowered, theme):
             exclude_themes.append(theme)
@@ -126,7 +133,10 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             include_themes.append(theme)
 
     for dimension, keywords in DIMENSION_RULES.items():
-        matched = next((keyword for keyword in keywords if keyword in lowered), None)
+        matched = next(
+            (keyword for keyword in keywords if _contains_term(lowered, keyword)),
+            None,
+        )
         if not matched:
             continue
 
@@ -137,9 +147,15 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             current = _apply_modifier(lowered, matched, current)
 
         if dimension == "pacing":
-            if any(term in lowered for term in ("slow", "slow burn", "slow-burn")):
+            if any(
+                _contains_term(lowered, term)
+                for term in ("slow", "slow burn", "slow-burn")
+            ):
                 current = 35
-            elif any(term in lowered for term in ("fast", "fast paced", "fast-paced")):
+            elif any(
+                _contains_term(lowered, term)
+                for term in ("fast", "fast paced", "fast-paced")
+            ):
                 current = 85
 
         target[dimension] = current

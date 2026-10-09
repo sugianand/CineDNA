@@ -7,6 +7,28 @@ from app.services.scoring import score_movie
 
 
 class SearchIntentTests(unittest.TestCase):
+    def test_keywords_do_not_match_inside_unrelated_words(self):
+        intent = parse_search_intent(
+            "A breakfast story set in Indiana about satisfaction",
+            MOVIES,
+        )
+
+        self.assertNotIn("pacing", intent.target_dimensions)
+        self.assertNotIn("action", intent.target_dimensions)
+        self.assertNotIn("action", intent.include_themes)
+        self.assertEqual(intent.preferred_countries, [])
+
+    def test_hyphenated_phrases_still_match(self):
+        intent = parse_search_intent(
+            "A fast-paced Indian science-fiction action movie",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.target_dimensions["pacing"], 85)
+        self.assertEqual(intent.target_dimensions["action"], 75)
+        self.assertIn("science fiction", intent.include_themes)
+        self.assertIn("India", intent.preferred_countries)
+
     def test_reference_movie_matches_unique_title_before_subtitle(self):
         intent = parse_search_intent(
             "Something like Dune but funnier",

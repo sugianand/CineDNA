@@ -77,6 +77,44 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         search_tmdb.assert_not_called()
 
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_title_mode_bypasses_title_guessing(self, _configured, search_tmdb):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="The Dark Knight",
+                year=2008,
+                country="USA",
+                genres=["Action", "Crime"],
+                themes=["justice"],
+                dimensions={"action": 94, "darkness": 89},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="155",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "The Dark Knight", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with("The Dark Knight", 6)
+        self.assertEqual(response.json()["results"][0]["movie"]["source"], "tmdb")
+
+    def test_vibe_mode_never_triggers_title_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "Arrival", "mode": "vibe"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

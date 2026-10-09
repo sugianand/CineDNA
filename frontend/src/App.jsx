@@ -164,7 +164,7 @@ function App() {
     })
   }
 
-  async function runSearch(searchQuery) {
+  async function runSearch(searchQuery, searchMode = mode) {
     const cleanedQuery = searchQuery.trim()
     if (!cleanedQuery) return
 
@@ -177,7 +177,7 @@ function App() {
       const res = await fetch(`${API}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: cleanedQuery, limit: 6 }),
+        body: JSON.stringify({ query: cleanedQuery, limit: 6, mode: searchMode }),
       })
 
       if (!res.ok) throw new Error('Search failed')
@@ -201,7 +201,7 @@ function App() {
     setMode('vibe')
     setSelected(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    await runSearch(nextQuery)
+    await runSearch(nextQuery, 'vibe')
   }
 
   function chooseMode(nextMode) {
@@ -388,7 +388,7 @@ function App() {
               <Dna size={30} />
               <h3>Try describing the feeling instead.</h3>
               <p>Use a mood, genre, country, or a movie you already love and CineDNA will broaden the search.</p>
-              <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists')}>
+              <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists', 'vibe')}>
                 Surprise me <ArrowRight size={15} />
               </button>
             </div>
@@ -409,7 +409,7 @@ function App() {
 
             <div className="discovery-grid">
               {discoveryPrompts.map(({ title, subtitle, query: prompt, icon: Icon }) => (
-                <button className="discovery-card" key={title} onClick={() => runSearch(prompt)}>
+                <button className="discovery-card" key={title} onClick={() => runSearch(prompt, 'vibe')}>
                   <span className="discovery-icon"><Icon size={21} /></span>
                   <span className="discovery-copy">
                     <strong>{title}</strong>

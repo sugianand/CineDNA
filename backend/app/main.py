@@ -51,7 +51,10 @@ def list_movies():
 @app.post("/api/search", response_model=SearchResponse)
 @app.post("/search", response_model=SearchResponse)
 def search_movies(request: SearchRequest):
-    if tmdb_is_configured() and looks_like_title_query(request.query):
+    should_search_titles = request.mode == "title" or (
+        request.mode == "auto" and looks_like_title_query(request.query)
+    )
+    if tmdb_is_configured() and should_search_titles:
         external_movies = search_tmdb_movies(request.query, request.limit)
         if external_movies:
             intent = SearchIntent(

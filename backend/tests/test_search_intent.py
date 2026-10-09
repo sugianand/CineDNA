@@ -80,6 +80,39 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIn("science fiction", intent.include_themes)
         self.assertIn("India", intent.preferred_countries)
 
+    def test_negated_pacing_terms_reverse_the_requested_speed(self):
+        slow_movie = MovieDNA(
+            title="Quiet Journey",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"pacing": 35},
+            summary="A deliberately paced test movie.",
+        )
+        fast_movie = MovieDNA(
+            title="Quick Escape",
+            year=2026,
+            country="USA",
+            genres=["Action"],
+            themes=[],
+            dimensions={"pacing": 85},
+            summary="A fast-paced test movie.",
+        )
+
+        for query, target, expected_title in (
+            ("not fast", 35, "Quiet Journey"),
+            ("without fast pacing", 35, "Quiet Journey"),
+            ("not slow", 85, "Quick Escape"),
+            ("without slow pacing", 85, "Quick Escape"),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies([slow_movie, fast_movie], intent, limit=2)
+
+                self.assertEqual(intent.target_dimensions["pacing"], target)
+                self.assertEqual(ranked[0][0].title, expected_title)
+
     def test_reference_movie_matches_unique_title_before_subtitle(self):
         intent = parse_search_intent(
             "Something like Dune but funnier",

@@ -6,11 +6,14 @@ from typing import Dict, List, Tuple
 from app.models import MovieDNA, SearchIntent
 
 
+FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced")
+SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn")
+
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "emotional_intensity": ("emotional", "moving", "heartfelt", "sad", "cry"),
     "narrative_complexity": ("complex", "mind bending", "mind-bending", "cerebral", "confusing"),
     "visual_spectacle": ("beautiful", "visual", "cinematic", "spectacle", "epic"),
-    "pacing": ("fast", "fast paced", "fast-paced", "slow", "slow burn", "slow-burn"),
+    "pacing": FAST_PACING_TERMS + SLOW_PACING_TERMS,
     "mystery": ("mystery", "mysterious", "detective", "whodunit"),
     "romance": ("romance", "romantic", "love story"),
     "darkness": ("dark", "bleak", "grim"),
@@ -152,24 +155,27 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             continue
 
         current = target.get(dimension, 75)
-        if _is_negated(lowered, matched):
+        negated = _is_negated(lowered, matched)
+        if dimension == "pacing":
+            negated_pacing = next(
+                (
+                    keyword
+                    for keyword in keywords
+                    if _contains_term(lowered, keyword)
+                    and _is_negated(lowered, keyword)
+                ),
+                None,
+            )
+            if negated_pacing:
+                current = 85 if negated_pacing in SLOW_PACING_TERMS else 35
+            else:
+                current = 35 if matched in SLOW_PACING_TERMS else 85
+        elif negated:
             current = 10
             if excluded_theme := NEGATED_THEME_ALIASES.get(matched):
                 exclude_themes.append(excluded_theme)
         else:
             current = _apply_modifier(lowered, matched, current)
-
-        if dimension == "pacing":
-            if any(
-                _contains_term(lowered, term)
-                for term in ("slow", "slow burn", "slow-burn")
-            ):
-                current = 35
-            elif any(
-                _contains_term(lowered, term)
-                for term in ("fast", "fast paced", "fast-paced")
-            ):
-                current = 85
 
         target[dimension] = current
 

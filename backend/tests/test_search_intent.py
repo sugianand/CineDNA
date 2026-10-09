@@ -3,10 +3,20 @@ import unittest
 from app.data.movies import MOVIES
 from app.models import MovieDNA, SearchIntent
 from app.services.ai import parse_search_intent
-from app.services.scoring import score_movie
+from app.services.scoring import rank_movies, score_movie
 
 
 class SearchIntentTests(unittest.TestCase):
+    def test_reference_movie_is_excluded_from_recommendations(self):
+        intent = parse_search_intent("Like 3 Idiots", MOVIES)
+
+        ranked = rank_movies(MOVIES, intent, limit=6)
+        ranked_titles = [movie.title for movie, _score in ranked]
+
+        self.assertEqual(intent.reference_titles, ["3 Idiots"])
+        self.assertNotIn("3 Idiots", ranked_titles)
+        self.assertEqual(len(ranked), 6)
+
     def test_keywords_do_not_match_inside_unrelated_words(self):
         intent = parse_search_intent(
             "A breakfast story set in Indiana about satisfaction",

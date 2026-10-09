@@ -82,9 +82,6 @@ def score_movie(movie: MovieDNA, intent: SearchIntent) -> float:
     score = dimension_score * 0.72 + theme_score * 0.28
     score += _country_bonus(movie, intent)
 
-    if movie.title.lower() in {title.lower() for title in intent.reference_titles}:
-        score -= 0.20
-
     return round(max(0.0, min(1.0, score)) * 100, 1)
 
 
@@ -93,6 +90,11 @@ def rank_movies(
     intent: SearchIntent,
     limit: int = 6,
 ) -> List[Tuple[MovieDNA, float]]:
-    ranked = [(movie, score_movie(movie, intent)) for movie in movies]
+    reference_titles = {title.casefold() for title in intent.reference_titles}
+    ranked = [
+        (movie, score_movie(movie, intent))
+        for movie in movies
+        if movie.title.casefold() not in reference_titles
+    ]
     ranked.sort(key=lambda item: item[1], reverse=True)
     return ranked[:limit]

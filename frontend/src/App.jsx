@@ -72,19 +72,21 @@ function App() {
   const [responseMode, setResponseMode] = useState('vibe')
   const [selected, setSelected] = useState(null)
   const [error, setError] = useState('')
-  const [catalogReady, setCatalogReady] = useState(false)
+  const [expandedCatalog, setExpandedCatalog] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
   const activeSearch = useRef(null)
 
   const examples = useMemo(() => (
     mode === 'title'
-      ? ['Baahubali', 'RRR', 'Interstellar']
+      ? expandedCatalog
+        ? ['Baahubali', 'RRR', 'Interstellar']
+        : ['Interstellar', 'Dune', '3 Idiots']
       : [
           'Like Interstellar, but darker and less complicated',
           'A twisty Indian mystery with dark humor',
           'Fast sci-fi with huge visuals and strong world building',
         ]
-  ), [mode])
+  ), [expandedCatalog, mode])
 
   const discoveryPrompts = useMemo(() => [
     {
@@ -125,10 +127,10 @@ function App() {
     fetch(`${API}/api/health`)
       .then((res) => (res.ok ? res.json() : null))
       .then((body) => {
-        if (!cancelled) setCatalogReady(Boolean(body?.tmdb_enabled))
+        if (!cancelled) setExpandedCatalog(Boolean(body?.tmdb_enabled))
       })
       .catch(() => {
-        if (!cancelled) setCatalogReady(false)
+        if (!cancelled) setExpandedCatalog(false)
       })
 
     return () => {
@@ -251,8 +253,8 @@ function App() {
           <a href="#how-it-works">How it works</a>
         </nav>
         <span className="catalog-pill">
-          <span className={`catalog-dot ${catalogReady ? 'catalog-dot-live' : ''}`} />
-          {catalogReady ? 'Expanded catalog live' : 'CineDNA catalog'}
+          <span className={`catalog-dot ${expandedCatalog ? 'catalog-dot-live' : ''}`} />
+          {expandedCatalog ? 'Expanded catalog live' : 'CineDNA catalog'}
         </span>
       </header>
 
@@ -271,17 +273,15 @@ function App() {
           >
             <Sparkles size={15} /> Describe a vibe
           </button>
-          {catalogReady && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={mode === 'title'}
-              className={mode === 'title' ? 'active' : ''}
-              onClick={() => chooseMode('title')}
-            >
-              <Film size={15} /> Find a movie
-            </button>
-          )}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'title'}
+            className={mode === 'title' ? 'active' : ''}
+            onClick={() => chooseMode('title')}
+          >
+            <Film size={15} /> Find a movie
+          </button>
         </div>
 
         <form onSubmit={searchMovies} className="search-box">

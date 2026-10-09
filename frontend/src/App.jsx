@@ -165,8 +165,14 @@ function App() {
   }
 
   async function runSearch(searchQuery, searchMode = mode) {
-    const cleanedQuery = searchQuery.trim()
-    if (!cleanedQuery) return
+    const cleanedQuery = searchQuery.trim().replace(/\s+/g, ' ')
+    const minimumLength = searchMode === 'vibe' ? 3 : 1
+    if (cleanedQuery.length < minimumLength) {
+      setError(searchMode === 'vibe'
+        ? 'Describe your movie vibe in at least 3 characters.'
+        : 'Enter a movie title to search.')
+      return
+    }
 
     setQuery(cleanedQuery)
     setLoading(true)
@@ -268,8 +274,9 @@ function App() {
             placeholder={mode === 'title' ? 'Search Baahubali, RRR, Parasite…' : 'Try: a dark Indian mystery with huge plot twists'}
             onChange={(event) => setQuery(event.target.value)}
             autoComplete="off"
+            minLength={mode === 'vibe' ? 3 : 1}
           />
-          <button disabled={loading || !query.trim()}>
+          <button disabled={loading || query.trim().length < (mode === 'vibe' ? 3 : 1)}>
             {loading ? 'Analyzing…' : mode === 'title' ? 'Search title' : 'Find my movie'}
           </button>
         </form>

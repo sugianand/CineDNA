@@ -35,6 +35,44 @@ class CineDNAAPITests(unittest.TestCase):
         response = self.client.post("/api/search", json={"query": ""})
         self.assertEqual(response.status_code, 422)
 
+    def test_whitespace_only_search_rejected(self):
+        response = self.client.post("/api/search", json={"query": " \n\t "})
+        self.assertEqual(response.status_code, 422)
+
+    def test_short_vibe_search_rejected(self):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "x", "mode": "vibe"},
+        )
+        self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_short_title_search_is_normalized(self, _configured, search_tmdb):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Up",
+                year=2009,
+                country="USA",
+                genres=["Animation", "Adventure"],
+                themes=["grief", "friendship"],
+                dimensions={"emotional_intensity": 88},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="14160",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "  Up \n", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with("Up", 6)
+        self.assertEqual(response.json()["query"], "Up")
+        self.assertEqual(response.json()["results"][0]["movie"]["title"], "Up")
+
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
     def test_title_search_uses_tmdb_catalog(self, _configured, search_tmdb):

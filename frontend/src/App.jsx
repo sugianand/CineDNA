@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   Brain,
@@ -69,10 +69,12 @@ function App() {
   const [mode, setMode] = useState('vibe')
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState(null)
+  const [responseMode, setResponseMode] = useState('vibe')
   const [selected, setSelected] = useState(null)
   const [error, setError] = useState('')
   const [catalogReady, setCatalogReady] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
+  const activeSearch = useRef(null)
 
   const examples = useMemo(() => (
     mode === 'title'
@@ -134,6 +136,8 @@ function App() {
     }
   }, [])
 
+  useEffect(() => () => activeSearch.current?.abort(), [])
+
   useEffect(() => {
     if (!selected) return undefined
 
@@ -174,6 +178,10 @@ function App() {
       return
     }
 
+    activeSearch.current?.abort()
+    const controller = new AbortController()
+    activeSearch.current = controller
+
     setQuery(cleanedQuery)
     setLoading(true)
     setError('')
@@ -184,16 +192,23 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: cleanedQuery, limit: 6, mode: searchMode }),
+        signal: controller.signal,
       })
 
       if (!res.ok) throw new Error('Search failed')
       const body = await res.json()
       setResponse(body)
+      setResponseMode(searchMode)
       rememberSearch(cleanedQuery)
-    } catch {
-      setError('We could not search CineDNA right now. Try again in a moment.')
+    } catch (searchError) {
+      if (searchError.name !== 'AbortError') {
+        setError('We could not search CineDNA right now. Try again in a moment.')
+      }
     } finally {
-      setLoading(false)
+      if (activeSearch.current === controller) {
+        activeSearch.current = null
+        setLoading(false)
+      }
     }
   }
 
@@ -211,6 +226,9 @@ function App() {
   }
 
   function chooseMode(nextMode) {
+    activeSearch.current?.abort()
+    activeSearch.current = null
+    setLoading(false)
     setMode(nextMode)
     setResponse(null)
     setError('')
@@ -329,17 +347,23 @@ function App() {
       {response && !loading && (
         <section className="results">
           <div className="intent-card">
-            <span>How we interpreted your search</span>
+            <span>{responseMode === 'title' ? 'Title search summary' : 'How we interpreted your search'}</span>
             <p>{response.intent.explanation}</p>
           </div>
 
           <div className="results-heading">
             <div>
-              <span className="section-kicker">DNA MATCHES</span>
+              <span className="section-kicker">
+                {responseMode === 'title' ? 'TITLE RESULTS' : 'DNA MATCHES'}
+              </span>
               <h2>
                 {response.results.length > 0
-                  ? `${response.results.length} movies ranked for your vibe`
-                  : 'No strong matches yet'}
+                  ? responseMode === 'title'
+                    ? `${response.results.length} title ${response.results.length === 1 ? 'match' : 'matches'}`
+                    : `${response.results.length} movies ranked for your vibe`
+                  : responseMode === 'title'
+                    ? 'No matching title found'
+                    : 'No strong matches yet'}
               </h2>
             </div>
             <button className="start-over" onClick={() => setResponse(null)}>Start a new search</button>
@@ -352,7 +376,9 @@ function App() {
                   <div className="poster-shell">
                     <MoviePoster movie={movie} />
                     <div className="poster-rank">#{index + 1}</div>
-                    <div className="poster-score">{score}% match</div>
+                    <div className="poster-score">
+                      {score}% {responseMode === 'title' ? 'title match' : 'match'}
+                    </div>
                   </div>
 
                   <div className="movie-card-body">
@@ -393,11 +419,25 @@ function App() {
           ) : (
             <div className="empty-state">
               <Dna size={30} />
-              <h3>Try describing the feeling instead.</h3>
-              <p>Use a mood, genre, country, or a movie you already love and CineDNA will broaden the search.</p>
-              <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists', 'vibe')}>
-                Surprise me <ArrowRight size={15} />
-              </button>
+              <h3>
+                {responseMode === 'title'
+                  ? 'We could not find that movie title.'
+                  : 'Try describing the feeling instead.'}
+              </h3>
+              <p>
+                {responseMode === 'title'
+                  ? 'Check the spelling, try an alternate title, or switch to vibe discovery.'
+                  : 'Use a mood, genre, country, or a movie you already love and CineDNA will broaden the search.'}
+              </p>
+              {responseMode === 'title' ? (
+                <button onClick={() => chooseMode('vibe')}>
+                  Describe a vibe <ArrowRight size={15} />
+                </button>
+              ) : (
+                <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists', 'vibe')}>
+                  Surprise me <ArrowRight size={15} />
+                </button>
+              )}
             </div>
           )}
         </section>

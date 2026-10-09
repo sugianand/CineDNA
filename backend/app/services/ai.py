@@ -208,9 +208,13 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
 def build_match_reason(movie: MovieDNA, intent: SearchIntent) -> str:
     reasons: List[str] = []
 
+    movie_terms = [
+        _normalize_text(item)
+        for item in movie.themes + movie.genres
+    ]
     matched_themes = [
         theme for theme in intent.include_themes
-        if theme.lower() in {item.lower() for item in movie.themes + movie.genres}
+        if any(_contains_term(movie_term, theme) for movie_term in movie_terms)
     ]
     if matched_themes:
         reasons.append("matches " + ", ".join(matched_themes[:3]))

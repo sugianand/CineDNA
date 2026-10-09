@@ -2,7 +2,7 @@ import unittest
 
 from app.data.movies import MOVIES
 from app.models import MovieDNA, SearchIntent
-from app.services.ai import parse_search_intent
+from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies, score_movie
 
 
@@ -31,6 +31,10 @@ class SearchIntentTests(unittest.TestCase):
         self.assertGreater(
             score_movie(psychological_thriller, intent),
             score_movie(drama, intent),
+        )
+        self.assertIn(
+            "matches thriller",
+            build_match_reason(psychological_thriller, intent),
         )
 
     def test_excluded_compound_genre_is_removed_from_ranking(self):

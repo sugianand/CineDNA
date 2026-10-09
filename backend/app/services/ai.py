@@ -27,8 +27,11 @@ THEME_VOCAB = {
     "family", "time", "space", "survival", "identity", "memory", "guilt", "reality",
     "morality", "justice", "crime", "deception", "murder", "greed", "friendship",
     "education", "mythology", "power", "destiny", "religion", "war", "love",
-    "trauma", "truth", "dreams", "language", "grief", "communication",
+    "trauma", "truth", "dreams", "language", "grief", "communication", "action",
+    "comedy", "horror", "mystery", "romance", "thriller", "science fiction",
 }
+
+NEGATION_PREFIX = r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not)"
 
 
 def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
@@ -56,6 +59,12 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
     return current
 
 
+def _is_negated(query: str, term: str) -> bool:
+    escaped = re.escape(term).replace(r"\ ", r"\s+")
+    pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:any|too\s+much)\s+)?{escaped}\b"
+    return bool(re.search(pattern, query))
+
+
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     lowered = " ".join(query.lower().split())
     references = _find_reference_movies(lowered, movies)
@@ -75,7 +84,11 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         preferred_countries.append("USA")
 
     for theme in THEME_VOCAB:
-        if theme in lowered:
+        if theme not in lowered:
+            continue
+        if _is_negated(lowered, theme):
+            exclude_themes.append(theme)
+        else:
             include_themes.append(theme)
 
     for dimension, keywords in DIMENSION_RULES.items():
@@ -84,7 +97,10 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             continue
 
         current = target.get(dimension, 75)
-        current = _apply_modifier(lowered, matched, current)
+        if _is_negated(lowered, matched):
+            current = 10
+        else:
+            current = _apply_modifier(lowered, matched, current)
 
         if dimension == "pacing":
             if any(term in lowered for term in ("slow", "slow burn", "slow-burn")):

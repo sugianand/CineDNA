@@ -55,11 +55,14 @@ def _theme_similarity(movie: MovieDNA, intent: SearchIntent) -> float:
     if not include and not exclude:
         return 0.5
 
-    included = len(movie_terms & include)
-    include_score = included / max(1, len(include)) if include else 0.5
-
     excluded = len(movie_terms & exclude)
     exclusion_score = 1.0 - (excluded / max(1, len(exclude))) if exclude else 1.0
+
+    if not include:
+        return max(0.0, min(1.0, exclusion_score))
+
+    included = len(movie_terms & include)
+    include_score = included / len(include)
 
     return max(0.0, min(1.0, include_score * 0.8 + exclusion_score * 0.2))
 

@@ -13,7 +13,6 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import './discovery.css'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'

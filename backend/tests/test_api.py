@@ -115,6 +115,46 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         search_tmdb.assert_not_called()
 
+    @patch("app.main.search_tmdb_movies", return_value=[])
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_title_mode_falls_back_to_local_catalog(self, _configured, _search_tmdb):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Interstelar", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+        self.assertEqual(body["results"][0]["movie"]["title"], "Interstellar")
+
+    @patch("app.main.search_tmdb_movies", return_value=[])
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_title_mode_does_not_return_unrelated_vibe_results(
+        self, _configured, _search_tmdb
+    ):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "A Movie That Does Not Exist", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["results"], [])
+        self.assertIn("No movie title matched", body["intent"]["explanation"])
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_title_mode_uses_local_catalog_without_tmdb(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Dune", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["results"][0]["movie"]["title"], "Dune: Part Two")
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
 from app.services.tmdb import (
     looks_like_title_query,
+    search_local_movies,
     search_tmdb_movies,
     title_match_score,
     tmdb_is_configured,
@@ -54,8 +55,12 @@ def search_movies(request: SearchRequest):
     should_search_titles = request.mode == "title" or (
         request.mode == "auto" and looks_like_title_query(request.query)
     )
-    if tmdb_is_configured() and should_search_titles:
-        external_movies = search_tmdb_movies(request.query, request.limit)
+    if should_search_titles:
+        external_movies = (
+            search_tmdb_movies(request.query, request.limit)
+            if tmdb_is_configured()
+            else []
+        )
         if external_movies:
             intent = SearchIntent(
                 target_dimensions={},
@@ -75,6 +80,37 @@ def search_movies(request: SearchRequest):
                 intent=intent,
                 results=results,
                 ai_provider="tmdb-catalog+heuristic-dna",
+            )
+
+        local_movies = search_local_movies(request.query, MOVIES, request.limit)
+        if local_movies:
+            intent = SearchIntent(
+                target_dimensions={},
+                explanation="Matched your title against CineDNA's curated movie catalog.",
+            )
+            return SearchResponse(
+                query=request.query,
+                intent=intent,
+                results=[
+                    SearchResult(
+                        movie=movie,
+                        score=title_match_score(request.query, movie),
+                        why="Title match from CineDNA's curated catalog. Open the movie to inspect its DNA profile.",
+                    )
+                    for movie in local_movies
+                ],
+                ai_provider="cinedna-title-catalog",
+            )
+
+        if request.mode == "title":
+            return SearchResponse(
+                query=request.query,
+                intent=SearchIntent(
+                    target_dimensions={},
+                    explanation="No movie title matched. Check the spelling or switch to Describe a vibe.",
+                ),
+                results=[],
+                ai_provider="cinedna-title-catalog",
             )
 
     intent = parse_search_intent(request.query, MOVIES)

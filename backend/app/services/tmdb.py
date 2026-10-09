@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from difflib import SequenceMatcher
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
 import httpx
 
@@ -190,14 +190,54 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
     return [_from_tmdb(item) for item in results[:limit]]
 
 
+def _normalize_title(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def search_local_movies(
+    query: str,
+    movies: Sequence[MovieDNA],
+    limit: int = 6,
+) -> List[MovieDNA]:
+    """Return credible title matches from the bundled catalog.
+
+    Substring matches support shortened titles such as "Dune", while the
+    similarity threshold tolerates small spelling mistakes without turning a
+    failed title lookup into unrelated vibe recommendations.
+    """
+    normalized_query = _normalize_title(query)
+    if not normalized_query:
+        return []
+
+    matches = []
+    for movie in movies:
+        candidates = [movie.title, movie.original_title or ""]
+        normalized_candidates = [
+            _normalize_title(candidate) for candidate in candidates if candidate
+        ]
+        best_similarity = max(
+            SequenceMatcher(None, normalized_query, candidate).ratio()
+            for candidate in normalized_candidates
+        )
+        contains_title = any(
+            normalized_query in candidate or candidate in normalized_query
+            for candidate in normalized_candidates
+        )
+        if contains_title or best_similarity >= 0.72:
+            matches.append((movie, title_match_score(query, movie)))
+
+    matches.sort(key=lambda item: item[1], reverse=True)
+    return [movie for movie, _score in matches[:limit]]
+
+
 def title_match_score(query: str, movie: MovieDNA) -> float:
-    normalized_query = re.sub(r"[^a-z0-9]+", " ", query.lower()).strip()
+    normalized_query = _normalize_title(query)
     candidates = [movie.title, movie.original_title or ""]
     best = max(
         SequenceMatcher(
             None,
             normalized_query,
-            re.sub(r"[^a-z0-9]+", " ", candidate.lower()).strip(),
+            _normalize_title(candidate),
         ).ratio()
         for candidate in candidates
         if candidate

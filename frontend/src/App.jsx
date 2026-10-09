@@ -1,13 +1,37 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Dna, Film, Search, Sparkles, X } from 'lucide-react'
+import {
+  ArrowRight,
+  Brain,
+  Clock3,
+  Dna,
+  Film,
+  Flame,
+  Heart,
+  Laugh,
+  Rocket,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react'
+import './discovery.css'
 
 const API = import.meta.env.VITE_API_URL || ''
+const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
 
 function prettyTrait(name) {
   return name
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function loadRecentSearches() {
+  try {
+    const value = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]')
+    return Array.isArray(value) ? value.filter((item) => typeof item === 'string').slice(0, 5) : []
+  } catch {
+    return []
+  }
 }
 
 function MoviePoster({ movie, large = false }) {
@@ -43,16 +67,73 @@ function MoviePoster({ movie, large = false }) {
 
 function App() {
   const [query, setQuery] = useState('Like Interstellar, but darker and less complicated')
+  const [mode, setMode] = useState('vibe')
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState(null)
   const [selected, setSelected] = useState(null)
   const [error, setError] = useState('')
+  const [catalogReady, setCatalogReady] = useState(false)
+  const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
 
-  const examples = useMemo(() => [
-    'Like Interstellar, but darker and less complicated',
-    'A twisty Indian mystery with dark humor',
-    'Fast sci-fi with huge visuals and strong world building',
+  const examples = useMemo(() => (
+    mode === 'title'
+      ? ['Baahubali', 'RRR', 'Interstellar']
+      : [
+          'Like Interstellar, but darker and less complicated',
+          'A twisty Indian mystery with dark humor',
+          'Fast sci-fi with huge visuals and strong world building',
+        ]
+  ), [mode])
+
+  const discoveryPrompts = useMemo(() => [
+    {
+      title: 'Mind-bending',
+      subtitle: 'Twists, mystery, cerebral stories',
+      query: 'A mind-bending mystery with huge plot twists and complex ideas',
+      icon: Brain,
+    },
+    {
+      title: 'Indian thrillers',
+      subtitle: 'Dark, tense, unpredictable',
+      query: 'A dark Indian thriller with mystery, crime, and huge plot twists',
+      icon: Flame,
+    },
+    {
+      title: 'Big-screen sci-fi',
+      subtitle: 'Worlds worth getting lost in',
+      query: 'Epic science fiction with huge visuals, action, and strong world building',
+      icon: Rocket,
+    },
+    {
+      title: 'Emotional',
+      subtitle: 'Character-first stories that hit hard',
+      query: 'An emotional character-driven drama with deep relationships',
+      icon: Heart,
+    },
+    {
+      title: 'Actually funny',
+      subtitle: 'Lighter, faster, rewatchable',
+      query: 'A funny fast-paced comedy with high rewatchability',
+      icon: Laugh,
+    },
   ], [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch(`${API}/api/health`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (!cancelled) setCatalogReady(Boolean(body?.tmdb_enabled))
+      })
+      .catch(() => {
+        if (!cancelled) setCatalogReady(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!selected) return undefined
@@ -72,12 +153,26 @@ function App() {
     }
   }, [selected])
 
+  function rememberSearch(searchQuery) {
+    setRecentSearches((current) => {
+      const next = [searchQuery, ...current.filter((item) => item.toLowerCase() !== searchQuery.toLowerCase())].slice(0, 5)
+      try {
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next))
+      } catch {
+        // Search still works when browser storage is unavailable.
+      }
+      return next
+    })
+  }
+
   async function runSearch(searchQuery) {
     const cleanedQuery = searchQuery.trim()
     if (!cleanedQuery) return
 
+    setQuery(cleanedQuery)
     setLoading(true)
     setError('')
+    setResponse(null)
 
     try {
       const res = await fetch(`${API}/api/search`, {
@@ -87,9 +182,11 @@ function App() {
       })
 
       if (!res.ok) throw new Error('Search failed')
-      setResponse(await res.json())
-    } catch (err) {
-      setError('Movie search is temporarily unavailable. Please try again in a moment.')
+      const body = await res.json()
+      setResponse(body)
+      rememberSearch(cleanedQuery)
+    } catch {
+      setError('We could not search CineDNA right now. Try again in a moment.')
     } finally {
       setLoading(false)
     }
@@ -102,10 +199,21 @@ function App() {
 
   async function findMoreLike(movie) {
     const nextQuery = `Like ${movie.title}, but show me a different movie with similar DNA`
-    setQuery(nextQuery)
+    setMode('vibe')
     setSelected(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     await runSearch(nextQuery)
+  }
+
+  function chooseMode(nextMode) {
+    setMode(nextMode)
+    setResponse(null)
+    setError('')
+    if (nextMode === 'title') {
+      setQuery('')
+    } else {
+      setQuery('Like Interstellar, but darker and less complicated')
+    }
   }
 
   return (
@@ -115,36 +223,104 @@ function App() {
           <span className="brand-mark"><Dna size={18} /></span>
           <span>CineDNA</span>
         </a>
-        <span className="header-note">Movie discovery by feeling</span>
+        <nav className="top-nav" aria-label="Primary navigation">
+          <a href="#discover">Discover</a>
+          <a href="#how-it-works">How it works</a>
+        </nav>
+        <span className="catalog-pill">
+          <span className={`catalog-dot ${catalogReady ? 'catalog-dot-live' : ''}`} />
+          {catalogReady ? 'Expanded catalog live' : 'CineDNA catalog'}
+        </span>
       </header>
 
       <section className="hero">
         <div className="eyebrow"><Sparkles size={16} /> MOVIE GENOME ENGINE</div>
         <h1>CineDNA</h1>
-        <p>Describe the movie you want. CineDNA translates the feeling into traits and finds the closest matches.</p>
+        <p>Tell us what you want to feel. We turn your words into Movie DNA and rank the closest matches.</p>
+
+        <div className="search-mode-switch" role="tablist" aria-label="Search type">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'vibe'}
+            className={mode === 'vibe' ? 'active' : ''}
+            onClick={() => chooseMode('vibe')}
+          >
+            <Sparkles size={15} /> Describe a vibe
+          </button>
+          {catalogReady && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'title'}
+              className={mode === 'title' ? 'active' : ''}
+              onClick={() => chooseMode('title')}
+            >
+              <Film size={15} /> Find a movie
+            </button>
+          )}
+        </div>
 
         <form onSubmit={searchMovies} className="search-box">
           <Search size={20} />
           <input
             value={query}
-            aria-label="Describe the movie you want"
-            placeholder="Try: a dark Indian mystery with huge plot twists"
+            aria-label={mode === 'title' ? 'Search for a movie title' : 'Describe the movie you want'}
+            placeholder={mode === 'title' ? 'Search Baahubali, RRR, Parasite…' : 'Try: a dark Indian mystery with huge plot twists'}
             onChange={(event) => setQuery(event.target.value)}
+            autoComplete="off"
           />
           <button disabled={loading || !query.trim()}>
-            {loading ? 'Analyzing…' : 'Find movies'}
+            {loading ? 'Analyzing…' : mode === 'title' ? 'Search title' : 'Find my movie'}
           </button>
         </form>
 
-        <div className="examples">
+        <div className="examples" aria-label="Example searches">
           {examples.map((example) => (
-            <button key={example} onClick={() => setQuery(example)}>{example}</button>
+            <button key={example} onClick={() => runSearch(example)}>{example}</button>
           ))}
         </div>
+
+        {recentSearches.length > 0 && !response && !loading && (
+          <div className="recent-searches">
+            <span><Clock3 size={13} /> Recent</span>
+            <div>
+              {recentSearches.slice(0, 3).map((item) => (
+                <button key={item} onClick={() => runSearch(item)} title={item}>{item}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {error && <p className="error">{error}</p>}
       </section>
 
-      {response && (
+      {loading && (
+        <section className="results" aria-live="polite" aria-busy="true">
+          <div className="loading-banner">
+            <Sparkles size={18} />
+            <div>
+              <strong>Decoding your Movie DNA…</strong>
+              <span>Comparing tone, pacing, emotion, mystery, spectacle and more.</span>
+            </div>
+          </div>
+          <div className="movie-grid">
+            {[0, 1, 2].map((item) => (
+              <div className="movie-card skeleton-card" key={item} aria-hidden="true">
+                <div className="skeleton skeleton-poster" />
+                <div className="movie-card-body">
+                  <div className="skeleton skeleton-title" />
+                  <div className="skeleton skeleton-line" />
+                  <div className="skeleton skeleton-line short" />
+                  <div className="skeleton skeleton-tags" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {response && !loading && (
         <section className="results">
           <div className="intent-card">
             <span>How we interpreted your search</span>
@@ -154,67 +330,107 @@ function App() {
           <div className="results-heading">
             <div>
               <span className="section-kicker">DNA MATCHES</span>
-              <h2>{response.results.length} movies ranked for your vibe</h2>
+              <h2>
+                {response.results.length > 0
+                  ? `${response.results.length} movies ranked for your vibe`
+                  : 'No strong matches yet'}
+              </h2>
             </div>
-            <p>Open any result to inspect its full Movie DNA.</p>
+            <button className="start-over" onClick={() => setResponse(null)}>Start a new search</button>
           </div>
 
-          <div className="movie-grid">
-            {response.results.map(({ movie, score, why }, index) => (
-              <article className="movie-card" key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}>
-                <div className="poster-shell">
-                  <MoviePoster movie={movie} />
-                  <div className="poster-rank">#{index + 1}</div>
-                  <div className="poster-score">{score}% match</div>
-                </div>
+          {response.results.length > 0 ? (
+            <div className="movie-grid">
+              {response.results.map(({ movie, score, why }, index) => (
+                <article className="movie-card" key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}>
+                  <div className="poster-shell">
+                    <MoviePoster movie={movie} />
+                    <div className="poster-rank">#{index + 1}</div>
+                    <div className="poster-score">{score}% match</div>
+                  </div>
 
-                <div className="movie-card-body">
-                  <div className="movie-card-heading">
-                    <div>
-                      <h2>{movie.title}</h2>
-                      <div className="meta">{movie.year || 'Year unknown'} · {movie.country} · {movie.genres.join(' / ')}</div>
+                  <div className="movie-card-body">
+                    <div className="movie-card-heading">
+                      <div>
+                        <h2>{movie.title}</h2>
+                        <div className="meta">{movie.year || 'Year unknown'} · {movie.country} · {movie.genres.join(' / ')}</div>
+                      </div>
+                      <div className="movie-card-mark"><Dna size={17} /></div>
                     </div>
-                    <div className="movie-card-mark"><Dna size={17} /></div>
+
+                    {movie.original_title && movie.original_title !== movie.title && (
+                      <p className="original-title">Original title: {movie.original_title}</p>
+                    )}
+
+                    <p className="summary">{movie.summary}</p>
+                    <p className="why">{why}</p>
+
+                    <div className="traits">
+                      {Object.entries(movie.dimensions)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 4)
+                        .map(([name, value]) => (
+                          <span key={name}>{prettyTrait(name)} {value}</span>
+                        ))}
+                    </div>
+
+                    <div className="card-footer">
+                      <span className="source-pill">{movie.source === 'tmdb' ? 'TMDB catalog' : 'CineDNA catalog'}</span>
+                      <button className="profile-button" onClick={() => setSelected({ movie, score, why })}>
+                        View full DNA <ArrowRight size={16} />
+                      </button>
+                    </div>
                   </div>
-
-                  {movie.original_title && movie.original_title !== movie.title && (
-                    <p className="original-title">Original title: {movie.original_title}</p>
-                  )}
-
-                  <p className="summary">{movie.summary}</p>
-                  <p className="why">{why}</p>
-
-                  <div className="traits">
-                    {Object.entries(movie.dimensions)
-                      .sort((a, b) => b[1] - a[1])
-                      .slice(0, 4)
-                      .map(([name, value]) => (
-                        <span key={name}>{prettyTrait(name)} {value}</span>
-                      ))}
-                  </div>
-
-                  <div className="card-footer">
-                    <span className="source-pill">{movie.source === 'tmdb' ? 'TMDB catalog' : 'CineDNA catalog'}</span>
-                    <button className="profile-button" onClick={() => setSelected({ movie, score, why })}>
-                      View full DNA <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <Dna size={30} />
+              <h3>Try describing the feeling instead.</h3>
+              <p>Use a mood, genre, country, or a movie you already love and CineDNA will broaden the search.</p>
+              <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists')}>
+                Surprise me <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
         </section>
       )}
 
-      {!response && (
-        <section className="how-it-works" aria-label="How CineDNA works">
-          <span className="section-kicker">HOW IT WORKS</span>
-          <div className="steps">
-            <article><strong>01</strong><h2>Describe a vibe</h2><p>Use normal language, a movie title, a mood, or a mix of all three.</p></article>
-            <article><strong>02</strong><h2>Decode the DNA</h2><p>CineDNA maps your request to traits like mystery, pacing, darkness, humor, and spectacle.</p></article>
-            <article><strong>03</strong><h2>Find your match</h2><p>Explore ranked movies, inspect their DNA, then branch into more movies like them.</p></article>
-          </div>
-        </section>
+      {!response && !loading && (
+        <>
+          <section className="discover-section" id="discover">
+            <div className="section-heading">
+              <div>
+                <span className="section-kicker">DISCOVER BY FEELING</span>
+                <h2>Not sure what to type?</h2>
+              </div>
+              <p>Pick a lane. CineDNA will do the rest.</p>
+            </div>
+
+            <div className="discovery-grid">
+              {discoveryPrompts.map(({ title, subtitle, query: prompt, icon: Icon }) => (
+                <button className="discovery-card" key={title} onClick={() => runSearch(prompt)}>
+                  <span className="discovery-icon"><Icon size={21} /></span>
+                  <span className="discovery-copy">
+                    <strong>{title}</strong>
+                    <small>{subtitle}</small>
+                  </span>
+                  <ArrowRight size={17} />
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="how-it-works" id="how-it-works" aria-label="How CineDNA works">
+            <span className="section-kicker">HOW IT WORKS</span>
+            <div className="steps">
+              <article><strong>01</strong><h2>Describe a vibe</h2><p>Use normal language, a movie title, a mood, or a mix of all three.</p></article>
+              <article><strong>02</strong><h2>Decode the DNA</h2><p>CineDNA maps your request to traits like mystery, pacing, darkness, humor, and spectacle.</p></article>
+              <article><strong>03</strong><h2>Find your match</h2><p>Explore ranked movies, inspect their DNA, then branch into more movies like them.</p></article>
+            </div>
+          </section>
+        </>
       )}
 
       {selected && (

@@ -45,6 +45,10 @@ THEME_VOCAB = {
     "comedy", "horror", "mystery", "romance", "thriller", "science fiction",
 }
 
+THEME_ALIASES = {
+    "science fiction": ("sci fi", "scifi"),
+}
+
 NEGATION_PREFIX = r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not)"
 
 
@@ -139,9 +143,17 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         preferred_countries.append("USA")
 
     for theme in THEME_VOCAB:
-        if not _contains_term(lowered, theme):
+        matched = next(
+            (
+                term
+                for term in (theme, *THEME_ALIASES.get(theme, ()))
+                if _contains_term(lowered, term)
+            ),
+            None,
+        )
+        if not matched:
             continue
-        if _is_negated(lowered, theme):
+        if _is_negated(lowered, matched):
             exclude_themes.append(theme)
         else:
             include_themes.append(theme)

@@ -84,6 +84,26 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIn("science fiction", intent.include_themes)
         self.assertIn("India", intent.preferred_countries)
 
+    def test_sci_fi_aliases_map_to_science_fiction(self):
+        for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=3)
+
+                self.assertIn("science fiction", intent.include_themes)
+                self.assertTrue(
+                    all("Science Fiction" in movie.genres for movie, _score in ranked)
+                )
+
+    def test_negated_sci_fi_alias_excludes_science_fiction(self):
+        intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)
+        ranked = rank_movies(MOVIES, intent, limit=20)
+
+        self.assertIn("science fiction", intent.exclude_themes)
+        self.assertTrue(
+            all("Science Fiction" not in movie.genres for movie, _score in ranked)
+        )
+
     def test_negated_pacing_terms_reverse_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

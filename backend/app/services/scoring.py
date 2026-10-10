@@ -107,10 +107,14 @@ def rank_movies(
     limit: int = 6,
 ) -> List[Tuple[MovieDNA, float]]:
     reference_titles = {title.casefold() for title in intent.reference_titles}
+    excluded_countries = {
+        country.casefold() for country in intent.excluded_countries
+    }
     ranked = [
         (movie, score_movie(movie, intent))
         for movie in movies
         if movie.title.casefold() not in reference_titles
+        and movie.country.casefold() not in excluded_countries
         and not _matching_preferences(movie, intent.exclude_themes)
     ]
     ranked.sort(key=lambda item: item[1], reverse=True)

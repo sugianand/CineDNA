@@ -41,6 +41,7 @@ class SearchIntent(BaseModel):
     exclude_themes: List[str] = []
     explanation: str = ""
     preferred_countries: List[str] = []
+    excluded_countries: List[str] = []
     reference_titles: List[str] = []
 
 

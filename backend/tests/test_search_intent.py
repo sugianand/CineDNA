@@ -83,6 +83,28 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["action"], 75)
         self.assertIn("science fiction", intent.include_themes)
         self.assertIn("India", intent.preferred_countries)
+        self.assertEqual(intent.excluded_countries, [])
+
+    def test_negated_country_preferences_are_excluded(self):
+        cases = (
+            ("No Indian movies", "India"),
+            ("Anything but Hollywood", "USA"),
+        )
+
+        for query, excluded_country in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertIn(excluded_country, intent.excluded_countries)
+                self.assertNotIn(excluded_country, intent.preferred_countries)
+                self.assertTrue(ranked)
+                self.assertTrue(
+                    all(
+                        movie.country != excluded_country
+                        for movie, _score in ranked
+                    )
+                )
 
     def test_sci_fi_aliases_map_to_science_fiction(self):
         for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):

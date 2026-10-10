@@ -49,6 +49,11 @@ THEME_ALIASES = {
     "science fiction": ("sci fi", "scifi"),
 }
 
+COUNTRY_ALIASES = {
+    "India": ("indian", "bollywood", "hindi"),
+    "USA": ("american", "hollywood", "us movie", "u.s."),
+}
+
 NEGATION_PREFIX = (
     r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
     r"(?:do\s+not|don\s+t)\s+(?:want|like))"
@@ -119,7 +124,7 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
 
 
 def _is_negated(query: str, term: str) -> bool:
-    escaped = re.escape(term).replace(r"\ ", r"\s+")
+    escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
     pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:a|an|any|too\s+much)\s+)?{escaped}\b"
     return bool(re.search(pattern, query))
 
@@ -141,14 +146,14 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     include_themes: List[str] = []
     exclude_themes: List[str] = []
     preferred_countries: List[str] = []
+    excluded_countries: List[str] = []
 
-    if any(_contains_term(lowered, word) for word in ("indian", "bollywood", "hindi")):
-        preferred_countries.append("India")
-    if any(
-        _contains_term(lowered, word)
-        for word in ("american", "hollywood", "us movie", "u.s.")
-    ):
-        preferred_countries.append("USA")
+    for country, aliases in COUNTRY_ALIASES.items():
+        matches = [alias for alias in aliases if _contains_term(lowered, alias)]
+        if any(_is_negated(lowered, alias) for alias in matches):
+            excluded_countries.append(country)
+        elif matches:
+            preferred_countries.append(country)
 
     for theme in THEME_VOCAB:
         matched = next(
@@ -222,6 +227,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         include_themes=sorted(set(include_themes)),
         exclude_themes=sorted(set(exclude_themes)),
         preferred_countries=preferred_countries,
+        excluded_countries=excluded_countries,
         reference_titles=reference_titles,
         explanation=explanation,
     )

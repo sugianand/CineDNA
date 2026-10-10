@@ -170,7 +170,7 @@ function App() {
     })
   }
 
-  async function runSearch(searchQuery, searchMode = mode) {
+  async function runSearch(searchQuery, searchMode = mode, referenceMovie = null) {
     const cleanedQuery = searchQuery.trim().replace(/\s+/g, ' ')
     const minimumLength = searchMode === 'vibe' ? 3 : 1
     if (cleanedQuery.length < minimumLength) {
@@ -193,7 +193,12 @@ function App() {
       const res = await fetch(`${API}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: cleanedQuery, limit: 6, mode: searchMode }),
+        body: JSON.stringify({
+          query: cleanedQuery,
+          limit: 6,
+          mode: searchMode,
+          ...(referenceMovie ? { reference_movie: referenceMovie } : {}),
+        }),
         signal: controller.signal,
       })
 
@@ -224,7 +229,7 @@ function App() {
     setMode('vibe')
     setSelected(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    await runSearch(nextQuery, 'vibe')
+    await runSearch(nextQuery, 'vibe', movie)
   }
 
   function replaySearch(item) {

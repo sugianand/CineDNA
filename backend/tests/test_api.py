@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from app.data.movies import MOVIES
 from app.main import app
 from app.models import MovieDNA
 
@@ -152,6 +153,35 @@ class CineDNAAPITests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         search_tmdb.assert_not_called()
+
+    def test_external_movie_dna_drives_more_like_this_search(self):
+        interstellar = next(movie for movie in MOVIES if movie.title == "Interstellar")
+        external_reference = MovieDNA(
+            title="Remote Space Story",
+            year=2026,
+            country="International",
+            genres=["Science Fiction"],
+            themes=["space", "family"],
+            dimensions=dict(interstellar.dimensions),
+            summary="A fictional expanded-catalog reference movie.",
+            source="tmdb",
+            source_id="987654",
+        )
+
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "Like Remote Space Story, but show me a different movie with similar DNA",
+                "mode": "vibe",
+                "reference_movie": external_reference.model_dump(mode="json"),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["reference_titles"], ["Remote Space Story"])
+        self.assertEqual(body["intent"]["target_dimensions"], interstellar.dimensions)
+        self.assertEqual(body["results"][0]["movie"]["title"], "Interstellar")
 
     @patch("app.main.search_tmdb_movies", return_value=[])
     @patch("app.main.tmdb_is_configured", return_value=True)

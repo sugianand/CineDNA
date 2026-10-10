@@ -118,7 +118,12 @@ def search_movies(request: SearchRequest):
                 ai_provider="cinedna-title-catalog",
             )
 
-    intent = parse_search_intent(request.query, MOVIES)
+    intent_movies = (
+        [request.reference_movie, *MOVIES]
+        if request.reference_movie is not None
+        else MOVIES
+    )
+    intent = parse_search_intent(request.query, intent_movies)
     ranked = rank_movies(MOVIES, intent, request.limit)
 
     results = [

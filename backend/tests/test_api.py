@@ -194,6 +194,18 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_recognizes_exact_title_with_vibe_word(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "The Dark Knight"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["results"][0]["movie"]["title"], "The Dark Knight")
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_short_title_does_not_match_inside_unrelated_words(self, _configured):
         response = self.client.post(
             "/api/search",

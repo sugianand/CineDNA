@@ -10,6 +10,7 @@ from app.models import SearchIntent, SearchRequest, SearchResponse, SearchResult
 from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
 from app.services.tmdb import (
+    has_exact_local_title,
     looks_like_title_query,
     search_local_movies,
     search_tmdb_movies,
@@ -53,7 +54,11 @@ def list_movies():
 @app.post("/search", response_model=SearchResponse)
 def search_movies(request: SearchRequest):
     should_search_titles = request.mode == "title" or (
-        request.mode == "auto" and looks_like_title_query(request.query)
+        request.mode == "auto"
+        and (
+            has_exact_local_title(request.query, MOVIES)
+            or looks_like_title_query(request.query)
+        )
     )
     if should_search_titles:
         external_movies = (

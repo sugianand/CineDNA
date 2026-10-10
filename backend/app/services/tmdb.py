@@ -196,6 +196,19 @@ def _normalize_title(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
 
 
+def has_exact_local_title(query: str, movies: Sequence[MovieDNA]) -> bool:
+    normalized_query = _normalize_title(query)
+    if not normalized_query:
+        return False
+
+    return any(
+        normalized_query == _normalize_title(candidate)
+        for movie in movies
+        for candidate in (movie.title, movie.original_title or "")
+        if candidate
+    )
+
+
 def search_local_movies(
     query: str,
     movies: Sequence[MovieDNA],

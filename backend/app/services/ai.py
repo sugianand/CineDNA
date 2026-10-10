@@ -8,6 +8,8 @@ from app.models import MovieDNA, SearchIntent
 
 FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced")
 SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn")
+POSITIVE_TRAIT_TARGET = 75
+INTENSIFIED_TRAIT_TARGET = 85
 
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "emotional_intensity": ("emotional", "moving", "heartfelt", "sad", "cry"),
@@ -150,8 +152,8 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
     if any(re.search(pattern, query) for pattern in less_patterns):
         return max(5, current - 25)
     if any(re.search(pattern, query) for pattern in more_patterns):
-        return min(100, current + 20)
-    return current
+        return min(100, max(INTENSIFIED_TRAIT_TARGET, current + 20))
+    return max(POSITIVE_TRAIT_TARGET, current)
 
 
 def _is_negated(query: str, term: str) -> bool:
@@ -255,7 +257,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     if "darker" in trait_query:
         target["darkness"] = min(100, target.get("darkness", 65) + 25)
 
-    if "funnier" in trait_query or "more funny" in trait_query:
+    if "funnier" in trait_query:
         target["humor"] = min(100, target.get("humor", 55) + 25)
 
     reference_titles = [movie.title for movie in references]

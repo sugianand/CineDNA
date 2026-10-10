@@ -287,6 +287,53 @@ class SearchIntentTests(unittest.TestCase):
             "Loud Escape",
         )
 
+    def test_positive_trait_adjusts_reference_movie_dna(self):
+        reference = MovieDNA(
+            title="Reference Story",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"humor": 20},
+            summary="A serious test reference movie.",
+        )
+        funny_movie = MovieDNA(
+            title="Funny Story",
+            year=2026,
+            country="USA",
+            genres=["Comedy"],
+            themes=[],
+            dimensions={"humor": 75},
+            summary="A funny test movie.",
+        )
+        serious_movie = MovieDNA(
+            title="Serious Story",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"humor": 20},
+            summary="A serious test movie.",
+        )
+
+        funny_intent = parse_search_intent(
+            "Like Reference Story but funny",
+            [reference, funny_movie, serious_movie],
+        )
+        funnier_intent = parse_search_intent(
+            "Like Reference Story but more funny",
+            [reference, funny_movie, serious_movie],
+        )
+        ranked = rank_movies(
+            [funny_movie, serious_movie],
+            funny_intent,
+            limit=2,
+        )
+
+        self.assertEqual(funny_intent.target_dimensions["humor"], 75)
+        self.assertEqual(funnier_intent.target_dimensions["humor"], 85)
+        self.assertEqual(ranked[0][0].title, "Funny Story")
+
     def test_complexity_synonyms_apply_one_consistent_reduction(self):
         reference = MovieDNA(
             title="Reference Story",

@@ -193,6 +193,16 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["results"][0]["movie"]["title"], "Dune: Part Two")
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_short_title_does_not_match_inside_unrelated_words(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "It", "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

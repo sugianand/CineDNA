@@ -203,7 +203,7 @@ def search_local_movies(
 ) -> List[MovieDNA]:
     """Return credible title matches from the bundled catalog.
 
-    Substring matches support shortened titles such as "Dune", while the
+    Phrase matches support shortened titles such as "Dune", while the
     similarity threshold tolerates small spelling mistakes without turning a
     failed title lookup into unrelated vibe recommendations.
     """
@@ -222,7 +222,8 @@ def search_local_movies(
             for candidate in normalized_candidates
         )
         contains_title = any(
-            normalized_query in candidate or candidate in normalized_query
+            f" {normalized_query} " in f" {candidate} "
+            or f" {candidate} " in f" {normalized_query} "
             for candidate in normalized_candidates
         )
         if contains_title or best_similarity >= 0.72:

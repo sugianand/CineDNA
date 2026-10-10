@@ -83,16 +83,23 @@ def _title_base(title: str) -> str:
 
 def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
     normalized_query = _normalize_text(query)
-    exact_matches = [
-        movie
-        for movie in movies
-        if any(
-            _contains_title(normalized_query, candidate)
+    exact_matches = []
+    for movie in movies:
+        matched_title_lengths = [
+            len(_normalize_text(candidate))
             for candidate in (movie.title, movie.original_title or "")
-        )
-    ]
+            if _contains_title(normalized_query, candidate)
+        ]
+        if matched_title_lengths:
+            exact_matches.append((movie, max(matched_title_lengths)))
+
     if exact_matches:
-        return exact_matches
+        longest_match = max(length for _movie, length in exact_matches)
+        return [
+            movie
+            for movie, length in exact_matches
+            if length == longest_match
+        ]
 
     base_matches: Dict[str, List[MovieDNA]] = {}
     for movie in movies:

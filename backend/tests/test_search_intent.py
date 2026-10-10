@@ -172,6 +172,33 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["visual_spectacle"], dune.dimensions["visual_spectacle"])
         self.assertGreater(intent.target_dimensions["humor"], dune.dimensions["humor"])
 
+    def test_reference_movie_prefers_longest_overlapping_title(self):
+        overlapping_movies = [
+            MovieDNA(
+                title="Up",
+                year=2009,
+                country="USA",
+                genres=["Animation"],
+                themes=[],
+                dimensions={"emotional_intensity": 20},
+                summary="A short-title test movie.",
+            ),
+            MovieDNA(
+                title="Up in the Air",
+                year=2009,
+                country="USA",
+                genres=["Drama"],
+                themes=[],
+                dimensions={"emotional_intensity": 80},
+                summary="A longer-title test movie.",
+            ),
+        ]
+
+        intent = parse_search_intent("Like Up in the Air", overlapping_movies)
+
+        self.assertEqual(intent.reference_titles, ["Up in the Air"])
+        self.assertEqual(intent.target_dimensions["emotional_intensity"], 80)
+
     def test_reference_title_traits_do_not_override_movie_dna(self):
         reference = MovieDNA(
             title="Slow Burn",

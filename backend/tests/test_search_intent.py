@@ -264,6 +264,46 @@ class SearchIntentTests(unittest.TestCase):
             "Loud Escape",
         )
 
+    def test_complexity_synonyms_apply_one_consistent_reduction(self):
+        reference = MovieDNA(
+            title="Reference Story",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"narrative_complexity": 80},
+            summary="A test reference movie.",
+        )
+        simpler_movie = MovieDNA(
+            title="Simple Story",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"narrative_complexity": 55},
+            summary="A straightforward test movie.",
+        )
+        complex_movie = MovieDNA(
+            title="Complex Story",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"narrative_complexity": 80},
+            summary="A complex test movie.",
+        )
+
+        for phrase in ("less complicated", "less confusing"):
+            with self.subTest(phrase=phrase):
+                intent = parse_search_intent(
+                    f"Like Reference Story but {phrase}",
+                    [reference, simpler_movie, complex_movie],
+                )
+                ranked = rank_movies([simpler_movie, complex_movie], intent, limit=2)
+
+                self.assertEqual(intent.target_dimensions["narrative_complexity"], 55)
+                self.assertEqual(ranked[0][0].title, "Simple Story")
+
     def test_negated_trait_aliases_exclude_matching_genres(self):
         intent = parse_search_intent(
             "Something mysterious but not romantic and not funny",

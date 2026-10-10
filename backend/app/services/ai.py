@@ -11,7 +11,9 @@ SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn")
 
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "emotional_intensity": ("emotional", "moving", "heartfelt", "sad", "cry"),
-    "narrative_complexity": ("complex", "mind bending", "mind-bending", "cerebral", "confusing"),
+    "narrative_complexity": (
+        "complex", "complicated", "mind bending", "mind-bending", "cerebral", "confusing",
+    ),
     "visual_spectacle": ("beautiful", "visual", "cinematic", "spectacle", "epic"),
     "pacing": FAST_PACING_TERMS + SLOW_PACING_TERMS,
     "mystery": ("mystery", "mysterious", "detective", "whodunit"),
@@ -205,9 +207,6 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             current = _apply_modifier(lowered, matched, current)
 
         target[dimension] = current
-
-    if "less complicated" in lowered or "less confusing" in lowered:
-        target["narrative_complexity"] = max(20, target.get("narrative_complexity", 70) - 30)
 
     if "darker" in lowered:
         target["darkness"] = min(100, target.get("darkness", 65) + 25)

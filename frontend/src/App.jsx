@@ -13,6 +13,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
+import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
@@ -26,8 +27,7 @@ function prettyTrait(name) {
 
 function loadRecentSearches() {
   try {
-    const value = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]')
-    return Array.isArray(value) ? value.filter((item) => typeof item === 'string').slice(0, 5) : []
+    return parseRecentSearches(localStorage.getItem(RECENT_SEARCHES_KEY))
   } catch {
     return []
   }
@@ -158,9 +158,9 @@ function App() {
     }
   }, [selected])
 
-  function rememberSearch(searchQuery) {
+  function rememberSearch(searchQuery, searchMode) {
     setRecentSearches((current) => {
-      const next = [searchQuery, ...current.filter((item) => item.toLowerCase() !== searchQuery.toLowerCase())].slice(0, 5)
+      const next = updateRecentSearches(current, searchQuery, searchMode)
       try {
         localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next))
       } catch {
@@ -201,7 +201,7 @@ function App() {
       const body = await res.json()
       setResponse(body)
       setResponseMode(searchMode)
-      rememberSearch(cleanedQuery)
+      rememberSearch(cleanedQuery, searchMode)
     } catch (searchError) {
       if (searchError.name !== 'AbortError') {
         setError('We could not search CineDNA right now. Try again in a moment.')
@@ -225,6 +225,11 @@ function App() {
     setSelected(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     await runSearch(nextQuery, 'vibe')
+  }
+
+  function replaySearch(item) {
+    setMode(item.mode)
+    runSearch(item.query, item.mode)
   }
 
   function chooseMode(nextMode) {
@@ -310,7 +315,13 @@ function App() {
             <span><Clock3 size={13} /> Recent</span>
             <div>
               {recentSearches.slice(0, 3).map((item) => (
-                <button key={item} onClick={() => runSearch(item)} title={item}>{item}</button>
+                <button
+                  key={`${item.mode}:${item.query}`}
+                  onClick={() => replaySearch(item)}
+                  title={`${item.query} · ${item.mode === 'title' ? 'Title search' : 'Vibe search'}`}
+                >
+                  {item.query}
+                </button>
               ))}
             </div>
           </div>

@@ -158,9 +158,9 @@ function App() {
     }
   }, [selected])
 
-  function rememberSearch(searchQuery, searchMode) {
+  function rememberSearch(searchQuery, searchMode, referenceMovie = null) {
     setRecentSearches((current) => {
-      const next = updateRecentSearches(current, searchQuery, searchMode)
+      const next = updateRecentSearches(current, searchQuery, searchMode, referenceMovie)
       try {
         localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next))
       } catch {
@@ -206,7 +206,7 @@ function App() {
       const body = await res.json()
       setResponse(body)
       setResponseMode(searchMode)
-      rememberSearch(cleanedQuery, searchMode)
+      rememberSearch(cleanedQuery, searchMode, referenceMovie)
     } catch (searchError) {
       if (searchError.name !== 'AbortError') {
         setError('We could not search CineDNA right now. Try again in a moment.')
@@ -234,7 +234,7 @@ function App() {
 
   function replaySearch(item) {
     setMode(item.mode)
-    runSearch(item.query, item.mode)
+    runSearch(item.query, item.mode, item.referenceMovie || null)
   }
 
   function chooseMode(nextMode) {

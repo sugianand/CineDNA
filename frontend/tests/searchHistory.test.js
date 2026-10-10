@@ -6,6 +6,9 @@ import { parseRecentSearches, updateRecentSearches } from '../src/searchHistory.
 test('parseRecentSearches safely rejects malformed storage', () => {
   assert.deepEqual(parseRecentSearches('{broken'), [])
   assert.deepEqual(parseRecentSearches('{"query":"Dune"}'), [])
+  assert.deepEqual(parseRecentSearches(JSON.stringify([
+    { query: 'Like Broken', mode: 'vibe', referenceMovie: { title: 'Broken' } },
+  ])), [])
 })
 
 test('parseRecentSearches preserves modes and migrates legacy entries', () => {
@@ -45,4 +48,27 @@ test('updateRecentSearches retains only five entries', () => {
   const updated = updateRecentSearches(current, 'six', 'vibe')
 
   assert.deepEqual(updated.map(({ query }) => query), ['six', 'one', 'two', 'three', 'four'])
+})
+
+test('similarity searches preserve reference DNA when stored and replayed', () => {
+  const referenceMovie = {
+    title: 'Remote Space Story',
+    year: 2026,
+    country: 'International',
+    genres: ['Science Fiction'],
+    themes: ['space', 'family'],
+    dimensions: { pacing: 72, world_building: 94 },
+    summary: 'An expanded-catalog test movie.',
+    source: 'tmdb',
+    source_id: '987654',
+  }
+  const updated = updateRecentSearches(
+    [],
+    'Like Remote Space Story, but show me a different movie with similar DNA',
+    'vibe',
+    referenceMovie,
+  )
+
+  assert.deepEqual(parseRecentSearches(JSON.stringify(updated)), updated)
+  assert.deepEqual(updated[0].referenceMovie, referenceMovie)
 })

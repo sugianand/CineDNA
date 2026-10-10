@@ -1,6 +1,23 @@
 const VALID_SEARCH_MODES = new Set(['vibe', 'title'])
 const MAX_RECENT_SEARCHES = 5
 
+function isValidReferenceMovie(movie) {
+  return Boolean(
+    movie
+    && typeof movie === 'object'
+    && typeof movie.title === 'string'
+    && Number.isInteger(movie.year)
+    && typeof movie.country === 'string'
+    && Array.isArray(movie.genres)
+    && Array.isArray(movie.themes)
+    && movie.dimensions
+    && typeof movie.dimensions === 'object'
+    && !Array.isArray(movie.dimensions)
+    && Object.values(movie.dimensions).every((value) => Number.isInteger(value))
+    && typeof movie.summary === 'string'
+  )
+}
+
 function normalizeSearch(entry) {
   if (typeof entry === 'string') {
     const query = entry.trim().replace(/\s+/g, ' ')
@@ -16,7 +33,14 @@ function normalizeSearch(entry) {
   }
 
   const query = entry.query.trim().replace(/\s+/g, ' ')
-  return query ? { query, mode: entry.mode } : null
+  if (!query) return null
+
+  if ('referenceMovie' in entry) {
+    if (!isValidReferenceMovie(entry.referenceMovie)) return null
+    return { query, mode: entry.mode, referenceMovie: entry.referenceMovie }
+  }
+
+  return { query, mode: entry.mode }
 }
 
 export function parseRecentSearches(serialized) {
@@ -33,8 +57,12 @@ export function parseRecentSearches(serialized) {
   }
 }
 
-export function updateRecentSearches(current, query, mode) {
-  const nextSearch = normalizeSearch({ query, mode })
+export function updateRecentSearches(current, query, mode, referenceMovie = null) {
+  const nextSearch = normalizeSearch({
+    query,
+    mode,
+    ...(referenceMovie ? { referenceMovie } : {}),
+  })
   if (!nextSearch) return current
 
   return [

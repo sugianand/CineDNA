@@ -105,6 +105,35 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
     ]
 
 
+def _without_reference_titles(
+    query: str,
+    references: List[MovieDNA],
+) -> str:
+    trait_query = query
+    for movie in references:
+        candidates = {
+            _normalize_text(candidate)
+            for candidate in (
+                movie.title,
+                movie.original_title or "",
+                _title_base(movie.title),
+            )
+            if candidate
+        }
+        for candidate in sorted(candidates, key=len, reverse=True):
+            pattern = rf"\b{re.escape(candidate)}\b"
+            trait_query, replacements = re.subn(
+                pattern,
+                " ",
+                trait_query,
+                count=1,
+            )
+            if replacements:
+                break
+
+    return " ".join(trait_query.split())
+
+
 def _apply_modifier(query: str, keyword: str, current: int) -> int:
     escaped = re.escape(_normalize_text(keyword))
     less_patterns = (
@@ -139,6 +168,7 @@ def _is_reduced(query: str, term: str) -> bool:
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     lowered = _normalize_text(query)
     references = _find_reference_movies(lowered, movies)
+    trait_query = _without_reference_titles(lowered, references)
 
     if references:
         target = dict(references[0].dimensions)
@@ -151,8 +181,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     excluded_countries: List[str] = []
 
     for country, aliases in COUNTRY_ALIASES.items():
-        matches = [alias for alias in aliases if _contains_term(lowered, alias)]
-        if any(_is_negated(lowered, alias) for alias in matches):
+        matches = [alias for alias in aliases if _contains_term(trait_query, alias)]
+        if any(_is_negated(trait_query, alias) for alias in matches):
             excluded_countries.append(country)
         elif matches:
             preferred_countries.append(country)
@@ -162,36 +192,40 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             (
                 term
                 for term in (theme, *THEME_ALIASES.get(theme, ()))
-                if _contains_term(lowered, term)
+                if _contains_term(trait_query, term)
             ),
             None,
         )
         if not matched:
             continue
-        if _is_reduced(lowered, matched):
+        if _is_reduced(trait_query, matched):
             continue
-        if _is_negated(lowered, matched):
+        if _is_negated(trait_query, matched):
             exclude_themes.append(theme)
         else:
             include_themes.append(theme)
 
     for dimension, keywords in DIMENSION_RULES.items():
         matched = next(
-            (keyword for keyword in keywords if _contains_term(lowered, keyword)),
+            (
+                keyword
+                for keyword in keywords
+                if _contains_term(trait_query, keyword)
+            ),
             None,
         )
         if not matched:
             continue
 
         current = target.get(dimension, 75)
-        negated = _is_negated(lowered, matched)
+        negated = _is_negated(trait_query, matched)
         if dimension == "pacing":
             negated_pacing = next(
                 (
                     keyword
                     for keyword in keywords
-                    if _contains_term(lowered, keyword)
-                    and _is_negated(lowered, keyword)
+                    if _contains_term(trait_query, keyword)
+                    and _is_negated(trait_query, keyword)
                 ),
                 None,
             )
@@ -199,8 +233,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
                 (
                     keyword
                     for keyword in keywords
-                    if _contains_term(lowered, keyword)
-                    and _is_reduced(lowered, keyword)
+                    if _contains_term(trait_query, keyword)
+                    and _is_reduced(trait_query, keyword)
                 ),
                 None,
             )
@@ -214,14 +248,14 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             if excluded_theme := NEGATED_THEME_ALIASES.get(matched):
                 exclude_themes.append(excluded_theme)
         else:
-            current = _apply_modifier(lowered, matched, current)
+            current = _apply_modifier(trait_query, matched, current)
 
         target[dimension] = current
 
-    if "darker" in lowered:
+    if "darker" in trait_query:
         target["darkness"] = min(100, target.get("darkness", 65) + 25)
 
-    if "funnier" in lowered or "more funny" in lowered:
+    if "funnier" in trait_query or "more funny" in trait_query:
         target["humor"] = min(100, target.get("humor", 55) + 25)
 
     reference_titles = [movie.title for movie in references]

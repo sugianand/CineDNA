@@ -172,6 +172,27 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["visual_spectacle"], dune.dimensions["visual_spectacle"])
         self.assertGreater(intent.target_dimensions["humor"], dune.dimensions["humor"])
 
+    def test_reference_title_traits_do_not_override_movie_dna(self):
+        reference = MovieDNA(
+            title="Slow Burn",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"pacing": 80},
+            summary="A fast-moving test reference movie.",
+        )
+
+        matching_intent = parse_search_intent("Like Slow Burn", [reference])
+        adjusted_intent = parse_search_intent(
+            "Like Slow Burn but slow",
+            [reference],
+        )
+
+        self.assertEqual(matching_intent.reference_titles, ["Slow Burn"])
+        self.assertEqual(matching_intent.target_dimensions["pacing"], 80)
+        self.assertEqual(adjusted_intent.target_dimensions["pacing"], 35)
+
     def test_ambiguous_franchise_base_is_not_silently_selected(self):
         franchise_movies = [
             MovieDNA(

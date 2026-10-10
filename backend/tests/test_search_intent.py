@@ -207,6 +207,41 @@ class SearchIntentTests(unittest.TestCase):
                     )
                 )
 
+    def test_less_modifier_does_not_add_positive_genre_preference(self):
+        action_movie = MovieDNA(
+            title="Loud Escape",
+            year=2026,
+            country="USA",
+            genres=["Action"],
+            themes=[],
+            dimensions={"action": 90},
+            summary="A test action movie.",
+        )
+        quieter_movie = MovieDNA(
+            title="Quiet Escape",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"action": 50},
+            summary="A test drama.",
+        )
+
+        less_intent = parse_search_intent("Something with less action", MOVIES)
+        more_intent = parse_search_intent("Something with more action", MOVIES)
+
+        self.assertEqual(less_intent.target_dimensions["action"], 50)
+        self.assertNotIn("action", less_intent.include_themes)
+        self.assertEqual(
+            rank_movies([action_movie, quieter_movie], less_intent, limit=2)[0][0].title,
+            "Quiet Escape",
+        )
+        self.assertIn("action", more_intent.include_themes)
+        self.assertEqual(
+            rank_movies([action_movie, quieter_movie], more_intent, limit=2)[0][0].title,
+            "Loud Escape",
+        )
+
     def test_negated_trait_aliases_exclude_matching_genres(self):
         intent = parse_search_intent(
             "Something mysterious but not romantic and not funny",

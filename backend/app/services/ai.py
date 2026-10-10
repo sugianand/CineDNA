@@ -124,6 +124,11 @@ def _is_negated(query: str, term: str) -> bool:
     return bool(re.search(pattern, query))
 
 
+def _is_reduced(query: str, term: str) -> bool:
+    escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
+    return bool(re.search(rf"\bless\s+{escaped}\b", query))
+
+
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     lowered = _normalize_text(query)
     references = _find_reference_movies(lowered, movies)
@@ -155,6 +160,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             None,
         )
         if not matched:
+            continue
+        if _is_reduced(lowered, matched):
             continue
         if _is_negated(lowered, matched):
             exclude_themes.append(theme)

@@ -195,8 +195,18 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
                 ),
                 None,
             )
-            if negated_pacing:
-                current = 85 if negated_pacing in SLOW_PACING_TERMS else 35
+            reduced_pacing = next(
+                (
+                    keyword
+                    for keyword in keywords
+                    if _contains_term(lowered, keyword)
+                    and _is_reduced(lowered, keyword)
+                ),
+                None,
+            )
+            reversed_pacing = negated_pacing or reduced_pacing
+            if reversed_pacing:
+                current = 85 if reversed_pacing in SLOW_PACING_TERMS else 35
             else:
                 current = 35 if matched in SLOW_PACING_TERMS else 85
         elif negated:

@@ -126,7 +126,7 @@ class SearchIntentTests(unittest.TestCase):
             all("Science Fiction" not in movie.genres for movie, _score in ranked)
         )
 
-    def test_negated_pacing_terms_reverse_the_requested_speed(self):
+    def test_negated_and_reduced_pacing_terms_reverse_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",
             year=2026,
@@ -151,6 +151,8 @@ class SearchIntentTests(unittest.TestCase):
             ("without fast pacing", 35, "Quiet Journey"),
             ("not slow", 85, "Quick Escape"),
             ("without slow pacing", 85, "Quick Escape"),
+            ("less fast-paced", 35, "Quiet Journey"),
+            ("less slow", 85, "Quick Escape"),
         ):
             with self.subTest(query=query):
                 intent = parse_search_intent(query, MOVIES)

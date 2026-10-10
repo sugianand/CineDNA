@@ -6,3 +6,6 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
+    envVars:
+      - key: TMDB_READ_TOKEN
+        sync: false

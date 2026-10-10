@@ -9,9 +9,14 @@ CineDNA is a React + FastAPI movie recommendation prototype. Its starter catalog
 This repo includes a multi-stage Dockerfile and a Render Blueprint (`render.yaml`). One container serves the React website and FastAPI API on the same domain, with no separate backend URL to configure.
 
 1. Sign in to [Render](https://render.com/) and connect GitHub.
-2. Choose **New → Blueprint** and select `sugianand/CineDNA`.
-3. Review the free web service and deploy.
-4. Share the public `onrender.com` URL Render assigns.
+2. Create a free TMDB API Read Access Token.
+3. Choose **New → Blueprint** and select `sugianand/CineDNA`.
+4. Enter the token when Render prompts for `TMDB_READ_TOKEN`, then deploy.
+5. Share the public `onrender.com` URL Render assigns.
+
+For a service that was already created from this Blueprint, add
+`TMDB_READ_TOKEN` under **Environment** in the Render Dashboard and redeploy.
+Render preserves that secret on future Blueprint syncs.
 
 Render can automatically redeploy new commits on `main`. Free instances may sleep when idle.
 

@@ -186,6 +186,27 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("romance", intent.include_themes)
         self.assertEqual(intent.target_dimensions["romance"], 10)
 
+    def test_natural_negation_phrases_are_excluded(self):
+        cases = (
+            ("I don't want a horror movie", "horror"),
+            ("Anything but comedy", "comedy"),
+            ("I do not like romance", "romance"),
+        )
+
+        for query, excluded_theme in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertIn(excluded_theme, intent.exclude_themes)
+                self.assertNotIn(excluded_theme, intent.include_themes)
+                self.assertTrue(
+                    all(
+                        excluded_theme not in " ".join(movie.genres + movie.themes).lower()
+                        for movie, _score in ranked
+                    )
+                )
+
     def test_negated_trait_aliases_exclude_matching_genres(self):
         intent = parse_search_intent(
             "Something mysterious but not romantic and not funny",

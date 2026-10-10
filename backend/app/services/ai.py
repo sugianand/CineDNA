@@ -49,7 +49,10 @@ THEME_ALIASES = {
     "science fiction": ("sci fi", "scifi"),
 }
 
-NEGATION_PREFIX = r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not)"
+NEGATION_PREFIX = (
+    r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
+    r"(?:do\s+not|don\s+t)\s+(?:want|like))"
+)
 
 
 def _normalize_text(value: str) -> str:
@@ -117,7 +120,7 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
 
 def _is_negated(query: str, term: str) -> bool:
     escaped = re.escape(term).replace(r"\ ", r"\s+")
-    pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:any|too\s+much)\s+)?{escaped}\b"
+    pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:a|an|any|too\s+much)\s+)?{escaped}\b"
     return bool(re.search(pattern, query))
 
 

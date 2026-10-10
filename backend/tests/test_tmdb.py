@@ -2,10 +2,32 @@ import os
 import unittest
 from unittest.mock import Mock, patch
 
-from app.services.tmdb import _from_tmdb, search_tmdb_movies
+from app.services.tmdb import (
+    _from_tmdb,
+    looks_like_title_query,
+    search_tmdb_movies,
+)
 
 
 class TMDBProfileTests(unittest.TestCase):
+    def test_title_casing_disambiguates_titles_with_vibe_words(self):
+        for title in (
+            "Fast Five",
+            "Dark City",
+            "The Fast and the Furious",
+        ):
+            with self.subTest(title=title):
+                self.assertTrue(looks_like_title_query(title))
+
+        for description in (
+            "fast action movie",
+            "A dark mystery",
+            "Like Interstellar",
+            "something funny and romantic",
+        ):
+            with self.subTest(description=description):
+                self.assertFalse(looks_like_title_query(description))
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_invalid_catalog_json_fails_closed(self, get):

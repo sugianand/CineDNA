@@ -43,16 +43,39 @@ TITLE_BLOCKERS = {
     "fast", "slow", "twist", "indian movie", "american movie", "something",
     "movie with", "film with", "less ", "more ",
 }
+TITLE_QUERY_STRUCTURE = {
+    "like ", "something", "movie with", "film with", "less ", "more ",
+}
+TITLE_CONNECTORS = {
+    "a", "an", "and", "as", "at", "but", "by", "for", "from",
+    "in", "nor", "of", "on", "or", "the", "to", "with", "yet",
+}
 
 
 def tmdb_is_configured() -> bool:
     return bool(os.getenv("TMDB_READ_TOKEN", "").strip())
 
 
+def _looks_title_cased(query: str) -> bool:
+    words = re.findall(r"[^\W_]+", query, flags=re.UNICODE)
+    cased_words = [word for word in words if any(char.isalpha() for char in word)]
+    if not cased_words:
+        return False
+
+    return all(
+        word.casefold() in TITLE_CONNECTORS or word[:1].isupper()
+        for word in cased_words
+    )
+
+
 def looks_like_title_query(query: str) -> bool:
-    cleaned = " ".join(query.lower().split())
+    cleaned = " ".join(query.casefold().split())
     if not cleaned or len(cleaned.split()) > 7:
         return False
+    if any(term in cleaned for term in TITLE_QUERY_STRUCTURE):
+        return False
+    if _looks_title_cased(query):
+        return True
     return not any(term in cleaned for term in TITLE_BLOCKERS)
 
 

@@ -1,9 +1,46 @@
+import os
 import unittest
+from unittest.mock import Mock, patch
 
-from app.services.tmdb import _from_tmdb
+from app.services.tmdb import _from_tmdb, search_tmdb_movies
 
 
 class TMDBProfileTests(unittest.TestCase):
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_invalid_catalog_json_fails_closed(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.side_effect = ValueError("invalid JSON")
+        get.return_value = response
+
+        self.assertEqual(search_tmdb_movies("Dune"), [])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_invalid_catalog_items_do_not_discard_valid_movies(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                None,
+                {"title": "Broken", "vote_average": "not-a-number"},
+                {
+                    "id": 3,
+                    "title": "Valid Movie",
+                    "genre_ids": [18],
+                    "overview": "A family faces a difficult choice.",
+                    "vote_average": 7.5,
+                    "release_date": "2026-01-01",
+                },
+            ]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("Valid Movie", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Valid Movie"])
+
     def test_overview_keywords_do_not_match_inside_unrelated_words(self):
         movie = _from_tmdb(
             {

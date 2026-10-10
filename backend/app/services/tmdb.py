@@ -185,11 +185,28 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
             timeout=6.0,
         )
         response.raise_for_status()
+        payload = response.json()
     except (httpx.HTTPError, ValueError):
         return []
 
-    results = response.json().get("results", [])
-    return [_from_tmdb(item) for item in results[:limit]]
+    if not isinstance(payload, dict):
+        return []
+
+    results = payload.get("results", [])
+    if not isinstance(results, list):
+        return []
+
+    movies = []
+    for item in results:
+        if len(movies) >= limit:
+            break
+        if not isinstance(item, dict):
+            continue
+        try:
+            movies.append(_from_tmdb(item))
+        except (TypeError, ValueError):
+            continue
+    return movies
 
 
 def _normalize_title(value: str) -> str:

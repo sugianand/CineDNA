@@ -192,6 +192,10 @@ class SearchIntentTests(unittest.TestCase):
     def test_release_periods_filter_ranked_movies(self):
         cases = (
             ("movies from the 2010s", 2010, 2019),
+            ("movies released in 2015", 2015, 2015),
+            ("movies from 2015", 2015, 2015),
+            ("movies between 2014 and 2018", 2014, 2018),
+            ("movies between 2018 and 2014", 2014, 2018),
             ("movies after 2018", 2019, None),
             ("movies since 2019", 2019, None),
             ("movies before 2010", None, 2009),
@@ -212,6 +216,12 @@ class SearchIntentTests(unittest.TestCase):
                         for movie, _score in ranked
                     )
                 )
+
+    def test_year_in_title_is_not_treated_as_release_filter(self):
+        intent = parse_search_intent("Blade Runner 2049", MOVIES)
+
+        self.assertIsNone(intent.min_year)
+        self.assertIsNone(intent.max_year)
 
     def test_negated_sci_fi_alias_excludes_science_fiction(self):
         intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)

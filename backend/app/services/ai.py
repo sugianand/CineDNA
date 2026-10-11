@@ -201,6 +201,24 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
 
+    between_match = re.search(
+        r"\bbetween\s+((?:19|20)\d{2})\s+(?:and|to)\s+((?:19|20)\d{2})\b",
+        query,
+    )
+    if between_match:
+        first_year = int(between_match.group(1))
+        second_year = int(between_match.group(2))
+        return min(first_year, second_year), max(first_year, second_year)
+
+    exact_match = re.search(
+        r"\b(?:(?:movies?\s+)?released\s+in|movies?\s+(?:from|in))\s+"
+        r"((?:19|20)\d{2})\b",
+        query,
+    )
+    if exact_match:
+        year = int(exact_match.group(1))
+        return year, year
+
     decade_match = re.search(r"\b((?:19|20)\d{2})s\b", query)
     if decade_match:
         min_year = int(decade_match.group(1))

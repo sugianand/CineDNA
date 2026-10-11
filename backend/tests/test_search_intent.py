@@ -191,6 +191,7 @@ class SearchIntentTests(unittest.TestCase):
 
     def test_release_periods_filter_ranked_movies(self):
         cases = (
+            ("movies from the 1970s", 1970, 1979),
             ("movies from the 1990s", 1990, 1999),
             ("movies from the 2010s", 2010, 2019),
             ("movies released in 2015", 2015, 2015),

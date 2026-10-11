@@ -38,6 +38,18 @@ MOVIES = [
         summary="A landmark science-fiction action story about reality, identity, free will, and rebellion against a machine-controlled world."
     ),
     MovieDNA(
+        title="The Godfather", year=1972, country="USA",
+        genres=["Crime", "Drama"],
+        themes=["family", "power", "loyalty", "crime", "morality", "betrayal"],
+        dimensions={
+            "emotional_intensity": 88, "narrative_complexity": 84, "visual_spectacle": 70,
+            "pacing": 54, "mystery": 48, "romance": 12, "darkness": 88,
+            "humor": 13, "plot_twists": 75, "action": 38, "character_depth": 99,
+            "world_building": 86, "dialogue_density": 91, "rewatchability": 97,
+        },
+        summary="A landmark crime drama about family, loyalty, power, and the moral transformation of a reluctant heir."
+    ),
+    MovieDNA(
         title="Inception", year=2010, country="USA",
         genres=["Science Fiction", "Thriller", "Action"],
         themes=["dreams", "memory", "guilt", "reality", "identity", "heist"],

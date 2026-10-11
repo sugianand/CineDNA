@@ -26,6 +26,18 @@ MOVIES = [
         summary="A cerebral first-contact story built around language, grief, perception, and a major emotional revelation."
     ),
     MovieDNA(
+        title="The Matrix", year=1999, country="USA",
+        genres=["Science Fiction", "Action"],
+        themes=["reality", "identity", "freedom", "choice", "technology", "rebellion"],
+        dimensions={
+            "emotional_intensity": 82, "narrative_complexity": 87, "visual_spectacle": 93,
+            "pacing": 86, "mystery": 78, "romance": 18, "darkness": 75,
+            "humor": 22, "plot_twists": 89, "action": 94, "character_depth": 82,
+            "world_building": 96, "dialogue_density": 66, "rewatchability": 98,
+        },
+        summary="A landmark science-fiction action story about reality, identity, free will, and rebellion against a machine-controlled world."
+    ),
+    MovieDNA(
         title="Inception", year=2010, country="USA",
         genres=["Science Fiction", "Thriller", "Action"],
         themes=["dreams", "memory", "guilt", "reality", "identity", "heist"],

@@ -434,6 +434,41 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_matrix_expands_offline_1990s_coverage(self, _configured):
+        title_response = self.client.post(
+            "/api/search",
+            json={"query": "the matrix"},
+        )
+
+        self.assertEqual(title_response.status_code, 200)
+        title_body = title_response.json()
+        movie = title_body["results"][0]["movie"]
+        self.assertEqual(movie["title"], "The Matrix")
+        self.assertEqual(movie["year"], 1999)
+        self.assertIn("Science Fiction", movie["genres"])
+        self.assertGreaterEqual(movie["dimensions"]["action"], 90)
+        self.assertEqual(title_body["ai_provider"], "cinedna-title-catalog")
+
+        period_response = self.client.post(
+            "/api/search",
+            json={"query": "movies from the 1990s", "limit": 20},
+        )
+
+        self.assertEqual(period_response.status_code, 200)
+        period_body = period_response.json()
+        self.assertTrue(period_body["results"])
+        self.assertIn(
+            "The Matrix",
+            {result["movie"]["title"] for result in period_body["results"]},
+        )
+        self.assertTrue(
+            all(
+                1990 <= result["movie"]["year"] <= 1999
+                for result in period_body["results"]
+            )
+        )
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_parasite_is_available_in_local_catalog_by_both_titles(self, _configured):
         for query in ("parasite", "기생충"):
             with self.subTest(query=query):

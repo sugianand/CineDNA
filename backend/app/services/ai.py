@@ -48,11 +48,12 @@ THEME_VOCAB = {
     "family", "time", "space", "survival", "identity", "memory", "guilt", "reality",
     "morality", "justice", "crime", "deception", "murder", "greed", "friendship",
     "education", "mythology", "power", "destiny", "religion", "war", "love",
-    "trauma", "truth", "dreams", "language", "grief", "communication", "action",
+    "trauma", "truth", "dreams", "language", "grief", "communication", "action", "animation",
     "comedy", "fantasy", "horror", "mystery", "romance", "thriller", "science fiction",
 }
 
 THEME_ALIASES = {
+    "animation": ("animated", "cartoon", "cartoons"),
     "horror": ("scary", "spooky", "frightening"),
     "romance": ROM_COM_TERMS,
     "comedy": ROM_COM_TERMS,

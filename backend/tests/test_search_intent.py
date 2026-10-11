@@ -155,6 +155,23 @@ class SearchIntentTests(unittest.TestCase):
             all("Fantasy" not in movie.genres for movie, _score in excluded_ranked)
         )
 
+    def test_animation_aliases_rank_and_exclude_animated_movies(self):
+        for query in ("an animated movie", "a cartoon", "cartoons"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=1)
+
+                self.assertIn("animation", intent.include_themes)
+                self.assertEqual(ranked[0][0].title, "Spirited Away")
+
+        excluded = parse_search_intent("anything but animated", MOVIES)
+        excluded_ranked = rank_movies(MOVIES, excluded, limit=20)
+
+        self.assertIn("animation", excluded.exclude_themes)
+        self.assertTrue(
+            all("Animation" not in movie.genres for movie, _score in excluded_ranked)
+        )
+
     def test_negated_sci_fi_alias_excludes_science_fiction(self):
         intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)
         ranked = rank_movies(MOVIES, intent, limit=20)

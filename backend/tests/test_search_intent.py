@@ -201,6 +201,38 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.reference_titles, ["Up in the Air"])
         self.assertEqual(intent.target_dimensions["emotional_intensity"], 80)
 
+    def test_reference_movie_matching_normalizes_unicode(self):
+        movies = [
+            MovieDNA(
+                title="Amélie",
+                year=2001,
+                country="France",
+                genres=["Romance"],
+                themes=[],
+                dimensions={"romance": 85},
+                summary="An accented-title test movie.",
+            ),
+            MovieDNA(
+                title="Amaran",
+                original_title="அமரன்",
+                year=2024,
+                country="India",
+                genres=["Drama"],
+                themes=[],
+                dimensions={"emotional_intensity": 90},
+                summary="A non-Latin-title test movie.",
+            ),
+        ]
+
+        for query, expected_title in (
+            ("Like Amelie", "Amélie"),
+            ("Like அமரன்", "Amaran"),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, movies)
+
+                self.assertEqual(intent.reference_titles, [expected_title])
+
     def test_reference_title_traits_do_not_override_movie_dna(self):
         reference = MovieDNA(
             title="Slow Burn",

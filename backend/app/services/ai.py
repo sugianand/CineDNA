@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Dict, List, Tuple
 
 from app.models import MovieDNA, SearchIntent
@@ -65,7 +66,21 @@ NEGATION_PREFIX = (
 
 
 def _normalize_text(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+    output = []
+    last_base_is_latin = False
+    for char in unicodedata.normalize("NFKD", value.casefold()):
+        category = unicodedata.category(char)
+        if category.startswith("M"):
+            if not last_base_is_latin:
+                output.append(char)
+        elif category.startswith(("L", "N")):
+            output.append(char)
+            last_base_is_latin = "LATIN" in unicodedata.name(char, "")
+        else:
+            output.append(" ")
+            last_base_is_latin = False
+
+    return " ".join("".join(output).split())
 
 
 def _contains_term(query: str, term: str) -> bool:

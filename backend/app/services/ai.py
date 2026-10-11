@@ -6,8 +6,8 @@ from typing import Dict, List, Tuple
 from app.models import MovieDNA, SearchIntent
 
 
-FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced")
-SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn")
+FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced", "faster")
+SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 

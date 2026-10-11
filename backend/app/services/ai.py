@@ -51,6 +51,7 @@ THEME_VOCAB = {
 }
 
 THEME_ALIASES = {
+    "horror": ("scary", "spooky", "frightening"),
     "science fiction": ("sci fi", "scifi"),
 }
 

@@ -126,6 +126,44 @@ class SearchIntentTests(unittest.TestCase):
             all("Science Fiction" not in movie.genres for movie, _score in ranked)
         )
 
+    def test_horror_aliases_drive_horror_ranking_and_exclusion(self):
+        horror_movie = MovieDNA(
+            title="Haunted House",
+            year=2026,
+            country="USA",
+            genres=["Horror"],
+            themes=[],
+            dimensions={},
+            summary="A scary test movie.",
+        )
+        drama_movie = MovieDNA(
+            title="Quiet House",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={},
+            summary="A calm test movie.",
+        )
+
+        for alias in ("scary", "spooky", "frightening"):
+            with self.subTest(alias=alias):
+                intent = parse_search_intent(f"a {alias} movie", MOVIES)
+                ranked = rank_movies([drama_movie, horror_movie], intent, limit=2)
+
+                self.assertIn("horror", intent.include_themes)
+                self.assertEqual(ranked[0][0].title, "Haunted House")
+
+        excluded_intent = parse_search_intent("anything but scary", MOVIES)
+        excluded_ranked = rank_movies(
+            [horror_movie, drama_movie],
+            excluded_intent,
+            limit=2,
+        )
+
+        self.assertIn("horror", excluded_intent.exclude_themes)
+        self.assertEqual([movie.title for movie, _score in excluded_ranked], ["Quiet House"])
+
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

@@ -41,7 +41,8 @@ INDIAN_LANGUAGES = {"hi", "te", "ta", "ml", "kn", "bn", "mr", "pa", "gu"}
 TITLE_BLOCKERS = {
     "like ", "dark", "funny", "comedy", "mystery", "romance", "romantic",
     "action", "emotional", "sad", "thriller", "horror", "sci-fi", "science fiction",
-    "fast", "slow", "twist", "indian movie", "american movie", "something",
+    "scary", "spooky", "frightening", "fast", "slow", "twist",
+    "indian movie", "american movie", "something",
     "movie with", "film with", "less ", "more ",
 }
 TITLE_QUERY_STRUCTURE = {

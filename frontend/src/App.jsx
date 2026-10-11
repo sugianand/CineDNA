@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
+import { getApiSearchMode, getResponseMode } from './searchRouting.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
@@ -179,6 +180,7 @@ function App() {
         : 'Enter a movie title to search.')
       return
     }
+    const apiSearchMode = getApiSearchMode(searchMode, referenceMovie)
 
     activeSearch.current?.abort()
     const controller = new AbortController()
@@ -196,7 +198,7 @@ function App() {
         body: JSON.stringify({
           query: cleanedQuery,
           limit: 6,
-          mode: searchMode,
+          mode: apiSearchMode,
           ...(referenceMovie ? { reference_movie: referenceMovie } : {}),
         }),
         signal: controller.signal,
@@ -204,9 +206,11 @@ function App() {
 
       if (!res.ok) throw new Error('Search failed')
       const body = await res.json()
+      const resolvedMode = getResponseMode(searchMode, body.ai_provider)
       setResponse(body)
-      setResponseMode(searchMode)
-      rememberSearch(cleanedQuery, searchMode, referenceMovie)
+      setResponseMode(resolvedMode)
+      setMode(resolvedMode)
+      rememberSearch(cleanedQuery, resolvedMode, referenceMovie)
     } catch (searchError) {
       if (searchError.name !== 'AbortError') {
         setError('We could not search CineDNA right now. Try again in a moment.')

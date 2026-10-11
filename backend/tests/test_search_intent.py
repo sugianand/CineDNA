@@ -201,6 +201,34 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(intent.target_dimensions["pacing"], target)
                 self.assertEqual(ranked[0][0].title, expected_title)
 
+    def test_positive_mood_terms_request_a_light_tone(self):
+        light_movie = MovieDNA(
+            title="Bright Day",
+            year=2026,
+            country="USA",
+            genres=["Comedy"],
+            themes=[],
+            dimensions={"darkness": 15},
+            summary="A light test movie.",
+        )
+        dark_movie = MovieDNA(
+            title="Bleak Night",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"darkness": 90},
+            summary="A dark test movie.",
+        )
+
+        for query in ("a feel-good movie", "something lighthearted", "an uplifting film"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies([dark_movie, light_movie], intent, limit=2)
+
+                self.assertEqual(intent.target_dimensions["darkness"], 20)
+                self.assertEqual(ranked[0][0].title, "Bright Day")
+
     def test_reference_movie_matches_unique_title_before_subtitle(self):
         intent = parse_search_intent(
             "Something like Dune but funnier",

@@ -9,6 +9,7 @@ from app.models import MovieDNA, SearchIntent
 
 FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced", "faster")
 SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower")
+LIGHT_TONE_TERMS = ("feel good", "feel-good", "lighthearted", "uplifting")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 
@@ -21,7 +22,7 @@ DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "pacing": FAST_PACING_TERMS + SLOW_PACING_TERMS,
     "mystery": ("mystery", "mysterious", "detective", "whodunit"),
     "romance": ("romance", "romantic", "love story"),
-    "darkness": ("dark", "bleak", "grim"),
+    "darkness": ("dark", "bleak", "grim") + LIGHT_TONE_TERMS,
     "humor": ("funny", "comedy", "humor", "hilarious"),
     "plot_twists": ("twist", "twisty", "unpredictable", "shocking"),
     "action": ("action", "fight", "explosive"),
@@ -268,6 +269,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
                 current = 85 if reversed_pacing in SLOW_PACING_TERMS else 35
             else:
                 current = 35 if matched in SLOW_PACING_TERMS else 85
+        elif dimension == "darkness" and matched in LIGHT_TONE_TERMS:
+            current = 80 if negated else 20
         elif negated:
             current = 10
             if excluded_theme := NEGATED_THEME_ALIASES.get(matched):

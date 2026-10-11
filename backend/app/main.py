@@ -66,6 +66,8 @@ def search_movies(request: SearchRequest):
         intent.preferred_countries,
         intent.excluded_countries,
         intent.reference_titles,
+        intent.min_year is not None,
+        intent.max_year is not None,
     ))
     should_search_titles = request.mode == "title" or (
         request.mode == "auto"

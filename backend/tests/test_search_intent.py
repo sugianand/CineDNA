@@ -189,6 +189,30 @@ class SearchIntentTests(unittest.TestCase):
             all("Adventure" not in movie.genres for movie, _score in excluded_ranked)
         )
 
+    def test_release_periods_filter_ranked_movies(self):
+        cases = (
+            ("movies from the 2010s", 2010, 2019),
+            ("movies after 2018", 2019, None),
+            ("movies since 2019", 2019, None),
+            ("movies before 2010", None, 2009),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+                self.assertTrue(ranked)
+                self.assertTrue(
+                    all(
+                        (min_year is None or movie.year >= min_year)
+                        and (max_year is None or movie.year <= max_year)
+                        for movie, _score in ranked
+                    )
+                )
+
     def test_negated_sci_fi_alias_excludes_science_fiction(self):
         intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)
         ranked = rank_movies(MOVIES, intent, limit=20)

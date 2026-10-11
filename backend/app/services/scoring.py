@@ -101,6 +101,18 @@ def score_movie(movie: MovieDNA, intent: SearchIntent) -> float:
     return round(max(0.0, min(1.0, score)) * 100, 1)
 
 
+def _matches_year_range(movie: MovieDNA, intent: SearchIntent) -> bool:
+    if intent.min_year is None and intent.max_year is None:
+        return True
+    if movie.year <= 0:
+        return False
+    if intent.min_year is not None and movie.year < intent.min_year:
+        return False
+    if intent.max_year is not None and movie.year > intent.max_year:
+        return False
+    return True
+
+
 def rank_movies(
     movies: Iterable[MovieDNA],
     intent: SearchIntent,
@@ -116,6 +128,7 @@ def rank_movies(
         if movie.title.casefold() not in reference_titles
         and movie.country.casefold() not in excluded_countries
         and not _matching_preferences(movie, intent.exclude_themes)
+        and _matches_year_range(movie, intent)
     ]
     ranked.sort(key=lambda item: item[1], reverse=True)
     return ranked[:limit]

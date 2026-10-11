@@ -197,6 +197,30 @@ def _is_reduced(query: str, term: str) -> bool:
     return bool(re.search(rf"\bless\s+{escaped}\b", query))
 
 
+def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
+    min_year = None
+    max_year = None
+
+    decade_match = re.search(r"\b((?:19|20)\d{2})s\b", query)
+    if decade_match:
+        min_year = int(decade_match.group(1))
+        max_year = min_year + 9
+
+    after_match = re.search(r"\b(?:after|newer\s+than)\s+((?:19|20)\d{2})\b", query)
+    if after_match:
+        min_year = int(after_match.group(1)) + 1
+
+    since_match = re.search(r"\bsince\s+((?:19|20)\d{2})\b", query)
+    if since_match:
+        min_year = int(since_match.group(1))
+
+    before_match = re.search(r"\b(?:before|older\s+than)\s+((?:19|20)\d{2})\b", query)
+    if before_match:
+        max_year = int(before_match.group(1)) - 1
+
+    return min_year, max_year
+
+
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     lowered = _normalize_text(query)
     references = _find_reference_movies(lowered, movies)
@@ -211,6 +235,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     exclude_themes: List[str] = []
     preferred_countries: List[str] = []
     excluded_countries: List[str] = []
+    min_year, max_year = _extract_year_range(trait_query)
 
     for country, aliases in COUNTRY_ALIASES.items():
         matches = [alias for alias in aliases if _contains_term(trait_query, alias)]
@@ -312,6 +337,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         preferred_countries=preferred_countries,
         excluded_countries=excluded_countries,
         reference_titles=reference_titles,
+        min_year=min_year,
+        max_year=max_year,
         explanation=explanation,
     )
 
@@ -343,5 +370,12 @@ def build_match_reason(movie: MovieDNA, intent: SearchIntent) -> str:
 
     if intent.preferred_countries and movie.country in intent.preferred_countries:
         reasons.append(f"fits your {movie.country} preference")
+
+    if intent.min_year is not None and intent.max_year is not None:
+        reasons.append(f"released from {intent.min_year} to {intent.max_year}")
+    elif intent.min_year is not None:
+        reasons.append(f"released in {intent.min_year} or later")
+    elif intent.max_year is not None:
+        reasons.append(f"released in {intent.max_year} or earlier")
 
     return "; ".join(reasons) or "overall Movie DNA similarity"

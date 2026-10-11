@@ -241,6 +241,25 @@ class CineDNAAPITests(unittest.TestCase):
             all("Adventure" in result["movie"]["genres"] for result in body["results"])
         )
 
+    def test_auto_mode_routes_decade_request_to_vibe_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "movies from the 2010s", "limit": 20},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["min_year"], 2010)
+        self.assertEqual(body["intent"]["max_year"], 2019)
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(2010 <= result["movie"]["year"] <= 2019 for result in body["results"])
+        )
+
     def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
         for query, theme in (
             ("space movie", "space"),

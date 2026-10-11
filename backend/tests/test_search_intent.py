@@ -164,6 +164,45 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIn("horror", excluded_intent.exclude_themes)
         self.assertEqual([movie.title for movie, _score in excluded_ranked], ["Quiet House"])
 
+    def test_rom_com_aliases_combine_romance_and_comedy(self):
+        romantic_comedy = MovieDNA(
+            title="Date Night",
+            year=2026,
+            country="USA",
+            genres=["Romance", "Comedy"],
+            themes=[],
+            dimensions={"romance": 80, "humor": 80},
+            summary="A test romantic comedy.",
+        )
+        serious_romance = MovieDNA(
+            title="Long Goodbye",
+            year=2026,
+            country="USA",
+            genres=["Romance", "Drama"],
+            themes=[],
+            dimensions={"romance": 80, "humor": 10},
+            summary="A serious test romance.",
+        )
+
+        for query in ("a rom-com", "a romantic comedy"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(
+                    [serious_romance, romantic_comedy],
+                    intent,
+                    limit=2,
+                )
+
+                self.assertEqual(intent.include_themes, ["comedy", "romance"])
+                self.assertEqual(intent.target_dimensions["romance"], 75)
+                self.assertEqual(intent.target_dimensions["humor"], 75)
+                self.assertEqual(ranked[0][0].title, "Date Night")
+
+        excluded = parse_search_intent("anything but a rom-com", MOVIES)
+        self.assertEqual(excluded.exclude_themes, ["comedy", "romance"])
+        self.assertEqual(excluded.target_dimensions["romance"], 10)
+        self.assertEqual(excluded.target_dimensions["humor"], 10)
+
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

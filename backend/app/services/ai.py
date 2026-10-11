@@ -10,6 +10,7 @@ from app.models import MovieDNA, SearchIntent
 FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced", "faster")
 SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower")
 LIGHT_TONE_TERMS = ("feel good", "feel-good", "lighthearted", "uplifting")
+ROM_COM_TERMS = ("rom com", "romantic comedy")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 
@@ -21,9 +22,9 @@ DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "visual_spectacle": ("beautiful", "visual", "cinematic", "spectacle", "epic"),
     "pacing": FAST_PACING_TERMS + SLOW_PACING_TERMS,
     "mystery": ("mystery", "mysterious", "detective", "whodunit"),
-    "romance": ("romance", "romantic", "love story"),
+    "romance": ("romance", "romantic", "love story") + ROM_COM_TERMS,
     "darkness": ("dark", "bleak", "grim") + LIGHT_TONE_TERMS,
-    "humor": ("funny", "comedy", "humor", "hilarious"),
+    "humor": ("funny", "comedy", "humor", "hilarious") + ROM_COM_TERMS,
     "plot_twists": ("twist", "twisty", "unpredictable", "shocking"),
     "action": ("action", "fight", "explosive"),
     "character_depth": ("character driven", "character-driven", "deep characters"),
@@ -53,6 +54,8 @@ THEME_VOCAB = {
 
 THEME_ALIASES = {
     "horror": ("scary", "spooky", "frightening"),
+    "romance": ROM_COM_TERMS,
+    "comedy": ROM_COM_TERMS,
     "science fiction": ("sci fi", "scifi"),
 }
 

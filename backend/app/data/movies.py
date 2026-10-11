@@ -74,6 +74,19 @@ MOVIES = [
         summary="A witty modern murder mystery with layered deception, family conflict, social satire, and sharp dialogue."
     ),
     MovieDNA(
+        title="Parasite", year=2019, country="South Korea",
+        original_title="기생충",
+        genres=["Drama", "Thriller", "Comedy"],
+        themes=["class", "inequality", "family", "deception", "greed", "survival"],
+        dimensions={
+            "emotional_intensity": 86, "narrative_complexity": 90, "visual_spectacle": 77,
+            "pacing": 79, "mystery": 82, "romance": 5, "darkness": 88,
+            "humor": 66, "plot_twists": 92, "action": 25, "character_depth": 94,
+            "world_building": 70, "dialogue_density": 82, "rewatchability": 94,
+        },
+        summary="A Korean social thriller blending dark comedy, family drama, and escalating deception in a sharp examination of class inequality."
+    ),
+    MovieDNA(
         title="Dune: Part Two", year=2024, country="USA",
         genres=["Science Fiction", "Adventure", "Drama"],
         themes=["power", "destiny", "religion", "war", "colonialism", "love"],

@@ -70,7 +70,10 @@ def _looks_title_cased(query: str) -> bool:
     )
 
 
-def looks_like_title_query(query: str) -> bool:
+def looks_like_title_query(
+    query: str,
+    has_vibe_preferences: bool = False,
+) -> bool:
     cleaned = " ".join(query.casefold().split())
     if not cleaned or len(cleaned.split()) > 7:
         return False
@@ -78,6 +81,8 @@ def looks_like_title_query(query: str) -> bool:
         return False
     if _looks_title_cased(query):
         return True
+    if has_vibe_preferences:
+        return False
     return not any(term in cleaned for term in TITLE_BLOCKERS)
 
 

@@ -131,6 +131,24 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertIn("horror", body["intent"]["include_themes"])
         self.assertIn("Horror", body["results"][0]["movie"]["genres"])
 
+    def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
+        for query, theme in (
+            ("space movie", "space"),
+            ("family movie", "family"),
+            ("war movie", "war"),
+        ):
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 3},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                self.assertIn(theme, response.json()["intent"]["include_themes"])
+
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
     def test_title_mode_bypasses_title_guessing(self, _configured, search_tmdb):

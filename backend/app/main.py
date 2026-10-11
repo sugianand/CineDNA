@@ -53,11 +53,25 @@ def list_movies():
 @app.post("/api/search", response_model=SearchResponse)
 @app.post("/search", response_model=SearchResponse)
 def search_movies(request: SearchRequest):
+    intent_movies = (
+        [request.reference_movie, *MOVIES]
+        if request.reference_movie is not None
+        else MOVIES
+    )
+    intent = parse_search_intent(request.query, intent_movies)
+    has_vibe_preferences = any((
+        intent.target_dimensions,
+        intent.include_themes,
+        intent.exclude_themes,
+        intent.preferred_countries,
+        intent.excluded_countries,
+        intent.reference_titles,
+    ))
     should_search_titles = request.mode == "title" or (
         request.mode == "auto"
         and (
             has_exact_local_title(request.query, MOVIES)
-            or looks_like_title_query(request.query)
+            or looks_like_title_query(request.query, has_vibe_preferences)
         )
     )
     if should_search_titles:
@@ -118,12 +132,6 @@ def search_movies(request: SearchRequest):
                 ai_provider="cinedna-title-catalog",
             )
 
-    intent_movies = (
-        [request.reference_movie, *MOVIES]
-        if request.reference_movie is not None
-        else MOVIES
-    )
-    intent = parse_search_intent(request.query, intent_movies)
     ranked = rank_movies(MOVIES, intent, request.limit)
 
     results = [

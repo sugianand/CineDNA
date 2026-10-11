@@ -54,6 +54,11 @@ class TMDBProfileTests(unittest.TestCase):
             with self.subTest(description=description):
                 self.assertFalse(looks_like_title_query(description))
 
+    def test_parsed_vibe_preferences_override_lowercase_title_guessing(self):
+        self.assertTrue(looks_like_title_query("space movie"))
+        self.assertFalse(looks_like_title_query("space movie", True))
+        self.assertTrue(looks_like_title_query("Space Movie", True))
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_invalid_catalog_json_fails_closed(self, get):

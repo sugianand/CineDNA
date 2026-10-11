@@ -201,13 +201,19 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
 
-    between_match = re.search(
+    range_match = re.search(
         r"\bbetween\s+((?:19|20)\d{2})\s+(?:and|to)\s+((?:19|20)\d{2})\b",
         query,
     )
-    if between_match:
-        first_year = int(between_match.group(1))
-        second_year = int(between_match.group(2))
+    if range_match is None:
+        range_match = re.search(
+            r"\b(?:(?:movies?|films?)\s+)?(?:released\s+)?from\s+"
+            r"((?:19|20)\d{2})\s+to\s+((?:19|20)\d{2})\b",
+            query,
+        )
+    if range_match:
+        first_year = int(range_match.group(1))
+        second_year = int(range_match.group(2))
         return min(first_year, second_year), max(first_year, second_year)
 
     exact_match = re.search(
@@ -389,7 +395,12 @@ def build_match_reason(movie: MovieDNA, intent: SearchIntent) -> str:
     if intent.preferred_countries and movie.country in intent.preferred_countries:
         reasons.append(f"fits your {movie.country} preference")
 
-    if intent.min_year is not None and intent.max_year is not None:
+    if (
+        intent.min_year is not None
+        and intent.min_year == intent.max_year
+    ):
+        reasons.append(f"released in {intent.min_year}")
+    elif intent.min_year is not None and intent.max_year is not None:
         reasons.append(f"released from {intent.min_year} to {intent.max_year}")
     elif intent.min_year is not None:
         reasons.append(f"released in {intent.min_year} or later")

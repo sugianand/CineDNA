@@ -197,6 +197,8 @@ class SearchIntentTests(unittest.TestCase):
             ("movies from 2015", 2015, 2015),
             ("movies between 2014 and 2018", 2014, 2018),
             ("movies between 2018 and 2014", 2014, 2018),
+            ("movies from 2014 to 2018", 2014, 2018),
+            ("films released from 2018 to 2014", 2014, 2018),
             ("movies after 2018", 2019, None),
             ("movies since 2019", 2019, None),
             ("movies before 2010", None, 2009),
@@ -223,6 +225,14 @@ class SearchIntentTests(unittest.TestCase):
 
         self.assertIsNone(intent.min_year)
         self.assertIsNone(intent.max_year)
+
+    def test_exact_release_year_has_natural_match_reason(self):
+        intent = parse_search_intent("movies released in 2015", MOVIES)
+
+        reason = build_match_reason(MOVIES[0], intent)
+
+        self.assertIn("released in 2015", reason)
+        self.assertNotIn("from 2015 to 2015", reason)
 
     def test_negated_sci_fi_alias_excludes_science_fiction(self):
         intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)

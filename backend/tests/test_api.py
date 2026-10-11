@@ -224,6 +224,18 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_bahubali_spelling_falls_back_to_local_catalog(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "bahubali"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["results"][0]["movie"]["title"], "Baahubali: The Beginning")
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_auto_mode_recognizes_exact_title_with_vibe_word(self, _configured):
         response = self.client.post(
             "/api/search",

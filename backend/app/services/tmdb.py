@@ -236,13 +236,20 @@ def _normalize_title(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
 
 
+def _normalized_title_variants(value: str) -> List[str]:
+    variants = [_normalize_title(value)]
+    if ":" in value:
+        variants.append(_normalize_title(value.split(":", 1)[0]))
+    return list(dict.fromkeys(variant for variant in variants if variant))
+
+
 def has_exact_local_title(query: str, movies: Sequence[MovieDNA]) -> bool:
     normalized_query = _normalize_title(query)
     if not normalized_query:
         return False
 
     return any(
-        normalized_query == _normalize_title(candidate)
+        normalized_query in _normalized_title_variants(candidate)
         for movie in movies
         for candidate in (movie.title, movie.original_title or "")
         if candidate
@@ -268,7 +275,10 @@ def search_local_movies(
     for movie in movies:
         candidates = [movie.title, movie.original_title or ""]
         normalized_candidates = [
-            _normalize_title(candidate) for candidate in candidates if candidate
+            variant
+            for candidate in candidates
+            if candidate
+            for variant in _normalized_title_variants(candidate)
         ]
         best_similarity = max(
             SequenceMatcher(None, normalized_query, candidate).ratio()
@@ -293,9 +303,10 @@ def title_match_score(query: str, movie: MovieDNA) -> float:
         SequenceMatcher(
             None,
             normalized_query,
-            _normalize_title(candidate),
+            variant,
         ).ratio()
         for candidate in candidates
         if candidate
+        for variant in _normalized_title_variants(candidate)
     )
     return round(55 + best * 45, 1)

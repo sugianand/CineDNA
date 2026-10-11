@@ -98,6 +98,18 @@ MOVIES = [
         summary="A crime epic about chaos, justice, sacrifice, and moral compromise disguised as a superhero film."
     ),
     MovieDNA(
+        title="Baahubali: The Beginning", year=2015, country="India",
+        genres=["Action", "Adventure", "Drama"],
+        themes=["power", "family", "destiny", "war", "revenge", "kingdom"],
+        dimensions={
+            "emotional_intensity": 84, "narrative_complexity": 68, "visual_spectacle": 96,
+            "pacing": 82, "mystery": 57, "romance": 41, "darkness": 61,
+            "humor": 22, "plot_twists": 72, "action": 95, "character_depth": 76,
+            "world_building": 94, "dialogue_density": 55, "rewatchability": 91,
+        },
+        summary="An epic Indian action drama about a lost heir, family loyalty, royal power, and the battle for a kingdom."
+    ),
+    MovieDNA(
         title="Andhadhun", year=2018, country="India",
         genres=["Thriller", "Comedy", "Crime"],
         themes=["deception", "murder", "luck", "greed", "identity", "morality"],

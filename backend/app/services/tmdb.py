@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 from difflib import SequenceMatcher
 from typing import Dict, List, Sequence
 
@@ -233,7 +234,21 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
 
 
 def _normalize_title(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+    output = []
+    last_base_is_latin = False
+    for char in unicodedata.normalize("NFKD", value.casefold()):
+        category = unicodedata.category(char)
+        if category.startswith("M"):
+            if not last_base_is_latin:
+                output.append(char)
+        elif category.startswith(("L", "N")):
+            output.append(char)
+            last_base_is_latin = "LATIN" in unicodedata.name(char, "")
+        else:
+            output.append(" ")
+            last_base_is_latin = False
+
+    return " ".join("".join(output).split())
 
 
 def _normalized_title_variants(value: str) -> List[str]:

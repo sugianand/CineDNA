@@ -2,14 +2,38 @@ import os
 import unittest
 from unittest.mock import Mock, patch
 
+from app.data.movies import MOVIES
+from app.models import MovieDNA
 from app.services.tmdb import (
     _from_tmdb,
+    has_exact_local_title,
     looks_like_title_query,
+    search_local_movies,
     search_tmdb_movies,
 )
 
 
 class TMDBProfileTests(unittest.TestCase):
+    def test_local_title_search_normalizes_unicode(self):
+        amelie = MovieDNA(
+            title="Amélie",
+            year=2001,
+            country="France",
+            genres=["Comedy", "Romance"],
+            themes=["love"],
+            dimensions={},
+            summary="A test movie with an accented title.",
+        )
+        baahubali = next(
+            movie for movie in MOVIES
+            if movie.title == "Baahubali: The Beginning"
+        )
+
+        self.assertTrue(has_exact_local_title("Amelie", [amelie]))
+        self.assertEqual(search_local_movies("Amelie", [amelie]), [amelie])
+        self.assertTrue(has_exact_local_title("బాహుబలి", [baahubali]))
+        self.assertEqual(search_local_movies("బాహుబలి", [baahubali]), [baahubali])
+
     def test_title_casing_disambiguates_titles_with_vibe_words(self):
         for title in (
             "Fast Five",

@@ -99,6 +99,7 @@ MOVIES = [
     ),
     MovieDNA(
         title="Baahubali: The Beginning", year=2015, country="India",
+        original_title="బాహుబలి: ది బిగినింగ్",
         genres=["Action", "Adventure", "Drama"],
         themes=["power", "family", "destiny", "war", "revenge", "kingdom"],
         dimensions={

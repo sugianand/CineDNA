@@ -172,6 +172,23 @@ class SearchIntentTests(unittest.TestCase):
             all("Animation" not in movie.genres for movie, _score in excluded_ranked)
         )
 
+    def test_catalog_genres_automatically_become_search_preferences(self):
+        for genre in ("Adventure", "Crime", "Drama"):
+            with self.subTest(genre=genre):
+                intent = parse_search_intent(f"a {genre.lower()} movie", MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=1)
+
+                self.assertIn(genre.lower(), intent.include_themes)
+                self.assertIn(genre, ranked[0][0].genres)
+
+        excluded = parse_search_intent("anything but adventure", MOVIES)
+        excluded_ranked = rank_movies(MOVIES, excluded, limit=20)
+
+        self.assertIn("adventure", excluded.exclude_themes)
+        self.assertTrue(
+            all("Adventure" not in movie.genres for movie, _score in excluded_ranked)
+        )
+
     def test_negated_sci_fi_alias_excludes_science_fiction(self):
         intent = parse_search_intent("A fast movie with no sci-fi", MOVIES)
         ranked = rank_movies(MOVIES, intent, limit=20)

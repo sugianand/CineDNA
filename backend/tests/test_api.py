@@ -224,6 +224,23 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertIn("animation", body["intent"]["include_themes"])
         self.assertEqual(body["results"][0]["movie"]["title"], "Spirited Away")
 
+    def test_auto_mode_routes_catalog_genres_to_vibe_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "adventure movie", "limit": 3},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertIn("adventure", body["intent"]["include_themes"])
+        self.assertTrue(
+            all("Adventure" in result["movie"]["genres"] for result in body["results"])
+        )
+
     def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
         for query, theme in (
             ("space movie", "space"),

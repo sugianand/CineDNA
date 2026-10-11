@@ -219,7 +219,13 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         elif matches:
             preferred_countries.append(country)
 
-    for theme in THEME_VOCAB:
+    catalog_genres = {
+        normalized
+        for movie in movies
+        for genre in movie.genres
+        if (normalized := _normalize_text(genre)) and normalized != "movie"
+    }
+    for theme in THEME_VOCAB | catalog_genres:
         matched = next(
             (
                 term

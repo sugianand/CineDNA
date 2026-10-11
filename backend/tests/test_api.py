@@ -162,6 +162,21 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["intent"]["target_dimensions"]["romance"], 75)
         self.assertEqual(body["intent"]["target_dimensions"]["humor"], 75)
 
+    def test_auto_mode_routes_korean_thriller_to_vibe_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "Korean thriller", "limit": 1},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["preferred_countries"], ["South Korea"])
+        self.assertEqual(body["results"][0]["movie"]["title"], "Parasite")
+
     def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
         for query, theme in (
             ("space movie", "space"),

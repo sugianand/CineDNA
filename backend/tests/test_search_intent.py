@@ -89,6 +89,7 @@ class SearchIntentTests(unittest.TestCase):
         cases = (
             ("No Indian movies", "India"),
             ("Anything but Hollywood", "USA"),
+            ("No Korean movies", "South Korea"),
         )
 
         for query, excluded_country in cases:
@@ -105,6 +106,15 @@ class SearchIntentTests(unittest.TestCase):
                         for movie, _score in ranked
                     )
                 )
+
+    def test_korean_preference_ranks_south_korean_movies_first(self):
+        intent = parse_search_intent("a Korean thriller", MOVIES)
+        ranked = rank_movies(MOVIES, intent, limit=3)
+
+        self.assertEqual(intent.preferred_countries, ["South Korea"])
+        self.assertIn("thriller", intent.include_themes)
+        self.assertEqual(ranked[0][0].title, "Parasite")
+        self.assertEqual(ranked[0][0].country, "South Korea")
 
     def test_sci_fi_aliases_map_to_science_fiction(self):
         for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):

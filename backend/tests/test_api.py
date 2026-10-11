@@ -269,6 +269,23 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_rrr_is_available_in_local_catalog(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "rrr"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        movie = body["results"][0]["movie"]
+        self.assertEqual(movie["title"], "RRR")
+        self.assertEqual(movie["country"], "India")
+        self.assertIn("Action", movie["genres"])
+        self.assertGreaterEqual(movie["dimensions"]["action"], 95)
+        self.assertGreaterEqual(movie["dimensions"]["visual_spectacle"], 95)
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_auto_mode_recognizes_exact_title_with_vibe_word(self, _configured):
         response = self.client.post(
             "/api/search",

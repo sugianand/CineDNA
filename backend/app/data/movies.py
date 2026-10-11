@@ -111,6 +111,18 @@ MOVIES = [
         summary="An epic Indian action drama about a lost heir, family loyalty, royal power, and the battle for a kingdom."
     ),
     MovieDNA(
+        title="RRR", year=2022, country="India",
+        genres=["Action", "Adventure", "Drama"],
+        themes=["friendship", "freedom", "justice", "war", "sacrifice", "power"],
+        dimensions={
+            "emotional_intensity": 88, "narrative_complexity": 61, "visual_spectacle": 98,
+            "pacing": 91, "mystery": 24, "romance": 22, "darkness": 64,
+            "humor": 48, "plot_twists": 58, "action": 99, "character_depth": 80,
+            "world_building": 83, "dialogue_density": 51, "rewatchability": 94,
+        },
+        summary="A large-scale Indian action drama about two revolutionaries whose friendship is tested by loyalty, sacrifice, and resistance to colonial rule."
+    ),
+    MovieDNA(
         title="Andhadhun", year=2018, country="India",
         genres=["Thriller", "Comedy", "Crime"],
         themes=["deception", "murder", "luck", "greed", "identity", "morality"],

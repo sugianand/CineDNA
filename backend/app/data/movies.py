@@ -87,6 +87,19 @@ MOVIES = [
         summary="A Korean social thriller blending dark comedy, family drama, and escalating deception in a sharp examination of class inequality."
     ),
     MovieDNA(
+        title="Spirited Away", year=2001, country="Japan",
+        original_title="千と千尋の神隠し",
+        genres=["Animation", "Fantasy", "Adventure"],
+        themes=["identity", "family", "friendship", "greed", "courage", "transformation"],
+        dimensions={
+            "emotional_intensity": 86, "narrative_complexity": 78, "visual_spectacle": 96,
+            "pacing": 68, "mystery": 79, "romance": 10, "darkness": 58,
+            "humor": 54, "plot_twists": 70, "action": 48, "character_depth": 91,
+            "world_building": 100, "dialogue_density": 54, "rewatchability": 98,
+        },
+        summary="A Japanese animated fantasy about a young girl's journey through a spirit world, blending courage, identity, friendship, and transformation."
+    ),
+    MovieDNA(
         title="Dune: Part Two", year=2024, country="USA",
         genres=["Science Fiction", "Adventure", "Drama"],
         themes=["power", "destiny", "religion", "war", "colonialism", "love"],

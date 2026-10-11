@@ -61,6 +61,7 @@ THEME_ALIASES = {
 
 COUNTRY_ALIASES = {
     "India": ("indian", "bollywood", "hindi"),
+    "Japan": ("japanese", "anime"),
     "South Korea": ("korean", "south korean"),
     "USA": ("american", "hollywood", "us movie", "u.s."),
 }

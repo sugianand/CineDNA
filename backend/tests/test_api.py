@@ -177,6 +177,21 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["intent"]["preferred_countries"], ["South Korea"])
         self.assertEqual(body["results"][0]["movie"]["title"], "Parasite")
 
+    def test_auto_mode_routes_anime_to_japanese_catalog(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "anime", "limit": 1},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["preferred_countries"], ["Japan"])
+        self.assertEqual(body["results"][0]["movie"]["title"], "Spirited Away")
+
     def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
         for query, theme in (
             ("space movie", "space"),
@@ -348,6 +363,25 @@ class CineDNAAPITests(unittest.TestCase):
                 self.assertEqual(movie["country"], "South Korea")
                 self.assertIn("Thriller", movie["genres"])
                 self.assertGreaterEqual(movie["dimensions"]["plot_twists"], 90)
+                self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_spirited_away_is_available_by_both_titles(self, _configured):
+        for query in ("spirited away", "千と千尋の神隠し"):
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                movie = body["results"][0]["movie"]
+                self.assertEqual(movie["title"], "Spirited Away")
+                self.assertEqual(movie["original_title"], "千と千尋の神隠し")
+                self.assertEqual(movie["country"], "Japan")
+                self.assertIn("Animation", movie["genres"])
+                self.assertGreaterEqual(movie["dimensions"]["world_building"], 95)
                 self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)

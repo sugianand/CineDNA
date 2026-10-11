@@ -38,6 +38,24 @@ GENRES = {
 
 INDIAN_LANGUAGES = {"hi", "te", "ta", "ml", "kn", "bn", "mr", "pa", "gu"}
 
+COUNTRY_NAMES = {
+    "AU": "Australia",
+    "BR": "Brazil",
+    "CA": "Canada",
+    "CN": "China",
+    "DE": "Germany",
+    "ES": "Spain",
+    "FR": "France",
+    "GB": "United Kingdom",
+    "HK": "Hong Kong",
+    "IN": "India",
+    "IT": "Italy",
+    "JP": "Japan",
+    "KR": "South Korea",
+    "MX": "Mexico",
+    "US": "USA",
+}
+
 TITLE_BLOCKERS = {
     "like ", "dark", "funny", "comedy", "mystery", "romance", "romantic",
     "action", "emotional", "sad", "thriller", "horror", "sci-fi", "science fiction",
@@ -163,9 +181,19 @@ def _themes_for(overview: str, genres: List[str]) -> List[str]:
     return list(dict.fromkeys(themes))[:6]
 
 
-def _country_label(language: str) -> str:
+def _country_label(origin_countries: object, language: str) -> str:
+    if isinstance(origin_countries, list):
+        for country_code in origin_countries:
+            if isinstance(country_code, str):
+                country = COUNTRY_NAMES.get(country_code.upper())
+                if country:
+                    return country
     if language in INDIAN_LANGUAGES:
         return "India"
+    if language == "ja":
+        return "Japan"
+    if language == "ko":
+        return "South Korea"
     return "International"
 
 
@@ -183,7 +211,10 @@ def _from_tmdb(item: dict) -> MovieDNA:
         title=item.get("title") or item.get("original_title") or "Untitled",
         original_title=item.get("original_title"),
         year=year,
-        country=_country_label(item.get("original_language") or ""),
+        country=_country_label(
+            item.get("origin_country"),
+            item.get("original_language") or "",
+        ),
         genres=genres or ["Movie"],
         themes=_themes_for(overview, genres),
         dimensions=_dimensions_for(genres, overview, rating),

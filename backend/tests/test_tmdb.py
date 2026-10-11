@@ -130,6 +130,38 @@ class TMDBProfileTests(unittest.TestCase):
         self.assertEqual(movie.dimensions["darkness"], 54)
         self.assertTrue({"family", "survival", "war", "murder", "love"} <= set(movie.themes))
 
+    def test_origin_country_is_preserved_in_generated_profiles(self):
+        cases = (
+            ({"origin_country": ["US"], "original_language": "en"}, "USA"),
+            (
+                {"origin_country": ["GB", "US"], "original_language": "en"},
+                "United Kingdom",
+            ),
+            ({"origin_country": ["IN"], "original_language": "en"}, "India"),
+            ({"origin_country": [], "original_language": "ja"}, "Japan"),
+            ({"original_language": "ko"}, "South Korea"),
+            (
+                {"origin_country": ["ZZ"], "original_language": "en"},
+                "International",
+            ),
+        )
+
+        for metadata, expected_country in cases:
+            with self.subTest(metadata=metadata):
+                movie = _from_tmdb(
+                    {
+                        "id": 4,
+                        "title": "Country Test",
+                        "genre_ids": [18],
+                        "overview": "A test movie.",
+                        "vote_average": 7.0,
+                        "release_date": "2026-01-01",
+                        **metadata,
+                    }
+                )
+
+                self.assertEqual(movie.country, expected_country)
+
 
 if __name__ == "__main__":
     unittest.main()

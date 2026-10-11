@@ -14,6 +14,16 @@ ROM_COM_TERMS = ("rom com", "romantic comedy")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 
+DECADE_WORDS = {
+    "thirties": 1930,
+    "forties": 1940,
+    "fifties": 1950,
+    "sixties": 1960,
+    "seventies": 1970,
+    "eighties": 1980,
+    "nineties": 1990,
+}
+
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "emotional_intensity": ("emotional", "moving", "heartfelt", "sad", "cry"),
     "narrative_complexity": (
@@ -229,6 +239,20 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     if decade_match:
         min_year = int(decade_match.group(1))
         max_year = min_year + 9
+    else:
+        short_decade_match = re.search(
+            r"(?<!\w)(?:the\s+)?([3-9]\d)\s*s\b",
+            query,
+        )
+        if short_decade_match:
+            min_year = 1900 + int(short_decade_match.group(1))
+            max_year = min_year + 9
+        else:
+            for word, start_year in DECADE_WORDS.items():
+                if _contains_term(query, word):
+                    min_year = start_year
+                    max_year = start_year + 9
+                    break
 
     after_match = re.search(r"\b(?:after|newer\s+than)\s+((?:19|20)\d{2})\b", query)
     if after_match:

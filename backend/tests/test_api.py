@@ -260,6 +260,32 @@ class CineDNAAPITests(unittest.TestCase):
             all(2010 <= result["movie"]["year"] <= 2019 for result in body["results"])
         )
 
+    def test_auto_mode_routes_abbreviated_decade_to_vibe_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "movies from the '90s", "limit": 20},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["min_year"], 1990)
+        self.assertEqual(body["intent"]["max_year"], 1999)
+        self.assertTrue(body["results"])
+        self.assertIn(
+            "The Matrix",
+            {result["movie"]["title"] for result in body["results"]},
+        )
+        self.assertTrue(
+            all(
+                1990 <= result["movie"]["year"] <= 1999
+                for result in body["results"]
+            )
+        )
+
     def test_auto_mode_routes_exact_release_year_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

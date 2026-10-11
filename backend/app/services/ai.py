@@ -49,7 +49,7 @@ THEME_VOCAB = {
     "morality", "justice", "crime", "deception", "murder", "greed", "friendship",
     "education", "mythology", "power", "destiny", "religion", "war", "love",
     "trauma", "truth", "dreams", "language", "grief", "communication", "action",
-    "comedy", "horror", "mystery", "romance", "thriller", "science fiction",
+    "comedy", "fantasy", "horror", "mystery", "romance", "thriller", "science fiction",
 }
 
 THEME_ALIASES = {

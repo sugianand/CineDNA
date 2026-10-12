@@ -14,7 +14,11 @@ import {
   X,
 } from 'lucide-react'
 import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
-import { getApiSearchMode, getResponseMode } from './searchRouting.js'
+import {
+  getApiSearchMode,
+  getEmptyResultsCopy,
+  getResponseMode,
+} from './searchRouting.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
@@ -76,6 +80,7 @@ function App() {
   const [expandedCatalog, setExpandedCatalog] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
   const activeSearch = useRef(null)
+  const searchInput = useRef(null)
 
   const examples = useMemo(() => (
     mode === 'title'
@@ -255,6 +260,19 @@ function App() {
     }
   }
 
+  function editSearch() {
+    setResponse(null)
+    setError('')
+    requestAnimationFrame(() => {
+      searchInput.current?.focus()
+      searchInput.current?.select()
+    })
+  }
+
+  const emptyResultsCopy = response
+    ? getEmptyResultsCopy(responseMode, response.intent)
+    : null
+
   return (
     <main className="app-shell">
       <header className="site-header">
@@ -301,6 +319,7 @@ function App() {
         <form onSubmit={searchMovies} className="search-box">
           <Search size={20} />
           <input
+            ref={searchInput}
             value={query}
             aria-label={mode === 'title' ? 'Search for a movie title' : 'Describe the movie you want'}
             placeholder={mode === 'title' ? 'Search Baahubali, RRR, Parasite…' : 'Try: a dark Indian mystery with huge plot twists'}
@@ -439,23 +458,15 @@ function App() {
           ) : (
             <div className="empty-state">
               <Dna size={30} />
-              <h3>
-                {responseMode === 'title'
-                  ? 'We could not find that movie title.'
-                  : 'Try describing the feeling instead.'}
-              </h3>
-              <p>
-                {responseMode === 'title'
-                  ? 'Check the spelling, try an alternate title, or switch to vibe discovery.'
-                  : 'Use a mood, genre, country, or a movie you already love and CineDNA will broaden the search.'}
-              </p>
+              <h3>{emptyResultsCopy.heading}</h3>
+              <p>{emptyResultsCopy.description}</p>
               {responseMode === 'title' ? (
                 <button onClick={() => chooseMode('vibe')}>
-                  Describe a vibe <ArrowRight size={15} />
+                  {emptyResultsCopy.action} <ArrowRight size={15} />
                 </button>
               ) : (
-                <button onClick={() => runSearch('A gripping mystery with strong characters and surprising plot twists', 'vibe')}>
-                  Surprise me <ArrowRight size={15} />
+                <button onClick={editSearch}>
+                  {emptyResultsCopy.action} <ArrowRight size={15} />
                 </button>
               )}
             </div>

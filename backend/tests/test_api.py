@@ -177,13 +177,13 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["intent"]["preferred_countries"], ["South Korea"])
         self.assertEqual(body["results"][0]["movie"]["title"], "Parasite")
 
-    def test_auto_mode_routes_telugu_action_to_indian_catalog(self):
+    def test_auto_mode_limits_bengali_mystery_to_indian_catalog(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"
         ) as search_tmdb:
             response = self.client.post(
                 "/api/search",
-                json={"query": "Telugu action movies", "limit": 2},
+                json={"query": "Bengali mystery", "limit": 6},
             )
 
         self.assertEqual(response.status_code, 200)

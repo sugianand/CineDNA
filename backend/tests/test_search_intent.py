@@ -143,6 +143,25 @@ class SearchIntentTests(unittest.TestCase):
 
                 self.assertEqual(intent.preferred_countries, ["India"])
 
+    def test_preferred_country_limits_results_when_catalog_has_matches(self):
+        intent = parse_search_intent("a Bengali mystery", MOVIES)
+        ranked = rank_movies(MOVIES, intent, limit=20)
+
+        self.assertTrue(ranked)
+        self.assertTrue(
+            all(movie.country == "India" for movie, _score in ranked)
+        )
+
+    def test_preferred_country_falls_back_when_catalog_has_no_matches(self):
+        intent = SearchIntent(
+            target_dimensions={},
+            preferred_countries=["France"],
+        )
+
+        ranked = rank_movies(MOVIES, intent, limit=3)
+
+        self.assertEqual(len(ranked), 3)
+
     def test_sci_fi_aliases_map_to_science_fiction(self):
         for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):
             with self.subTest(query=query):

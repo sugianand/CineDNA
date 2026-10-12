@@ -122,13 +122,29 @@ def rank_movies(
     excluded_countries = {
         country.casefold() for country in intent.excluded_countries
     }
-    ranked = [
-        (movie, score_movie(movie, intent))
+    eligible_movies = [
+        movie
         for movie in movies
         if movie.title.casefold() not in reference_titles
         and movie.country.casefold() not in excluded_countries
         and not _matching_preferences(movie, intent.exclude_themes)
         and _matches_year_range(movie, intent)
+    ]
+
+    preferred_countries = {
+        country.casefold() for country in intent.preferred_countries
+    }
+    preferred_movies = [
+        movie
+        for movie in eligible_movies
+        if movie.country.casefold() in preferred_countries
+    ]
+    if preferred_movies:
+        eligible_movies = preferred_movies
+
+    ranked = [
+        (movie, score_movie(movie, intent))
+        for movie in eligible_movies
     ]
     ranked.sort(key=lambda item: item[1], reverse=True)
     return ranked[:limit]

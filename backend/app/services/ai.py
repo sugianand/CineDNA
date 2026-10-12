@@ -227,7 +227,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         return min(first_year, second_year), max(first_year, second_year)
 
     exact_match = re.search(
-        r"\b(?:(?:movies?\s+)?released\s+in|movies?\s+(?:from|in))\s+"
+        r"\b(?:(?:(?:movies?|films?)\s+)?released\s+in|"
+        r"(?:movies?|films?)\s+(?:from|in))\s+"
         r"((?:19|20)\d{2})\b",
         query,
     )

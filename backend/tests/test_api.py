@@ -286,13 +286,13 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
-    def test_auto_mode_routes_exact_release_year_to_vibe_search(self):
+    def test_auto_mode_routes_film_release_year_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"
         ) as search_tmdb:
             response = self.client.post(
                 "/api/search",
-                json={"query": "movies released in 2015", "limit": 20},
+                json={"query": "films from 2015", "limit": 20},
             )
 
         self.assertEqual(response.status_code, 200)

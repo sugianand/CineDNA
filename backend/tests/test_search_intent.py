@@ -127,6 +127,22 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(ranked[0][0].title, "Spirited Away")
                 self.assertEqual(ranked[0][0].country, "Japan")
 
+    def test_regional_indian_languages_are_recognized(self):
+        for query in (
+            "a Telugu action movie",
+            "a Tamil thriller",
+            "a Malayalam drama",
+            "a Kannada adventure",
+            "a Bengali mystery",
+            "a Marathi comedy",
+            "a Punjabi movie",
+            "a Gujarati film",
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.preferred_countries, ["India"])
+
     def test_sci_fi_aliases_map_to_science_fiction(self):
         for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):
             with self.subTest(query=query):

@@ -71,7 +71,10 @@ THEME_ALIASES = {
 }
 
 COUNTRY_ALIASES = {
-    "India": ("indian", "bollywood", "hindi"),
+    "India": (
+        "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
+        "kannada", "bengali", "marathi", "punjabi", "gujarati",
+    ),
     "Japan": ("japanese", "anime"),
     "South Korea": ("korean", "south korean"),
     "USA": ("american", "hollywood", "us movie", "u.s."),

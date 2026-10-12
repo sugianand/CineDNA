@@ -195,6 +195,19 @@ class CineDNAAPITests(unittest.TestCase):
             all(result["movie"]["country"] == "India" for result in body["results"])
         )
 
+    def test_country_and_year_filters_do_not_leak_other_countries(self):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Indian movies from the 1990s", "limit": 6},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["preferred_countries"], ["India"])
+        self.assertEqual(body["intent"]["min_year"], 1990)
+        self.assertEqual(body["intent"]["max_year"], 1999)
+        self.assertEqual(body["results"], [])
+
     def test_auto_mode_routes_anime_to_japanese_catalog(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

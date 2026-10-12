@@ -118,13 +118,14 @@ def rank_movies(
     intent: SearchIntent,
     limit: int = 6,
 ) -> List[Tuple[MovieDNA, float]]:
+    catalog_movies = list(movies)
     reference_titles = {title.casefold() for title in intent.reference_titles}
     excluded_countries = {
         country.casefold() for country in intent.excluded_countries
     }
     eligible_movies = [
         movie
-        for movie in movies
+        for movie in catalog_movies
         if movie.title.casefold() not in reference_titles
         and movie.country.casefold() not in excluded_countries
         and not _matching_preferences(movie, intent.exclude_themes)
@@ -139,7 +140,11 @@ def rank_movies(
         for movie in eligible_movies
         if movie.country.casefold() in preferred_countries
     ]
-    if preferred_movies:
+    has_preferred_country_coverage = any(
+        movie.country.casefold() in preferred_countries
+        for movie in catalog_movies
+    )
+    if has_preferred_country_coverage:
         eligible_movies = preferred_movies
 
     ranked = [

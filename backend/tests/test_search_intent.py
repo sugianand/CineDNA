@@ -162,6 +162,13 @@ class SearchIntentTests(unittest.TestCase):
 
         self.assertEqual(len(ranked), 3)
 
+    def test_supported_country_does_not_fall_back_after_other_filters(self):
+        intent = parse_search_intent("Indian movies from the 1990s", MOVIES)
+
+        ranked = rank_movies(MOVIES, intent, limit=6)
+
+        self.assertEqual(ranked, [])
+
     def test_sci_fi_aliases_map_to_science_fiction(self):
         for query in ("A fast sci-fi movie", "A sci fi epic", "Something scifi"):
             with self.subTest(query=query):

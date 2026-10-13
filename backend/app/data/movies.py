@@ -50,6 +50,18 @@ MOVIES = [
         summary="A landmark crime drama about family, loyalty, power, and the moral transformation of a reluctant heir."
     ),
     MovieDNA(
+        title="Back to the Future", year=1985, country="USA",
+        genres=["Science Fiction", "Adventure", "Comedy"],
+        themes=["time", "family", "friendship", "destiny", "invention", "home"],
+        dimensions={
+            "emotional_intensity": 72, "narrative_complexity": 70, "visual_spectacle": 82,
+            "pacing": 86, "mystery": 55, "romance": 42, "darkness": 38,
+            "humor": 82, "plot_twists": 78, "action": 70, "character_depth": 68,
+            "world_building": 80, "dialogue_density": 62, "rewatchability": 97,
+        },
+        summary="A teenager stranded in 1955 must reunite his future parents and find a way home with help from an eccentric inventor."
+    ),
+    MovieDNA(
         title="Inception", year=2010, country="USA",
         genres=["Science Fiction", "Thriller", "Action"],
         themes=["dreams", "memory", "guilt", "reality", "identity", "heist"],

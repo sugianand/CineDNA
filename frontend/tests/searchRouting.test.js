@@ -28,11 +28,32 @@ test('empty vibe results explain which strict constraints can be widened', () =>
     min_year: 1990,
     max_year: 1999,
     include_themes: ['mystery'],
+    exclude_themes: ['horror'],
   })
 
   assert.equal(copy.heading, 'No movies matched every filter.')
-  assert.match(copy.description, /country, release period, and genre or theme filters strict/)
+  assert.match(copy.description, /country \(India\)/)
+  assert.match(copy.description, /release years \(1990\u20131999\)/)
+  assert.match(copy.description, /excluded genres or themes \(horror\)/)
+  assert.doesNotMatch(copy.description, /mystery/)
   assert.equal(copy.action, 'Edit this search')
+})
+
+test('positive themes are not misrepresented as strict filters', () => {
+  const copy = getEmptyResultsCopy('vibe', {
+    include_themes: ['mystery'],
+  })
+
+  assert.equal(copy.heading, 'No strong matches yet.')
+  assert.doesNotMatch(copy.description, /strict/)
+})
+
+test('one-sided release filters explain their boundary', () => {
+  const newerCopy = getEmptyResultsCopy('vibe', { min_year: 2020 })
+  const olderCopy = getEmptyResultsCopy('vibe', { max_year: 1970 })
+
+  assert.match(newerCopy.description, /release year \(2020 or later\)/)
+  assert.match(olderCopy.description, /release year \(1970 or earlier\)/)
 })
 
 test('empty vibe results without hard constraints suggest a more specific query', () => {

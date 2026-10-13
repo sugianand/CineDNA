@@ -108,6 +108,23 @@ class SearchIntentTests(unittest.TestCase):
                     )
                 )
 
+    def test_non_prefix_excludes_country_and_theme_preferences(self):
+        intent = parse_search_intent("a non-Indian, non-horror movie", MOVIES)
+
+        ranked = rank_movies(MOVIES, intent, limit=20)
+
+        self.assertEqual(intent.preferred_countries, [])
+        self.assertEqual(intent.excluded_countries, ["India"])
+        self.assertIn("horror", intent.exclude_themes)
+        self.assertNotIn("horror", intent.include_themes)
+        self.assertTrue(ranked)
+        self.assertTrue(
+            all(
+                movie.country != "India" and "Horror" not in movie.genres
+                for movie, _score in ranked
+            )
+        )
+
     def test_korean_preference_ranks_south_korean_movies_first(self):
         intent = parse_search_intent("a Korean thriller", MOVIES)
         ranked = rank_movies(MOVIES, intent, limit=3)

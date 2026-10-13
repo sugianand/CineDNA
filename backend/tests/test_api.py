@@ -131,6 +131,27 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertIn("horror", body["intent"]["include_themes"])
         self.assertIn("Horror", body["results"][0]["movie"]["genres"])
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_honors_non_prefixed_exclusions(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "a non-Indian, non-horror movie", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["excluded_countries"], ["India"])
+        self.assertIn("horror", body["intent"]["exclude_themes"])
+        self.assertNotIn("horror", body["intent"]["include_themes"])
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(
+                result["movie"]["country"] != "India"
+                and "Horror" not in result["movie"]["genres"]
+                for result in body["results"]
+            )
+        )
+
     def test_auto_mode_routes_feel_good_description_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

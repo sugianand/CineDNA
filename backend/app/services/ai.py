@@ -81,7 +81,7 @@ COUNTRY_ALIASES = {
 }
 
 NEGATION_PREFIX = (
-    r"(?:without|no|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
+    r"(?:without|no|non|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
     r"(?:do\s+not|don\s+t)\s+(?:want|like))"
 )
 

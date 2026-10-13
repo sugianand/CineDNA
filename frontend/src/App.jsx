@@ -411,7 +411,21 @@ function App() {
           {response.results.length > 0 ? (
             <div className="movie-grid">
               {response.results.map(({ movie, score, why }, index) => (
-                <article className="movie-card" key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}>
+                <article
+                  className="movie-card movie-card-clickable"
+                  key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${movie.title} Movie DNA profile`}
+                  onClick={() => setSelected({ movie, score, why })}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setSelected({ movie, score, why })
+                    }
+                  }}
+                >
                   <div className="poster-shell">
                     <MoviePoster movie={movie} />
                     <div className="poster-rank">#{index + 1}</div>
@@ -447,7 +461,13 @@ function App() {
 
                     <div className="card-footer">
                       <span className="source-pill">{movie.source === 'tmdb' ? 'TMDB catalog' : 'CineDNA catalog'}</span>
-                      <button className="profile-button" onClick={() => setSelected({ movie, score, why })}>
+                      <button
+                        className="profile-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setSelected({ movie, score, why })
+                        }}
+                      >
                         View full DNA <ArrowRight size={16} />
                       </button>
                     </div>

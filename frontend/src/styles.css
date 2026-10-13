@@ -104,6 +104,15 @@ h1 { font-family: 'Playfair Display', serif; font-size: clamp(66px, 12vw, 130px)
 }
 .movie-card:hover { transform: translateY(-5px); border-color: #49445f; box-shadow: 0 22px 60px rgba(0,0,0,.3); }
 
+.movie-card-clickable { cursor: pointer; }
+.movie-card-clickable:focus-visible {
+  outline: 2px solid #9f8bff;
+  outline-offset: 4px;
+  border-color: #62577d;
+}
+.movie-card-clickable:active { transform: translateY(-1px); }
+
+
 .poster-shell { position: relative; height: 255px; overflow: hidden; background: #12131a; }
 .movie-poster { width: 100%; height: 100%; overflow: hidden; background: #14151d; }
 .movie-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }

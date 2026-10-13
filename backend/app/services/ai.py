@@ -7,10 +7,19 @@ from typing import Dict, List, Tuple
 from app.models import MovieDNA, SearchIntent
 
 
-FAST_PACING_TERMS = ("fast", "fast paced", "fast-paced", "faster")
-SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower")
-LIGHT_TONE_TERMS = ("feel good", "feel-good", "lighthearted", "uplifting")
+FAST_PACING_TERMS = (
+    "fast", "fast paced", "fast-paced", "faster",
+    "high energy", "high-energy", "energetic", "quick paced", "quick-paced",
+)
+SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower", "deliberate", "deliberately paced")
+LIGHT_TONE_TERMS = (
+    "feel good", "feel-good", "lighthearted", "uplifting", "comforting", "easy watch",
+)
 ROM_COM_TERMS = ("rom com", "romantic comedy")
+SUSPENSE_TERMS = (
+    "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
+)
+MILD_PREFIXES = ("a little", "a bit", "somewhat", "slightly", "kind of", "kinda")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 
@@ -25,22 +34,40 @@ DECADE_WORDS = {
 }
 
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
-    "emotional_intensity": ("emotional", "moving", "heartfelt", "sad", "cry"),
+    "emotional_intensity": (
+        "emotional", "moving", "heartfelt", "sad", "cry", "intense", "powerful",
+        "tearjerker", "tear jerker",
+    ),
     "narrative_complexity": (
         "complex", "complicated", "mind bending", "mind-bending", "cerebral", "confusing",
+        "thought provoking", "thought-provoking", "intellectual", "smart",
     ),
-    "visual_spectacle": ("beautiful", "visual", "cinematic", "spectacle", "epic"),
+    "visual_spectacle": (
+        "beautiful", "visual", "cinematic", "spectacle", "epic", "visually stunning",
+        "gorgeous", "big screen", "big-screen",
+    ),
     "pacing": FAST_PACING_TERMS + SLOW_PACING_TERMS,
-    "mystery": ("mystery", "mysterious", "detective", "whodunit"),
+    "mystery": ("mystery", "mysterious", "detective", "whodunit", "suspenseful"),
     "romance": ("romance", "romantic", "love story") + ROM_COM_TERMS,
-    "darkness": ("dark", "bleak", "grim") + LIGHT_TONE_TERMS,
-    "humor": ("funny", "comedy", "humor", "hilarious") + ROM_COM_TERMS,
-    "plot_twists": ("twist", "twisty", "unpredictable", "shocking"),
-    "action": ("action", "fight", "explosive"),
-    "character_depth": ("character driven", "character-driven", "deep characters"),
-    "world_building": ("world building", "world-building", "immersive world"),
-    "dialogue_density": ("dialogue", "talky", "conversation"),
-    "rewatchability": ("rewatchable", "rewatch"),
+    "darkness": ("dark", "bleak", "grim", "scary", "disturbing") + LIGHT_TONE_TERMS,
+    "humor": ("funny", "comedy", "humor", "hilarious", "fun") + ROM_COM_TERMS,
+    "plot_twists": (
+        "twist", "twists", "twisty", "unpredictable", "shocking", "surprising",
+    ),
+    "action": ("action", "fight", "fights", "fighting", "explosive", "combat"),
+    "character_depth": (
+        "character driven", "character-driven", "deep characters", "strong characters",
+        "character focused", "character-focused",
+    ),
+    "world_building": (
+        "world building", "world-building", "worldbuilding", "immersive world", "big world",
+    ),
+    "dialogue_density": (
+        "dialogue", "talky", "conversation", "dialogue heavy", "dialogue-heavy",
+    ),
+    "rewatchability": (
+        "rewatchable", "rewatch", "easy watch", "comfort movie", "comforting",
+    ),
 }
 
 NEGATED_THEME_ALIASES = {
@@ -63,11 +90,16 @@ THEME_VOCAB = {
 }
 
 THEME_ALIASES = {
+    "adventure": ("adventurous", "adventures"),
     "animation": ("animated", "cartoon", "cartoons"),
-    "horror": ("scary", "spooky", "frightening"),
-    "romance": ROM_COM_TERMS,
-    "comedy": ROM_COM_TERMS,
-    "science fiction": ("sci fi", "scifi"),
+    "comedy": ROM_COM_TERMS + ("comedies",),
+    "drama": ("dramatic", "dramas"),
+    "fantasy": ("magical", "magic", "fantasies"),
+    "horror": ("scary", "spooky", "frightening", "horrors"),
+    "mystery": ("mysteries",),
+    "romance": ROM_COM_TERMS + ("romances",),
+    "science fiction": ("sci fi", "scifi", "space opera"),
+    "thriller": SUSPENSE_TERMS + ("thrillers",),
 }
 
 COUNTRY_ALIASES = {
@@ -199,7 +231,22 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
     return max(POSITIVE_TRAIT_TARGET, current)
 
 
+def _soft_preference_target(query: str, term: str) -> int | None:
+    escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
+    if re.search(rf"\bnot\s+too\s+{escaped}\b", query):
+        return 40
+    mild_prefix = "|".join(
+        re.escape(prefix).replace(r"\ ", r"\s+")
+        for prefix in MILD_PREFIXES
+    )
+    if re.search(rf"\b(?:{mild_prefix})\s+{escaped}\b", query):
+        return 60
+    return None
+
+
 def _is_negated(query: str, term: str) -> bool:
+    if _soft_preference_target(query, term) is not None:
+        return False
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
     pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:a|an|any|too\s+much)\s+)?{escaped}\b"
     return bool(re.search(pattern, query))
@@ -316,6 +363,8 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             continue
         if _is_reduced(trait_query, matched):
             continue
+        if _soft_preference_target(trait_query, matched) is not None:
+            continue
         if _is_negated(trait_query, matched):
             exclude_themes.append(theme)
         else:
@@ -334,6 +383,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             continue
 
         current = target.get(dimension, 75)
+        soft_target = _soft_preference_target(trait_query, matched)
         negated = _is_negated(trait_query, matched)
         if dimension == "pacing":
             negated_pacing = next(
@@ -355,10 +405,14 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
                 None,
             )
             reversed_pacing = negated_pacing or reduced_pacing
-            if reversed_pacing:
+            if soft_target is not None:
+                current = 55 if matched in FAST_PACING_TERMS else 60
+            elif reversed_pacing:
                 current = 85 if reversed_pacing in SLOW_PACING_TERMS else 35
             else:
                 current = 35 if matched in SLOW_PACING_TERMS else 85
+        elif soft_target is not None:
+            current = soft_target
         elif dimension == "darkness" and matched in LIGHT_TONE_TERMS:
             current = 80 if negated else 20
         elif negated:

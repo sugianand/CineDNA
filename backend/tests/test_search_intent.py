@@ -767,6 +767,33 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["humor"], 10)
         self.assertEqual([movie.title for movie, _score in ranked], ["Hidden Clue"])
 
+    def test_soft_preferences_do_not_become_hard_exclusions(self):
+        intent = parse_search_intent(
+            "I want something not too dark and kind of funny",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.target_dimensions["darkness"], 40)
+        self.assertEqual(intent.target_dimensions["humor"], 60)
+        self.assertNotIn("comedy", intent.exclude_themes)
+        self.assertNotIn("comedy", intent.include_themes)
+
+    def test_natural_aliases_map_to_movie_dna(self):
+        intent = parse_search_intent(
+            "A suspenseful high-energy thriller with big-screen visuals and huge twists",
+            MOVIES,
+        )
+
+        self.assertIn("thriller", intent.include_themes)
+        self.assertEqual(intent.target_dimensions["pacing"], 85)
+        self.assertEqual(intent.target_dimensions["visual_spectacle"], 75)
+        self.assertEqual(intent.target_dimensions["plot_twists"], 75)
+
+    def test_thought_provoking_maps_to_narrative_complexity(self):
+        intent = parse_search_intent("something thought-provoking and smart", MOVIES)
+
+        self.assertEqual(intent.target_dimensions["narrative_complexity"], 75)
+
     def test_exclusion_only_query_penalizes_matching_movies(self):
         intent = SearchIntent(
             target_dimensions={},

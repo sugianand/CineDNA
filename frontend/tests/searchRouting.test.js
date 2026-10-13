@@ -7,8 +7,8 @@ import {
   getResponseMode,
 } from '../src/searchRouting.js'
 
-test('default search uses backend auto-routing', () => {
-  assert.equal(getApiSearchMode('vibe'), 'auto')
+test('explicit search modes stay explicit', () => {
+  assert.equal(getApiSearchMode('vibe'), 'vibe')
   assert.equal(getApiSearchMode('title'), 'title')
 })
 

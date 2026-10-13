@@ -358,26 +358,31 @@ class CineDNAAPITests(unittest.TestCase):
         )
 
     def test_auto_mode_routes_from_to_year_range_to_vibe_search(self):
-        with patch("app.main.tmdb_is_configured", return_value=True), patch(
-            "app.main.search_tmdb_movies"
-        ) as search_tmdb:
-            response = self.client.post(
-                "/api/search",
-                json={"query": "movies from 2013 to 2016", "limit": 20},
-            )
+        for query in (
+            "movies from 2013 to 2016",
+            "movies from 2013-2016",
+            "movies from 2013–2016",
+        ):
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 20},
+                )
 
-        self.assertEqual(response.status_code, 200)
-        search_tmdb.assert_not_called()
-        body = response.json()
-        self.assertEqual(body["intent"]["min_year"], 2013)
-        self.assertEqual(body["intent"]["max_year"], 2016)
-        self.assertTrue(body["results"])
-        self.assertTrue(
-            all(
-                2013 <= result["movie"]["year"] <= 2016
-                for result in body["results"]
-            )
-        )
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                body = response.json()
+                self.assertEqual(body["intent"]["min_year"], 2013)
+                self.assertEqual(body["intent"]["max_year"], 2016)
+                self.assertTrue(body["results"])
+                self.assertTrue(
+                    all(
+                        2013 <= result["movie"]["year"] <= 2016
+                        for result in body["results"]
+                    )
+                )
 
     def test_auto_mode_uses_parsed_themes_to_avoid_title_search(self):
         for query, theme in (

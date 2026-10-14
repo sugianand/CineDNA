@@ -778,6 +778,31 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("comedy", intent.exclude_themes)
         self.assertNotIn("comedy", intent.include_themes)
 
+    def test_negation_carries_across_coordinated_theme_list(self):
+        intent = parse_search_intent("no horror or thriller movies", MOVIES)
+
+        self.assertEqual(intent.exclude_themes, ["horror", "thriller"])
+        self.assertNotIn("horror", intent.include_themes)
+        self.assertNotIn("thriller", intent.include_themes)
+
+    def test_negation_carries_across_coordinated_country_list(self):
+        intent = parse_search_intent(
+            "movies without Indian or Korean titles",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.excluded_countries, ["India", "South Korea"])
+        self.assertEqual(intent.preferred_countries, [])
+
+    def test_negation_does_not_cross_contrasting_clause(self):
+        intent = parse_search_intent(
+            "not horror but a funny thriller",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.exclude_themes, ["horror"])
+        self.assertIn("thriller", intent.include_themes)
+
     def test_natural_aliases_map_to_movie_dna(self):
         intent = parse_search_intent(
             "A suspenseful high-energy thriller with big-screen visuals and huge twists",

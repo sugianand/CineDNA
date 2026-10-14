@@ -249,7 +249,30 @@ def _is_negated(query: str, term: str) -> bool:
         return False
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
     pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:a|an|any|too\s+much)\s+)?{escaped}\b"
-    return bool(re.search(pattern, query))
+    if re.search(pattern, query):
+        return True
+
+    # Carry a negation across short, coordinated lists such as
+    # "no horror or thriller" without crossing a contrasting clause.
+    for negation in re.finditer(rf"\b{NEGATION_PREFIX}\b", query):
+        clause = re.split(
+            r"\b(?:but|instead|although|though|yet|with)\b",
+            query[negation.end():],
+            maxsplit=1,
+        )[0]
+        term_match = re.search(rf"\b{escaped}\b", clause)
+        if term_match is None:
+            continue
+
+        prefix = term_match.string[:term_match.start()].strip()
+        prefix = re.sub(r"^(?:a|an|any|too\s+much)\s+", "", prefix)
+        if (
+            len(prefix.split()) <= 8
+            and re.search(r"\b(?:and|or)\s*$", prefix)
+        ):
+            return True
+
+    return False
 
 
 def _is_reduced(query: str, term: str) -> bool:

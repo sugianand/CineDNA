@@ -152,6 +152,28 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    def test_vibe_mode_honors_coordinated_exclusions(self):
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "no horror or thriller movies",
+                "limit": 20,
+                "mode": "vibe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["exclude_themes"], ["horror", "thriller"])
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(
+                "Horror" not in result["movie"]["genres"]
+                and "Thriller" not in result["movie"]["genres"]
+                for result in body["results"]
+            )
+        )
+
     def test_auto_mode_routes_feel_good_description_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

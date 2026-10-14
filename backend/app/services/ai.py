@@ -284,17 +284,24 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
 
-    range_match = re.search(
+    range_patterns = (
         r"\bbetween\s+((?:19|20)\d{2})\s+(?:and\s+|to\s+)?"
         r"((?:19|20)\d{2})\b",
-        query,
+        r"\b(?:(?:movies?|films?)\s+)?(?:released\s+)?from\s+"
+        r"((?:19|20)\d{2})\s+(?:to\s+)?((?:19|20)\d{2})\b",
+        r"\b(?:movies?|films?)\s+(?:released\s+)?"
+        r"((?:19|20)\d{2})\s+(?:to\s+)?((?:19|20)\d{2})\b",
+        r"\b(?:released\s+)?((?:19|20)\d{2})\s+(?:to\s+)?"
+        r"((?:19|20)\d{2})\s+(?:movies?|films?)\b",
     )
-    if range_match is None:
-        range_match = re.search(
-            r"\b(?:(?:movies?|films?)\s+)?(?:released\s+)?from\s+"
-            r"((?:19|20)\d{2})\s+(?:to\s+)?((?:19|20)\d{2})\b",
-            query,
-        )
+    range_match = next(
+        (
+            match
+            for pattern in range_patterns
+            if (match := re.search(pattern, query)) is not None
+        ),
+        None,
+    )
     if range_match:
         first_year = int(range_match.group(1))
         second_year = int(range_match.group(2))

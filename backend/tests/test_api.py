@@ -360,24 +360,33 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
-    def test_auto_mode_routes_film_release_year_to_vibe_search(self):
-        with patch("app.main.tmdb_is_configured", return_value=True), patch(
-            "app.main.search_tmdb_movies"
-        ) as search_tmdb:
-            response = self.client.post(
-                "/api/search",
-                json={"query": "films from 2015", "limit": 20},
-            )
+    def test_auto_mode_routes_natural_release_years_to_vibe_search(self):
+        for query in (
+            "films from 2015",
+            "movies 2015",
+            "2015 films",
+            "movies released 2015",
+        ):
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 20},
+                )
 
-        self.assertEqual(response.status_code, 200)
-        search_tmdb.assert_not_called()
-        body = response.json()
-        self.assertEqual(body["intent"]["min_year"], 2015)
-        self.assertEqual(body["intent"]["max_year"], 2015)
-        self.assertTrue(body["results"])
-        self.assertTrue(
-            all(result["movie"]["year"] == 2015 for result in body["results"])
-        )
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                body = response.json()
+                self.assertEqual(body["intent"]["min_year"], 2015)
+                self.assertEqual(body["intent"]["max_year"], 2015)
+                self.assertTrue(body["results"])
+                self.assertTrue(
+                    all(
+                        result["movie"]["year"] == 2015
+                        for result in body["results"]
+                    )
+                )
 
     def test_auto_mode_routes_natural_year_ranges_to_vibe_search(self):
         for query in (

@@ -307,11 +307,19 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         second_year = int(range_match.group(2))
         return min(first_year, second_year), max(first_year, second_year)
 
-    exact_match = re.search(
-        r"\b(?:(?:(?:movies?|films?)\s+)?released\s+in|"
-        r"(?:movies?|films?)\s+(?:from|in))\s+"
+    exact_patterns = (
+        r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"
         r"((?:19|20)\d{2})\b",
-        query,
+        r"\breleased\s+(?:in\s+)?((?:19|20)\d{2})\b",
+        r"\b((?:19|20)\d{2})\s+(?:movies?|films?)\b",
+    )
+    exact_match = next(
+        (
+            match
+            for pattern in exact_patterns
+            if (match := re.search(pattern, query)) is not None
+        ),
+        None,
     )
     if exact_match:
         year = int(exact_match.group(1))

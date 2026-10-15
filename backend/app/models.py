@@ -15,6 +15,13 @@ class MovieDNA(BaseModel):
     original_title: Optional[str] = None
     poster_url: Optional[str] = None
 
+    @field_validator("dimensions")
+    @classmethod
+    def validate_dimension_scores(cls, value):
+        if any(score < 0 or score > 100 for score in value.values()):
+            raise ValueError("Movie DNA dimensions must be between 0 and 100")
+        return value
+
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)

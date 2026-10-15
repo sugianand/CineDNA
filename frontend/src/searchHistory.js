@@ -13,7 +13,9 @@ function isValidReferenceMovie(movie) {
     && movie.dimensions
     && typeof movie.dimensions === 'object'
     && !Array.isArray(movie.dimensions)
-    && Object.values(movie.dimensions).every((value) => Number.isInteger(value))
+    && Object.values(movie.dimensions).every(
+      (value) => Number.isInteger(value) && value >= 0 && value <= 100,
+    )
     && typeof movie.summary === 'string'
   )
 }

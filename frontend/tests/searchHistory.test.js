@@ -11,6 +11,22 @@ test('parseRecentSearches safely rejects malformed storage', () => {
   ])), [])
 })
 
+test('parseRecentSearches rejects reference DNA dimensions outside the scoring scale', () => {
+  const referenceMovie = {
+    title: 'Corrupt Movie',
+    year: 2026,
+    country: 'USA',
+    genres: ['Drama'],
+    themes: ['family'],
+    dimensions: { action: 101 },
+    summary: 'A malformed persisted reference movie.',
+  }
+
+  assert.deepEqual(parseRecentSearches(JSON.stringify([
+    { query: 'Like Corrupt Movie', mode: 'vibe', referenceMovie },
+  ])), [])
+})
+
 test('parseRecentSearches preserves modes and migrates legacy entries', () => {
   const stored = JSON.stringify([
     { query: '  Dune  ', mode: 'title' },

@@ -352,7 +352,9 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         year = int(exact_match.group(1))
         return year, year
 
-    decade_match = re.search(r"\b((?:19|20)\d{2})s\b", query)
+    # Apostrophes normalize to spaces, so accept both "1990s" and the common
+    # (though nonstandard) spellings "1990's" and "1990’s".
+    decade_match = re.search(r"\b((?:19|20)\d{2})\s*s\b", query)
     if decade_match:
         min_year = int(decade_match.group(1))
         max_year = min_year + 9

@@ -325,7 +325,7 @@ class CineDNAAPITests(unittest.TestCase):
         ) as search_tmdb:
             response = self.client.post(
                 "/api/search",
-                json={"query": "movies from the 2010s", "limit": 20},
+                json={"query": "movies from the 2010's", "limit": 20},
             )
 
         self.assertEqual(response.status_code, 200)

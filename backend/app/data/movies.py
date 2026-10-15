@@ -50,6 +50,18 @@ MOVIES = [
         summary="A landmark crime drama about family, loyalty, power, and the moral transformation of a reluctant heir."
     ),
     MovieDNA(
+        title="2001: A Space Odyssey", year=1968, country="USA",
+        genres=["Science Fiction", "Adventure", "Mystery"],
+        themes=["space", "evolution", "technology", "humanity", "identity", "survival"],
+        dimensions={
+            "emotional_intensity": 58, "narrative_complexity": 94, "visual_spectacle": 98,
+            "pacing": 32, "mystery": 93, "romance": 0, "darkness": 66,
+            "humor": 4, "plot_twists": 82, "action": 28, "character_depth": 62,
+            "world_building": 99, "dialogue_density": 24, "rewatchability": 91,
+        },
+        summary="A visionary science-fiction journey through human evolution, artificial intelligence, and the mysteries of space."
+    ),
+    MovieDNA(
         title="Back to the Future", year=1985, country="USA",
         genres=["Science Fiction", "Adventure", "Comedy"],
         themes=["time", "family", "friendship", "destiny", "invention", "home"],

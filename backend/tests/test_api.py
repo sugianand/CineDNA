@@ -673,6 +673,41 @@ class CineDNAAPITests(unittest.TestCase):
         )
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_2001_expands_offline_1960s_coverage(self, _configured):
+        title_response = self.client.post(
+            "/api/search",
+            json={"query": "2001: A Space Odyssey"},
+        )
+
+        self.assertEqual(title_response.status_code, 200)
+        title_body = title_response.json()
+        movie = title_body["results"][0]["movie"]
+        self.assertEqual(movie["title"], "2001: A Space Odyssey")
+        self.assertEqual(movie["year"], 1968)
+        self.assertIn("Science Fiction", movie["genres"])
+        self.assertGreaterEqual(movie["dimensions"]["narrative_complexity"], 90)
+        self.assertEqual(title_body["ai_provider"], "cinedna-title-catalog")
+
+        period_response = self.client.post(
+            "/api/search",
+            json={"query": "sixties sci-fi movies", "limit": 20},
+        )
+
+        self.assertEqual(period_response.status_code, 200)
+        period_body = period_response.json()
+        self.assertTrue(period_body["results"])
+        self.assertIn(
+            "2001: A Space Odyssey",
+            {result["movie"]["title"] for result in period_body["results"]},
+        )
+        self.assertTrue(
+            all(
+                1960 <= result["movie"]["year"] <= 1969
+                for result in period_body["results"]
+            )
+        )
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_back_to_the_future_expands_offline_1980s_coverage(self, _configured):
         title_response = self.client.post(
             "/api/search",

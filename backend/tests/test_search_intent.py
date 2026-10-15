@@ -62,6 +62,40 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("3 Idiots", ranked_titles)
         self.assertEqual(len(ranked), 6)
 
+    def test_reference_movie_exclusion_normalizes_titles(self):
+        reference_movie = MovieDNA(
+            title="Amelie!",
+            original_title="Le Fabuleux Destin d'Amélie",
+            year=2001,
+            country="France",
+            genres=["Romance"],
+            themes=["love"],
+            dimensions={"romance": 85},
+            summary="The selected reference movie.",
+        )
+        alternative = MovieDNA(
+            title="Before Sunrise",
+            year=1995,
+            country="USA",
+            genres=["Romance"],
+            themes=["love"],
+            dimensions={"romance": 82},
+            summary="A different romantic movie.",
+        )
+
+        for reference_title in ("Amélie", "Le Fabuleux Destin d’Amélie"):
+            with self.subTest(reference_title=reference_title):
+                intent = SearchIntent(
+                    target_dimensions={"romance": 85},
+                    reference_titles=[reference_title],
+                )
+                ranked = rank_movies([reference_movie, alternative], intent)
+
+                self.assertEqual(
+                    [movie.title for movie, _score in ranked],
+                    ["Before Sunrise"],
+                )
+
     def test_keywords_do_not_match_inside_unrelated_words(self):
         intent = parse_search_intent(
             "A breakfast story set in Indiana about satisfaction",

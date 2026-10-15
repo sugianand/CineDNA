@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from math import sqrt
 from typing import Dict, Iterable, List, Tuple
 
@@ -27,6 +28,24 @@ DIMENSION_WEIGHTS = {
 
 def _normalize_term(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
+
+
+def _normalize_title(value: str) -> str:
+    output = []
+    last_base_is_latin = False
+    for char in unicodedata.normalize("NFKD", value.casefold()):
+        category = unicodedata.category(char)
+        if category.startswith("M"):
+            if not last_base_is_latin:
+                output.append(char)
+        elif category.startswith(("L", "N")):
+            output.append(char)
+            last_base_is_latin = "LATIN" in unicodedata.name(char, "")
+        else:
+            output.append(" ")
+            last_base_is_latin = False
+
+    return " ".join("".join(output).split())
 
 
 def _matching_preferences(movie: MovieDNA, preferences: Iterable[str]) -> set[str]:
@@ -119,14 +138,22 @@ def rank_movies(
     limit: int = 6,
 ) -> List[Tuple[MovieDNA, float]]:
     catalog_movies = list(movies)
-    reference_titles = {title.casefold() for title in intent.reference_titles}
+    reference_titles = {
+        normalized
+        for title in intent.reference_titles
+        if (normalized := _normalize_title(title))
+    }
     excluded_countries = {
         country.casefold() for country in intent.excluded_countries
     }
     eligible_movies = [
         movie
         for movie in catalog_movies
-        if movie.title.casefold() not in reference_titles
+        if not any(
+            _normalize_title(candidate) in reference_titles
+            for candidate in (movie.title, movie.original_title or "")
+            if candidate
+        )
         and movie.country.casefold() not in excluded_countries
         and not _matching_preferences(movie, intent.exclude_themes)
         and _matches_year_range(movie, intent)

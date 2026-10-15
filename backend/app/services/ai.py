@@ -13,7 +13,8 @@ FAST_PACING_TERMS = (
 )
 SLOW_PACING_TERMS = ("slow", "slow burn", "slow-burn", "slower", "deliberate", "deliberately paced")
 LIGHT_TONE_TERMS = (
-    "feel good", "feel-good", "lighthearted", "uplifting", "comforting", "easy watch",
+    "feel good", "feel-good", "lighthearted", "lighter", "lighter tone",
+    "uplifting", "comforting", "easy watch",
 )
 ROM_COM_TERMS = ("rom com", "romantic comedy")
 SUSPENSE_TERMS = (
@@ -479,7 +480,11 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             else:
                 current = 35 if matched in SLOW_PACING_TERMS else 85
         elif soft_target is not None:
-            current = soft_target
+            current = (
+                100 - soft_target
+                if dimension == "darkness" and matched in LIGHT_TONE_TERMS
+                else soft_target
+            )
         elif dimension == "darkness" and matched in LIGHT_TONE_TERMS:
             current = 80 if negated else 20
         elif negated:

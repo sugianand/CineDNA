@@ -203,19 +203,23 @@ class CineDNAAPITests(unittest.TestCase):
         )
 
     def test_auto_mode_routes_feel_good_description_to_vibe_search(self):
-        with patch("app.main.tmdb_is_configured", return_value=True), patch(
-            "app.main.search_tmdb_movies"
-        ) as search_tmdb:
-            response = self.client.post(
-                "/api/search",
-                json={"query": "feel-good movie", "limit": 1},
-            )
+        for query in ("feel-good movie", "something lighter"):
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 1},
+                )
 
-        self.assertEqual(response.status_code, 200)
-        search_tmdb.assert_not_called()
-        body = response.json()
-        self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 20)
-        self.assertEqual(body["results"][0]["movie"]["title"], "3 Idiots")
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                body = response.json()
+                self.assertEqual(
+                    body["intent"]["target_dimensions"]["darkness"],
+                    20,
+                )
+                self.assertEqual(body["results"][0]["movie"]["title"], "3 Idiots")
 
     def test_auto_mode_routes_rom_com_description_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(

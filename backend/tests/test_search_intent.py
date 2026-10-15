@@ -506,13 +506,31 @@ class SearchIntentTests(unittest.TestCase):
             summary="A dark test movie.",
         )
 
-        for query in ("a feel-good movie", "something lighthearted", "an uplifting film"):
+        for query in (
+            "a feel-good movie",
+            "something lighthearted",
+            "something lighter",
+            "an uplifting film",
+            "Like The Dark Knight but lighter",
+        ):
             with self.subTest(query=query):
                 intent = parse_search_intent(query, MOVIES)
                 ranked = rank_movies([dark_movie, light_movie], intent, limit=2)
 
                 self.assertEqual(intent.target_dimensions["darkness"], 20)
                 self.assertEqual(ranked[0][0].title, "Bright Day")
+
+    def test_soft_light_tone_modifiers_invert_darkness(self):
+        for query, target in (
+            ("something kind of lighthearted", 40),
+            ("a little lighter", 40),
+            ("not too lighthearted", 60),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.target_dimensions["darkness"], target)
+                self.assertNotIn("horror", intent.exclude_themes)
 
     def test_reference_movie_matches_unique_title_before_subtitle(self):
         intent = parse_search_intent(

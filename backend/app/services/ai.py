@@ -266,9 +266,13 @@ def _is_negated(query: str, term: str) -> bool:
 
         prefix = term_match.string[:term_match.start()].strip()
         prefix = re.sub(r"^(?:a|an|any|too\s+much)\s+", "", prefix)
+        suffix = term_match.string[term_match.end():]
         if (
             len(prefix.split()) <= 8
-            and re.search(r"\b(?:and|or)\s*$", prefix)
+            and (
+                re.search(r"\b(?:and|or)\s*$", prefix)
+                or re.search(r"\b(?:and|or)\b", suffix)
+            )
         ):
             return True
 

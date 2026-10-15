@@ -156,7 +156,7 @@ class CineDNAAPITests(unittest.TestCase):
         response = self.client.post(
             "/api/search",
             json={
-                "query": "no horror or thriller movies",
+                "query": "no action, comedy, or romance movies",
                 "limit": 20,
                 "mode": "vibe",
             },
@@ -164,12 +164,16 @@ class CineDNAAPITests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertEqual(body["intent"]["exclude_themes"], ["horror", "thriller"])
+        self.assertEqual(
+            body["intent"]["exclude_themes"],
+            ["action", "comedy", "romance"],
+        )
         self.assertTrue(body["results"])
         self.assertTrue(
             all(
-                "Horror" not in result["movie"]["genres"]
-                and "Thriller" not in result["movie"]["genres"]
+                not {"Action", "Comedy", "Romance"}.intersection(
+                    result["movie"]["genres"]
+                )
                 for result in body["results"]
             )
         )

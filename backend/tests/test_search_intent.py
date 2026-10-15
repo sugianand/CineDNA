@@ -808,6 +808,27 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.excluded_countries, ["India", "South Korea"])
         self.assertEqual(intent.preferred_countries, [])
 
+    def test_negation_carries_across_comma_separated_lists(self):
+        theme_intent = parse_search_intent(
+            "no action, comedy, or romance movies",
+            MOVIES,
+        )
+        country_intent = parse_search_intent(
+            "movies without Indian, Korean, or Japanese titles",
+            MOVIES,
+        )
+
+        self.assertEqual(
+            theme_intent.exclude_themes,
+            ["action", "comedy", "romance"],
+        )
+        self.assertEqual(theme_intent.include_themes, [])
+        self.assertEqual(
+            country_intent.excluded_countries,
+            ["India", "Japan", "South Korea"],
+        )
+        self.assertEqual(country_intent.preferred_countries, [])
+
     def test_negation_does_not_cross_contrasting_clause(self):
         intent = parse_search_intent(
             "not horror but a funny thriller",

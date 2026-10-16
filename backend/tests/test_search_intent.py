@@ -620,6 +620,38 @@ class SearchIntentTests(unittest.TestCase):
 
                 self.assertEqual(intent.reference_titles, [expected_title])
 
+    def test_reference_movie_matching_tolerates_confident_typos(self):
+        intent = parse_search_intent(
+            "Movies like Intersteller but funnier",
+            MOVIES,
+        )
+
+        interstellar = next(movie for movie in MOVIES if movie.title == "Interstellar")
+        self.assertEqual(intent.reference_titles, ["Interstellar"])
+        self.assertEqual(
+            intent.target_dimensions["visual_spectacle"],
+            interstellar.dimensions["visual_spectacle"],
+        )
+        self.assertGreater(
+            intent.target_dimensions["humor"],
+            interstellar.dimensions["humor"],
+        )
+
+        article_intent = parse_search_intent(
+            "Something like Dark Knigt but lighter",
+            MOVIES,
+        )
+        self.assertEqual(article_intent.reference_titles, ["The Dark Knight"])
+        self.assertEqual(article_intent.target_dimensions["darkness"], 20)
+
+    def test_fuzzy_reference_matching_requires_an_explicit_cue(self):
+        intent = parse_search_intent(
+            "An intersteller journey through grief",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.reference_titles, [])
+
     def test_reference_title_traits_do_not_override_movie_dna(self):
         reference = MovieDNA(
             title="Slow Burn",

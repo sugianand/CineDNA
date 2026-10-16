@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from difflib import SequenceMatcher
 from typing import Dict, List, Tuple
 
 from app.models import MovieDNA, SearchIntent
@@ -152,6 +153,43 @@ def _title_base(title: str) -> str:
     return re.split(r":|\s[-–—]\s", title, maxsplit=1)[0].strip()
 
 
+def _reference_hint(query: str) -> str:
+    cue_patterns = (
+        r"(?:^|\b(?:movie|movies|film|films|something|anything|one)\s+)like\s+",
+        r"\bsimilar\s+to\s+",
+        r"\bsame\s+(?:vibe|dna|feel)\s+as\s+",
+    )
+    for pattern in cue_patterns:
+        match = re.search(pattern, query)
+        if not match:
+            continue
+        hint = query[match.end():]
+        hint = re.split(
+            r"\s+(?:but|with|without|except|and|more|less)\b|[,;]",
+            hint,
+            maxsplit=1,
+        )[0]
+        return hint.strip()
+    return ""
+
+
+def _fuzzy_title_variants(movie: MovieDNA) -> set[str]:
+    variants = {
+        _normalize_text(candidate)
+        for candidate in (
+            movie.title,
+            movie.original_title or "",
+            _title_base(movie.title),
+        )
+        if candidate
+    }
+    variants.update(
+        re.sub(r"^(?:a|an|the)\s+", "", variant)
+        for variant in tuple(variants)
+    )
+    return {variant for variant in variants if len(variant) >= 4}
+
+
 def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
     normalized_query = _normalize_text(query)
     exact_matches = []
@@ -178,11 +216,38 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
         if base != movie.title and len(_normalize_text(base)) >= 4:
             base_matches.setdefault(_normalize_text(base), []).append(movie)
 
-    return [
+    unique_base_matches = [
         candidates[0]
         for base, candidates in base_matches.items()
         if len(candidates) == 1 and _contains_title(normalized_query, base)
     ]
+    if unique_base_matches:
+        return unique_base_matches
+
+    hint = _reference_hint(normalized_query)
+    if len(hint) < 4:
+        return []
+
+    fuzzy_matches = []
+    for movie in movies:
+        variants = _fuzzy_title_variants(movie)
+        if variants:
+            fuzzy_matches.append((
+                max(
+                    SequenceMatcher(None, hint, variant).ratio()
+                    for variant in variants
+                ),
+                movie,
+            ))
+    fuzzy_matches.sort(key=lambda match: match[0])
+    if not fuzzy_matches:
+        return []
+
+    best_score, best_movie = fuzzy_matches[-1]
+    next_score = fuzzy_matches[-2][0] if len(fuzzy_matches) > 1 else 0.0
+    if best_score < 0.8 or best_score - next_score < 0.05:
+        return []
+    return [best_movie]
 
 
 def _without_reference_titles(
@@ -190,6 +255,9 @@ def _without_reference_titles(
     references: List[MovieDNA],
 ) -> str:
     trait_query = query
+    hint = _reference_hint(query)
+    if references and hint:
+        trait_query = trait_query.replace(hint, " ", 1)
     for movie in references:
         candidates = {
             _normalize_text(candidate)

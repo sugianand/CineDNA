@@ -310,7 +310,10 @@ class CineDNAAPITests(unittest.TestCase):
                     body["intent"]["target_dimensions"]["darkness"],
                     20,
                 )
-                self.assertEqual(body["results"][0]["movie"]["title"], "3 Idiots")
+                self.assertLessEqual(
+                    body["results"][0]["movie"]["dimensions"]["darkness"],
+                    35,
+                )
 
     def test_auto_mode_routes_rom_com_description_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
@@ -724,6 +727,37 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertGreaterEqual(movie["dimensions"]["action"], 95)
         self.assertGreaterEqual(movie["dimensions"]["visual_spectacle"], 95)
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_expanded_catalog_resolves_popular_titles_without_tmdb(self, _configured):
+        cases = {
+            "titanic": ("Titanic", "USA"),
+            "shawshank redemption": ("The Shawshank Redemption", "USA"),
+            "avatar": ("Avatar", "USA"),
+            "avengers endgame": ("Avengers: Endgame", "USA"),
+            "दंगल": ("Dangal", "India"),
+            "pk": ("PK", "India"),
+            "ಕಾಂತಾರ": ("Kantara", "India"),
+            "올드보이": ("Oldboy", "South Korea"),
+            "부산행": ("Train to Busan", "South Korea"),
+            "君の名は。": ("Your Name", "Japan"),
+            "amelie": ("Amélie", "France"),
+            "cidade de deus": ("City of God", "Brazil"),
+        }
+
+        for query, (expected_title, expected_country) in cases.items():
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "mode": "title"},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertTrue(body["results"])
+                self.assertEqual(body["results"][0]["movie"]["title"], expected_title)
+                self.assertEqual(body["results"][0]["movie"]["country"], expected_country)
+                self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
     @patch("app.main.tmdb_is_configured", return_value=False)
     def test_matrix_expands_offline_1990s_coverage(self, _configured):

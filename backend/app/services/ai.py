@@ -104,6 +104,8 @@ THEME_ALIASES = {
 }
 
 COUNTRY_ALIASES = {
+    "Brazil": ("brazilian",),
+    "France": ("french",),
     "India": (
         "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
         "kannada", "bengali", "marathi", "punjabi", "gujarati",

@@ -178,6 +178,24 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(ranked[0][0].title, "Spirited Away")
                 self.assertEqual(ranked[0][0].country, "Japan")
 
+    def test_expanded_country_aliases_use_new_offline_coverage(self):
+        cases = (
+            ("a French romantic comedy", "France", "Amélie"),
+            ("a Brazilian crime drama", "Brazil", "City of God"),
+        )
+
+        for query, country, expected_title in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=6)
+
+                self.assertEqual(intent.preferred_countries, [country])
+                self.assertTrue(ranked)
+                self.assertEqual(ranked[0][0].title, expected_title)
+                self.assertTrue(
+                    all(movie.country == country for movie, _score in ranked)
+                )
+
     def test_regional_indian_languages_are_recognized(self):
         for query in (
             "a Telugu action movie",
@@ -206,7 +224,7 @@ class SearchIntentTests(unittest.TestCase):
     def test_preferred_country_falls_back_when_catalog_has_no_matches(self):
         intent = SearchIntent(
             target_dimensions={},
-            preferred_countries=["France"],
+            preferred_countries=["Canada"],
         )
 
         ranked = rank_movies(MOVIES, intent, limit=3)

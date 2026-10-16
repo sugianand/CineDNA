@@ -244,4 +244,149 @@ MOVIES = [
         },
         summary="A visually distinctive Indian folk-horror fable about greed, mythology, inheritance, and consequence."
     ),
+    MovieDNA(
+        title="Titanic", year=1997, country="USA",
+        genres=["Drama", "Romance"],
+        themes=["love", "class", "survival", "sacrifice", "tragedy", "history"],
+        dimensions={
+            "emotional_intensity": 95, "narrative_complexity": 55, "visual_spectacle": 94,
+            "pacing": 64, "mystery": 20, "romance": 96, "darkness": 72,
+            "humor": 18, "plot_twists": 45, "action": 55, "character_depth": 89,
+            "world_building": 75, "dialogue_density": 68, "rewatchability": 94,
+        },
+        summary="An epic romance and disaster drama about class, sacrifice, and survival aboard the Titanic."
+    ),
+    MovieDNA(
+        title="The Shawshank Redemption", year=1994, country="USA",
+        genres=["Drama"],
+        themes=["hope", "friendship", "freedom", "justice", "survival", "institutionalization"],
+        dimensions={
+            "emotional_intensity": 96, "narrative_complexity": 60, "visual_spectacle": 48,
+            "pacing": 58, "mystery": 40, "romance": 5, "darkness": 68,
+            "humor": 35, "plot_twists": 66, "action": 15, "character_depth": 99,
+            "world_building": 65, "dialogue_density": 82, "rewatchability": 98,
+        },
+        summary="A deeply human prison drama about friendship, endurance, injustice, and the sustaining power of hope."
+    ),
+    MovieDNA(
+        title="Avatar", year=2009, country="USA",
+        genres=["Science Fiction", "Adventure", "Action"],
+        themes=["nature", "colonialism", "identity", "belonging", "war", "love"],
+        dimensions={
+            "emotional_intensity": 80, "narrative_complexity": 55, "visual_spectacle": 100,
+            "pacing": 82, "mystery": 45, "romance": 54, "darkness": 52,
+            "humor": 20, "plot_twists": 48, "action": 93, "character_depth": 72,
+            "world_building": 100, "dialogue_density": 44, "rewatchability": 93,
+        },
+        summary="A visually immersive science-fiction adventure about identity, ecology, love, and resistance on Pandora."
+    ),
+    MovieDNA(
+        title="Avengers: Endgame", year=2019, country="USA",
+        genres=["Action", "Adventure", "Science Fiction"],
+        themes=["sacrifice", "friendship", "grief", "time", "family", "heroism"],
+        dimensions={
+            "emotional_intensity": 92, "narrative_complexity": 70, "visual_spectacle": 100,
+            "pacing": 84, "mystery": 35, "romance": 20, "darkness": 65,
+            "humor": 68, "plot_twists": 72, "action": 100, "character_depth": 82,
+            "world_building": 95, "dialogue_density": 58, "rewatchability": 95,
+        },
+        summary="A large-scale superhero finale centered on grief, time travel, friendship, and costly sacrifice."
+    ),
+    MovieDNA(
+        title="Dangal", year=2016, country="India", original_title="दंगल",
+        genres=["Drama", "Sport", "Biography"],
+        themes=["family", "ambition", "discipline", "equality", "competition", "success"],
+        dimensions={
+            "emotional_intensity": 95, "narrative_complexity": 62, "visual_spectacle": 55,
+            "pacing": 76, "mystery": 20, "romance": 5, "darkness": 45,
+            "humor": 48, "plot_twists": 38, "action": 25, "character_depth": 95,
+            "world_building": 50, "dialogue_density": 78, "rewatchability": 94,
+        },
+        summary="An inspiring Indian sports drama about a father training his daughters to challenge convention and become champion wrestlers."
+    ),
+    MovieDNA(
+        title="PK", year=2014, country="India",
+        genres=["Comedy", "Drama", "Science Fiction"],
+        themes=["religion", "humanity", "love", "truth", "identity", "society"],
+        dimensions={
+            "emotional_intensity": 82, "narrative_complexity": 70, "visual_spectacle": 52,
+            "pacing": 79, "mystery": 58, "romance": 44, "darkness": 35,
+            "humor": 92, "plot_twists": 62, "action": 12, "character_depth": 84,
+            "world_building": 48, "dialogue_density": 88, "rewatchability": 95,
+        },
+        summary="A warm satirical comedy about an alien questioning religion, social customs, love, and what it means to be human."
+    ),
+    MovieDNA(
+        title="Kantara", year=2022, country="India", original_title="ಕಾಂತಾರ",
+        genres=["Action", "Drama", "Fantasy"],
+        themes=["mythology", "nature", "tradition", "land", "power", "identity"],
+        dimensions={
+            "emotional_intensity": 83, "narrative_complexity": 68, "visual_spectacle": 91,
+            "pacing": 84, "mystery": 76, "romance": 25, "darkness": 75,
+            "humor": 38, "plot_twists": 73, "action": 92, "character_depth": 80,
+            "world_building": 95, "dialogue_density": 58, "rewatchability": 91,
+        },
+        summary="A Kannada action-fantasy rooted in folklore, land conflict, ritual, nature, and spiritual inheritance."
+    ),
+    MovieDNA(
+        title="Oldboy", year=2003, country="South Korea", original_title="올드보이",
+        genres=["Thriller", "Mystery", "Drama"],
+        themes=["revenge", "memory", "identity", "guilt", "truth", "obsession"],
+        dimensions={
+            "emotional_intensity": 92, "narrative_complexity": 91, "visual_spectacle": 73,
+            "pacing": 81, "mystery": 96, "romance": 20, "darkness": 100,
+            "humor": 4, "plot_twists": 100, "action": 76, "character_depth": 93,
+            "world_building": 55, "dialogue_density": 70, "rewatchability": 83,
+        },
+        summary="A brutal Korean revenge mystery driven by imprisonment, obsession, buried memory, and a devastating revelation."
+    ),
+    MovieDNA(
+        title="Train to Busan", year=2016, country="South Korea", original_title="부산행",
+        genres=["Horror", "Action", "Thriller"],
+        themes=["family", "survival", "sacrifice", "fear", "humanity", "class"],
+        dimensions={
+            "emotional_intensity": 95, "narrative_complexity": 58, "visual_spectacle": 82,
+            "pacing": 97, "mystery": 35, "romance": 6, "darkness": 88,
+            "humor": 12, "plot_twists": 45, "action": 90, "character_depth": 88,
+            "world_building": 72, "dialogue_density": 45, "rewatchability": 88,
+        },
+        summary="A relentless Korean zombie thriller that combines claustrophobic action with family drama and human sacrifice."
+    ),
+    MovieDNA(
+        title="Your Name", year=2016, country="Japan", original_title="君の名は。",
+        genres=["Animation", "Romance", "Fantasy"],
+        themes=["identity", "time", "memory", "love", "destiny", "connection"],
+        dimensions={
+            "emotional_intensity": 94, "narrative_complexity": 88, "visual_spectacle": 98,
+            "pacing": 77, "mystery": 90, "romance": 92, "darkness": 45,
+            "humor": 55, "plot_twists": 93, "action": 20, "character_depth": 88,
+            "world_building": 92, "dialogue_density": 62, "rewatchability": 97,
+        },
+        summary="A visually stunning Japanese romance about two teenagers linked across identity, memory, distance, and time."
+    ),
+    MovieDNA(
+        title="Amélie", year=2001, country="France",
+        original_title="Le Fabuleux Destin d'Amélie Poulain",
+        genres=["Romance", "Comedy", "Drama"],
+        themes=["love", "loneliness", "kindness", "imagination", "connection", "identity"],
+        dimensions={
+            "emotional_intensity": 82, "narrative_complexity": 58, "visual_spectacle": 90,
+            "pacing": 72, "mystery": 45, "romance": 84, "darkness": 18,
+            "humor": 86, "plot_twists": 52, "action": 5, "character_depth": 88,
+            "world_building": 82, "dialogue_density": 72, "rewatchability": 96,
+        },
+        summary="A whimsical French romantic comedy about a shy dreamer quietly reshaping the lives of people around her."
+    ),
+    MovieDNA(
+        title="City of God", year=2002, country="Brazil", original_title="Cidade de Deus",
+        genres=["Crime", "Drama"],
+        themes=["crime", "poverty", "violence", "ambition", "survival", "friendship"],
+        dimensions={
+            "emotional_intensity": 91, "narrative_complexity": 81, "visual_spectacle": 78,
+            "pacing": 93, "mystery": 45, "romance": 8, "darkness": 96,
+            "humor": 38, "plot_twists": 79, "action": 78, "character_depth": 94,
+            "world_building": 90, "dialogue_density": 74, "rewatchability": 91,
+        },
+        summary="A kinetic Brazilian crime drama tracing friendship, ambition, violence, and survival across generations in Rio de Janeiro."
+    ),
 ]

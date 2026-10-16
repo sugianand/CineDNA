@@ -2,7 +2,7 @@
 
 Discover movies by how they feel, not just by genre.
 
-CineDNA is a React + FastAPI movie recommendation prototype. Its starter catalog contains hand-curated Movie DNA profiles. The current natural-language interpreter is **rule-based**, not yet an LLM or vector-search system.
+CineDNA is a React + FastAPI movie recommendation prototype. It combines hand-curated Movie DNA profiles with a broader, live TMDB candidate catalog for title and vibe searches when a free TMDB API Read Access Token is configured. The current natural-language interpreter and generated Movie DNA profiles are **heuristic/rule-based**, not yet an LLM or vector-search system. Without the token, only the small offline catalog is available.
 
 ## Published sites
 

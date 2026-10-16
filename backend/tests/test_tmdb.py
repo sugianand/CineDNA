@@ -3,9 +3,10 @@ import unittest
 from unittest.mock import Mock, patch
 
 from app.data.movies import MOVIES
-from app.models import MovieDNA
+from app.models import MovieDNA, SearchIntent
 from app.services.tmdb import (
     _from_tmdb,
+    discover_tmdb_movies,
     has_exact_local_title,
     looks_like_title_query,
     search_local_movies,
@@ -93,6 +94,55 @@ class TMDBProfileTests(unittest.TestCase):
         movies = search_tmdb_movies("Valid Movie", limit=1)
 
         self.assertEqual([movie.title for movie in movies], ["Valid Movie"])
+
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_discovery_filters_country_year_genres_and_exclusions(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [{
+                "id": 101,
+                "title": "Regional Thriller",
+                "release_date": "2015-03-01",
+                "genre_ids": [53],
+                "origin_country": ["IN"],
+            }]
+        }
+        get.return_value = response
+        intent = SearchIntent(
+            target_dimensions={},
+            include_themes=["thriller", "mystery"],
+            exclude_themes=["comedy"],
+            preferred_countries=["India"],
+            min_year=2010,
+            max_year=2019,
+        )
+
+        movies = discover_tmdb_movies(intent)
+
+        self.assertEqual([movie.title for movie in movies], ["Regional Thriller"])
+        self.assertEqual(movies[0].country, "India")
+        args, kwargs = get.call_args
+        self.assertEqual(args[0], "https://api.themoviedb.org/3/discover/movie")
+        self.assertEqual(kwargs["params"]["with_genres"], "53|9648")
+        self.assertEqual(kwargs["params"]["without_genres"], "35")
+        self.assertEqual(kwargs["params"]["with_origin_country"], "IN")
+        self.assertEqual(kwargs["params"]["primary_release_date.gte"], "2010-01-01")
+        self.assertEqual(kwargs["params"]["primary_release_date.lte"], "2019-12-31")
+        self.assertEqual(kwargs["timeout"], 4.0)
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get", side_effect=__import__("httpx").TimeoutException("slow"))
+    def test_discovery_timeout_preserves_offline_fallback(self, _get):
+        self.assertEqual(discover_tmdb_movies(SearchIntent(target_dimensions={})), [])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": ""})
+    @patch("app.services.tmdb.httpx.get")
+    def test_discovery_requires_token(self, get):
+        self.assertEqual(discover_tmdb_movies(SearchIntent(target_dimensions={})), [])
+        get.assert_not_called()
 
     def test_overview_keywords_do_not_match_inside_unrelated_words(self):
         movie = _from_tmdb(

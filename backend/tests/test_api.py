@@ -949,6 +949,39 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["results"][0]["movie"]["title"], "The Dark Knight")
         self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_recognizes_misspelled_title_with_vibe_word(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "dark knigt"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["results"][0]["movie"]["title"], "The Dark Knight")
+        self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+        self.assertEqual(body["intent"]["target_dimensions"], {})
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_recognizes_misspelled_multiword_titles(self, _configured):
+        queries = {
+            "avenger end game": "Avengers: Endgame",
+            "shawshank redemtion": "The Shawshank Redemption",
+            "spirited awy": "Spirited Away",
+        }
+
+        for query, expected_title in queries.items():
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(body["results"][0]["movie"]["title"], expected_title)
+                self.assertEqual(body["ai_provider"], "cinedna-title-catalog")
+
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
     def test_auto_mode_recognizes_title_cased_external_title_with_vibe_word(

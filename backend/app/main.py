@@ -98,10 +98,16 @@ def search_movies(request: SearchRequest):
         intent.min_year is not None,
         intent.max_year is not None,
     ))
+    local_title_matches = search_local_movies(
+        request.query,
+        MOVIES,
+        request.limit,
+    )
     should_search_titles = request.mode == "title" or (
         request.mode == "auto"
         and (
             has_exact_local_title(request.query, MOVIES)
+            or bool(local_title_matches)
             or looks_like_title_query(request.query, has_vibe_preferences)
         )
     )
@@ -132,8 +138,7 @@ def search_movies(request: SearchRequest):
                 ai_provider="tmdb-catalog+heuristic-dna",
             )
 
-        local_movies = search_local_movies(request.query, MOVIES, request.limit)
-        if local_movies:
+        if local_title_matches:
             intent = SearchIntent(
                 target_dimensions={},
                 explanation="Matched your title against CineDNA's curated movie catalog.",
@@ -147,7 +152,7 @@ def search_movies(request: SearchRequest):
                         score=title_match_score(request.query, movie),
                         why="Title match from CineDNA's curated catalog. Open the movie to inspect its DNA profile.",
                     )
-                    for movie in local_movies
+                    for movie in local_title_matches
                 ],
                 ai_provider="cinedna-title-catalog",
             )

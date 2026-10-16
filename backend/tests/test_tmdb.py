@@ -15,6 +15,34 @@ from app.services.tmdb import (
 
 
 class TMDBProfileTests(unittest.TestCase):
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_movie_detail_fetch_by_id(self, get):
+        from app.services.tmdb import get_tmdb_movie
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "id": 256040, "title": "Baahubali: The Beginning",
+            "genres": [{"id": 28, "name": "Action"}],
+            "origin_country": ["IN"], "release_date": "2015-07-10",
+            "overview": "An epic story.", "vote_average": 7.5,
+        }
+        get.return_value = response
+        movie = get_tmdb_movie("256040")
+        self.assertEqual(movie.title, "Baahubali: The Beginning")
+        self.assertEqual(movie.genres, ["Action"])
+        self.assertEqual(movie.source_id, "256040")
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    def test_invalid_movie_id_does_not_trigger_network(self):
+        from app.services.tmdb import get_tmdb_movie
+        with patch("app.services.tmdb.httpx.get") as get:
+            self.assertIsNone(get_tmdb_movie("../search"))
+            self.assertIsNone(get_tmdb_movie("bad"))
+            get.assert_not_called()
+
+
     def test_local_title_search_normalizes_unicode(self):
         amelie = MovieDNA(
             title="Amélie",

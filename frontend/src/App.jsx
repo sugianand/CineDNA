@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
+import { getMovieProfileHref, parseMovieProfileLink } from './movieLinks.js'
 import {
   getApiSearchMode,
   getEmptyResultsCopy,
@@ -76,6 +77,8 @@ function App() {
   const [response, setResponse] = useState(null)
   const [responseMode, setResponseMode] = useState('vibe')
   const [selected, setSelected] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [error, setError] = useState('')
   const [expandedCatalog, setExpandedCatalog] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
@@ -153,7 +156,7 @@ function App() {
     document.body.style.overflow = 'hidden'
 
     const closeOnEscape = (event) => {
-      if (event.key === 'Escape') setSelected(null)
+      if (event.key === 'Escape') closeMovie()
     }
 
     window.addEventListener('keydown', closeOnEscape)
@@ -163,6 +166,70 @@ function App() {
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [selected])
+
+  useEffect(() => {
+    let controller = null
+    let active = true
+
+    async function restoreMovieLink() {
+      controller?.abort()
+      const link = parseMovieProfileLink(window.location.search)
+      if (!link) {
+        setSelected(null)
+        setProfileLoading(false)
+        setProfileError('')
+        return
+      }
+      const nextController = new AbortController()
+      controller = nextController
+      setProfileLoading(true)
+      setProfileError('')
+      try {
+        const params = new URLSearchParams({ title: link.title, source: link.source })
+        if (link.sourceId) params.set('source_id', link.sourceId)
+        const res = await fetch(`${API}/api/movie?${params}`, { signal: nextController.signal })
+        if (!res.ok) throw new Error('Movie not found')
+        const movie = await res.json()
+        if (active && controller === nextController) {
+          setSelected({ movie, score: null, why: 'Movie DNA profile' })
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError' && active && controller === nextController) {
+          setSelected(null)
+          setProfileError('Could not load this movie. Try searching for its title again.')
+        }
+      } finally {
+        if (active && controller === nextController) setProfileLoading(false)
+      }
+    }
+
+    window.addEventListener('popstate', restoreMovieLink)
+    restoreMovieLink()
+    return () => {
+      active = false
+      controller?.abort()
+      window.removeEventListener('popstate', restoreMovieLink)
+    }
+  }, [])
+
+  function openMovie(movie, score, why) {
+    const target = getMovieProfileHref(movie, window.location.search)
+    window.history.pushState(null, '', target)
+    setProfileError('')
+    setProfileLoading(false)
+    setSelected({ movie, score, why })
+  }
+
+  function closeMovie() {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('movie')
+    url.searchParams.delete('source')
+    url.searchParams.delete('source_id')
+    window.history.replaceState(null, '', url)
+    setSelected(null)
+    setProfileError('')
+    setProfileLoading(false)
+  }
 
   function rememberSearch(searchQuery, searchMode, referenceMovie = null) {
     setRecentSearches((current) => {
@@ -414,17 +481,7 @@ function App() {
                 <article
                   className="movie-card movie-card-clickable"
                   key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open ${movie.title} Movie DNA profile`}
-                  onClick={() => setSelected({ movie, score, why })}
-                  onKeyDown={(event) => {
-                    if (event.target !== event.currentTarget) return
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setSelected({ movie, score, why })
-                    }
-                  }}
+                  onClick={() => openMovie(movie, score, why)}
                 >
                   <div className="poster-shell">
                     <MoviePoster movie={movie} />
@@ -437,7 +494,20 @@ function App() {
                   <div className="movie-card-body">
                     <div className="movie-card-heading">
                       <div>
-                        <h2>{movie.title}</h2>
+                        <h2>
+                          <a
+                            href={getMovieProfileHref(movie, window.location.search)}
+                            className="movie-title-link"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+                              event.preventDefault()
+                              openMovie(movie, score, why)
+                            }}
+                          >
+                            {movie.title}
+                          </a>
+                        </h2>
                         <div className="meta">{movie.year || 'Year unknown'} · {movie.country} · {movie.genres.join(' / ')}</div>
                       </div>
                       <div className="movie-card-mark"><Dna size={17} /></div>
@@ -465,7 +535,7 @@ function App() {
                         className="profile-button"
                         onClick={(event) => {
                           event.stopPropagation()
-                          setSelected({ movie, score, why })
+                          openMovie(movie, score, why)
                         }}
                       >
                         View full DNA <ArrowRight size={16} />
@@ -530,11 +600,26 @@ function App() {
         </>
       )}
 
+      {!selected && (profileLoading || profileError) && (
+        <div className="profile-backdrop">
+          <section className="profile-panel" role="dialog" aria-modal="true" aria-label="Movie details">
+            <button className="profile-close" aria-label="Close movie details" onClick={closeMovie}>
+              <X size={20} />
+            </button>
+            <div className="movie-profile-status" role="status">
+              <Dna size={28} />
+              <h2>{profileLoading ? 'Loading movie details…' : 'Movie unavailable'}</h2>
+              {profileError && <p>{profileError}</p>}
+            </div>
+          </section>
+        </div>
+      )}
+
       {selected && (
         <div
           className="profile-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelected(null)
+            if (event.target === event.currentTarget) closeMovie()
           }}
         >
           <section
@@ -543,7 +628,7 @@ function App() {
             aria-modal="true"
             aria-labelledby="movie-dna-title"
           >
-            <button className="profile-close" aria-label="Close Movie DNA profile" onClick={() => setSelected(null)}>
+            <button className="profile-close" aria-label="Close Movie DNA profile" onClick={closeMovie}>
               <X size={20} />
             </button>
 
@@ -554,7 +639,7 @@ function App() {
                   <div className="profile-icon"><Dna size={24} /></div>
                   <div>
                     <span>MOVIE DNA PROFILE</span>
-                    <strong>{selected.score}% match to your search</strong>
+                    <strong>{selected.score == null ? "Explore this movie’s DNA" : `${selected.score}% match to your search`}</strong>
                   </div>
                 </div>
 

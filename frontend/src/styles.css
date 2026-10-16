@@ -589,3 +589,22 @@ h1 { font-family: 'Playfair Display', serif; font-size: clamp(66px, 12vw, 130px)
   .recent-searches { display: none; }
 }
 
+
+/* Stable movie-profile links: the title works as a real link or as a card tap. */
+.movie-title-link { color: inherit; text-decoration: none; }
+.movie-title-link:hover { color: #d0c5ff; }
+.movie-title-link:focus-visible {
+  outline: 2px solid #ae9bff;
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+.movie-profile-status {
+  padding: 60px 24px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.movie-profile-status svg { color: #c7baff; }
+.movie-profile-status h2 { margin: 0; font-size: 24px; }
+.movie-profile-status p { color: #aaabb4; max-width: 440px; }

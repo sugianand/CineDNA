@@ -278,6 +278,32 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
     return movies
 
 
+
+def get_tmdb_movie(movie_id: str) -> MovieDNA | None:
+    """Load an exact TMDB movie for a shareable details link."""
+    token = os.getenv("TMDB_READ_TOKEN", "").strip()
+    if not token or not movie_id.isdecimal() or len(movie_id) > 12:
+        return None
+    try:
+        response = httpx.get(
+            f"{TMDB_API_URL}/movie/{movie_id}",
+            params={"language": "en-US"},
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            timeout=6.0,
+        )
+        response.raise_for_status()
+        item = response.json()
+        if not isinstance(item, dict):
+            return None
+        genre_ids = [
+            genre["id"] for genre in item.get("genres", [])
+            if isinstance(genre, dict) and isinstance(genre.get("id"), int)
+        ]
+        return _from_tmdb({**item, "genre_ids": genre_ids})
+    except (httpx.HTTPError, ValueError, TypeError):
+        return None
+
+
 def _normalize_title(value: str) -> str:
     output = []
     last_base_is_latin = False

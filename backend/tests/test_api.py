@@ -12,6 +12,34 @@ class CineDNAAPITests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_movie_profile_resolves_local_title(self, _configured):
+        response = self.client.get("/api/movie", params={"title": "Interstellar"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["title"], "Interstellar")
+
+    @patch("app.main.get_tmdb_movie")
+    def test_movie_profile_resolves_external_id(self, get_movie):
+        get_movie.return_value = MovieDNA(
+            title="Baahubali: The Beginning",
+            year=2015, country="India", genres=["Action"], themes=["family"],
+            dimensions={"action": 95}, summary="An epic movie.",
+            source="tmdb", source_id="256040",
+        )
+        response = self.client.get("/api/movie", params={
+            "title": "Baahubali: The Beginning", "source": "tmdb",
+            "source_id": "256040",
+        })
+        self.assertEqual(response.status_code, 200)
+        get_movie.assert_called_once_with("256040")
+        self.assertEqual(response.json()["source_id"], "256040")
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_missing_movie_profile_returns_404(self, _configured):
+        response = self.client.get("/api/movie", params={"title": "No Such Movie"})
+        self.assertEqual(response.status_code, 404)
+
     def test_health_endpoint(self):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -11,6 +11,7 @@ from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
 from app.services.tmdb import (
     discover_tmdb_movies,
+    get_tmdb_movie,
     has_exact_local_title,
     looks_like_title_query,
     search_local_movies,
@@ -49,6 +50,33 @@ def health():
 @app.get("/movies")
 def list_movies():
     return MOVIES
+
+
+
+@app.get("/api/movie", response_model=MovieDNA)
+def get_movie_profile(
+    title: str = Query(min_length=1, max_length=200),
+    source: str = "cinedna",
+    source_id: str | None = None,
+):
+    """Resolve movie details for a URL that can be refreshed or shared."""
+    if source == "tmdb" and source_id:
+        movie = get_tmdb_movie(source_id)
+        if movie is not None:
+            return movie
+
+    for movie in MOVIES:
+        if movie.title.casefold() == title.casefold() or (
+            movie.original_title and movie.original_title.casefold() == title.casefold()
+        ):
+            return movie
+    if tmdb_is_configured():
+        for movie in search_tmdb_movies(title, 10):
+            if (source_id and movie.source_id == source_id) or (
+                movie.title.casefold() == title.casefold()
+            ):
+                return movie
+    raise HTTPException(status_code=404, detail="Movie profile not found")
 
 
 @app.post("/api/search", response_model=SearchResponse)

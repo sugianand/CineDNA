@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch
 
@@ -59,12 +60,14 @@ class CineDNAAPITests(unittest.TestCase):
         response = self.client.get("/api/movie", params={"title": "No Such Movie"})
         self.assertEqual(response.status_code, 404)
 
+    @patch.dict(os.environ, {"RENDER_GIT_COMMIT": "abc123"})
     def test_health_endpoint(self):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
         self.assertGreater(response.json()["movies"], 0)
         self.assertIn("tmdb_enabled", response.json())
+        self.assertEqual(response.json()["revision"], "abc123")
 
     def test_search_returns_ranked_movies(self):
         response = self.client.post(

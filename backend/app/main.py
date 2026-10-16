@@ -43,6 +43,7 @@ def health():
         "status": "ok",
         "movies": len(MOVIES),
         "tmdb_enabled": tmdb_is_configured(),
+        "revision": os.getenv("RENDER_GIT_COMMIT", "local"),
     }
 
 

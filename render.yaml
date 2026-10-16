@@ -3,6 +3,7 @@ services:
     name: cinedna
     runtime: docker
     plan: free
+    autoDeployTrigger: checksPass
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
@@ -15,6 +16,7 @@ services:
   - type: web
     name: cinedna-app
     runtime: static
+    autoDeployTrigger: checksPass
     buildCommand: cd frontend && npm ci --no-audit --no-fund && npm run build
     staticPublishPath: ./frontend/dist
     envVars:

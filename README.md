@@ -32,9 +32,10 @@ For a service that was already created from this Blueprint, add
 `TMDB_READ_TOKEN` under **Environment** in the Render Dashboard and redeploy.
 Render preserves that secret on future Blueprint syncs.
 
-Render automatically redeploys new commits on `main`. Free API instances may
-sleep when idle, but the static site remains immediately available and warms the
-API in the background.
+Render redeploys `main` after its GitHub checks pass. The health response includes
+the deployed Git commit as `revision`, making it possible to verify that the API
+service has rolled forward. Free API instances may sleep when idle, but the
+static site remains immediately available and warms the API in the background.
 
 Alternatively, create a Render Web Service with **Docker** runtime from this
 repo. The health check is `/api/health`. If the frontend is hosted separately,

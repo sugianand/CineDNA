@@ -9,3 +9,18 @@ services:
     envVars:
       - key: TMDB_READ_TOKEN
         sync: false
+      - key: CORS_ORIGINS
+        value: https://cinedna-app.onrender.com
+
+  - type: web
+    name: cinedna-app
+    runtime: static
+    buildCommand: cd frontend && npm ci --no-audit --no-fund && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://cinedna-hpji.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

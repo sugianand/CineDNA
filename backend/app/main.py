@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.data.movies import MOVIES
-from app.models import SearchIntent, SearchRequest, SearchResponse, SearchResult
+from app.models import MovieDNA, SearchIntent, SearchRequest, SearchResponse, SearchResult
 from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
 from app.services.tmdb import (

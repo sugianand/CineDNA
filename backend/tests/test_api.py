@@ -19,6 +19,25 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["title"], "Interstellar")
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_movie_profile_uses_same_fuzzy_matching_as_search(self, _configured):
+        cases = {
+            "Amelie": "Amélie",
+            "avengers endgame": "Avengers: Endgame",
+            "dark knigt": "The Dark Knight",
+            "Dune": "Dune: Part Two",
+        }
+
+        for title, expected_title in cases.items():
+            with self.subTest(title=title):
+                response = self.client.get(
+                    "/api/movie",
+                    params={"title": title, "source": "cinedna"},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["title"], expected_title)
+
     @patch("app.main.get_tmdb_movie")
     def test_movie_profile_resolves_external_id(self, get_movie):
         get_movie.return_value = MovieDNA(

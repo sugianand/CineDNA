@@ -65,15 +65,13 @@ def get_movie_profile(
         if movie is not None:
             return movie
 
-    for movie in MOVIES:
-        if movie.title.casefold() == title.casefold() or (
-            movie.original_title and movie.original_title.casefold() == title.casefold()
-        ):
-            return movie
+    local_matches = search_local_movies(title, MOVIES, limit=1)
+    if local_matches:
+        return local_matches[0]
     if tmdb_is_configured():
         for movie in search_tmdb_movies(title, 10):
             if (source_id and movie.source_id == source_id) or (
-                movie.title.casefold() == title.casefold()
+                search_local_movies(title, [movie], limit=1)
             ):
                 return movie
     raise HTTPException(status_code=404, detail="Movie profile not found")

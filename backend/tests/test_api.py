@@ -32,6 +32,69 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(scores, sorted(scores, reverse=True))
         self.assertTrue(all(0 <= score <= 100 for score in scores))
 
+
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_vibe_discovery_expands_country_and_decade_coverage(
+        self, _configured, discover
+    ):
+        discover.return_value = [
+            MovieDNA(
+                title="New Regional Drama",
+                year=1997,
+                country="India",
+                genres=["Drama"],
+                themes=["family"],
+                dimensions={"emotional_intensity": 85},
+                summary="A representative 1990s movie from the external catalog.",
+                source="tmdb",
+                source_id="987321",
+            ),
+            MovieDNA(
+                title="Wrong Country Movie",
+                year=1997,
+                country="USA",
+                genres=["Drama"],
+                themes=["family"],
+                dimensions={},
+                summary="Must be filtered out.",
+                source="tmdb",
+                source_id="112233",
+            ),
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Indian movies from the 1990s", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["ai_provider"], "tmdb-discover+rule-based-dna")
+        self.assertIn(
+            "New Regional Drama",
+            [result["movie"]["title"] for result in body["results"]],
+        )
+        self.assertTrue(all(
+            result["movie"]["country"] == "India"
+            and 1990 <= result["movie"]["year"] <= 1999
+            for result in body["results"]
+        ))
+        discover.assert_called_once()
+
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_discovery_deduplicates_curated_titles(self, _configured, discover):
+        discover.return_value = [MOVIES[0]]
+        response = self.client.post(
+            "/api/search",
+            json={"query": "emotional science fiction", "mode": "vibe", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        titles = [item["movie"]["title"] for item in response.json()["results"]]
+        self.assertEqual(titles.count(MOVIES[0].title), 1)
+
     def test_empty_search_rejected(self):
         response = self.client.post("/api/search", json={"query": ""})
         self.assertEqual(response.status_code, 422)

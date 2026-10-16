@@ -8,7 +8,7 @@ from typing import Dict, List, Sequence
 
 import httpx
 
-from app.models import MovieDNA
+from app.models import MovieDNA, SearchIntent
 
 
 TMDB_API_URL = "https://api.themoviedb.org/3"
@@ -34,6 +34,14 @@ GENRES = {
     53: "Thriller",
     10752: "War",
     37: "Western",
+}
+
+GENRE_IDS = {name.casefold(): genre_id for genre_id, name in GENRES.items()}
+ORIGIN_COUNTRY_CODES = {
+    "India": "IN",
+    "Japan": "JP",
+    "South Korea": "KR",
+    "USA": "US",
 }
 
 INDIAN_LANGUAGES = {"hi", "te", "ta", "ml", "kn", "bn", "mr", "pa", "gu"}
@@ -362,3 +370,77 @@ def title_match_score(query: str, movie: MovieDNA) -> float:
         for variant in _normalized_title_variants(candidate)
     )
     return round(55 + best * 45, 1)
+
+
+def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA]:
+    """Expand vibe searches using one bounded page of TMDB movie discovery.
+
+    Filters narrow the external candidate set; CineDNA still ranks and
+    enforces all final constraints across the combined candidate catalog.
+    Failures never prevent recommendations from the curated offline catalog.
+    """
+    token = os.getenv("TMDB_READ_TOKEN", "").strip()
+    if not token:
+        return []
+
+    params = {
+        "language": "en-US",
+        "include_adult": "false",
+        "include_video": "false",
+        "sort_by": "popularity.desc",
+        "page": 1,
+    }
+    genres = [
+        GENRE_IDS[theme.casefold()]
+        for theme in intent.include_themes
+        if theme.casefold() in GENRE_IDS
+    ]
+    excluded_genres = [
+        GENRE_IDS[theme.casefold()]
+        for theme in intent.exclude_themes
+        if theme.casefold() in GENRE_IDS
+    ]
+    if genres:
+        params["with_genres"] = "|".join(map(str, dict.fromkeys(genres)))
+    if excluded_genres:
+        params["without_genres"] = ",".join(map(str, dict.fromkeys(excluded_genres)))
+    if len(intent.preferred_countries) == 1:
+        country_code = ORIGIN_COUNTRY_CODES.get(intent.preferred_countries[0])
+        if country_code:
+            params["with_origin_country"] = country_code
+    if intent.min_year is not None:
+        params["primary_release_date.gte"] = f"{intent.min_year:04d}-01-01"
+    if intent.max_year is not None:
+        params["primary_release_date.lte"] = f"{intent.max_year:04d}-12-31"
+
+    try:
+        response = httpx.get(
+            f"{TMDB_API_URL}/discover/movie",
+            params=params,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+            timeout=4.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except (httpx.HTTPError, ValueError):
+        return []
+
+    if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+        return []
+
+    movies = []
+    for item in payload["results"]:
+        if len(movies) >= limit:
+            break
+        if not isinstance(item, dict):
+            continue
+        try:
+            movie = _from_tmdb(item)
+        except (TypeError, ValueError):
+            continue
+        if movie.year > 0 and movie.title != "Untitled":
+            movies.append(movie)
+    return movies

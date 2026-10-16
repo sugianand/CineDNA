@@ -10,6 +10,7 @@ from app.models import SearchIntent, SearchRequest, SearchResponse, SearchResult
 from app.services.ai import build_match_reason, parse_search_intent
 from app.services.scoring import rank_movies
 from app.services.tmdb import (
+    discover_tmdb_movies,
     has_exact_local_title,
     looks_like_title_query,
     search_local_movies,
@@ -134,7 +135,17 @@ def search_movies(request: SearchRequest):
                 ai_provider="cinedna-title-catalog",
             )
 
-    ranked = rank_movies(MOVIES, intent, request.limit)
+    # Discover a larger candidate pool instead of limiting vibe results to
+    # the small hand-curated catalog. Keep the offline catalog on API failures.
+    candidates = list(MOVIES)
+    external_movies = discover_tmdb_movies(intent) if tmdb_is_configured() else []
+    seen = {(movie.title.casefold(), movie.year) for movie in candidates}
+    for movie in external_movies:
+        identity = (movie.title.casefold(), movie.year)
+        if identity not in seen:
+            candidates.append(movie)
+            seen.add(identity)
+    ranked = rank_movies(candidates, intent, request.limit)
 
     results = [
         SearchResult(
@@ -149,7 +160,7 @@ def search_movies(request: SearchRequest):
         query=request.query,
         intent=intent,
         results=results,
-        ai_provider="rule-based-v0.1",
+        ai_provider="tmdb-discover+rule-based-dna" if external_movies else "rule-based-v0.1",
     )
 
 

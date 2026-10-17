@@ -162,6 +162,26 @@ class TMDBProfileTests(unittest.TestCase):
         self.assertEqual(kwargs["timeout"], 4.0)
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_discovery_filters_newly_supported_countries(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"results": []}
+        get.return_value = response
+
+        for country, country_code in (("Brazil", "BR"), ("France", "FR")):
+            with self.subTest(country=country):
+                discover_tmdb_movies(SearchIntent(
+                    target_dimensions={},
+                    preferred_countries=[country],
+                ))
+
+                self.assertEqual(
+                    get.call_args.kwargs["params"]["with_origin_country"],
+                    country_code,
+                )
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get", side_effect=__import__("httpx").TimeoutException("slow"))
     def test_discovery_timeout_preserves_offline_fallback(self, _get):
         self.assertEqual(discover_tmdb_movies(SearchIntent(target_dimensions={})), [])

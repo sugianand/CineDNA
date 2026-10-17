@@ -1,7 +1,11 @@
 .env
+.env.*
+!.env.example
+.vercel/
 .venv/
 __pycache__/
 *.pyc
 node_modules/
+.npm-cache/
 dist/
 .DS_Store

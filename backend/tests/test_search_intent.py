@@ -896,6 +896,17 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("comedy", intent.exclude_themes)
         self.assertNotIn("comedy", intent.include_themes)
 
+    def test_not_too_much_is_a_soft_preference(self):
+        intent = parse_search_intent(
+            "A tense thriller with not too much action",
+            MOVIES,
+        )
+
+        self.assertEqual(intent.target_dimensions["action"], 40)
+        self.assertNotIn("action", intent.exclude_themes)
+        self.assertNotIn("action", intent.include_themes)
+        self.assertIn("thriller", intent.include_themes)
+
     def test_negation_carries_across_coordinated_theme_list(self):
         intent = parse_search_intent("no horror or thriller movies", MOVIES)
 

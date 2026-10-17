@@ -315,6 +315,18 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    def test_auto_mode_keeps_not_too_much_as_a_soft_preference(self):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "a tense thriller with not too much action", "limit": 6},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["target_dimensions"]["action"], 40)
+        self.assertNotIn("action", body["intent"]["exclude_themes"])
+        self.assertTrue(body["results"])
+
     def test_auto_mode_routes_feel_good_description_to_vibe_search(self):
         for query in ("feel-good movie", "something lighter"):
             with self.subTest(query=query), patch(

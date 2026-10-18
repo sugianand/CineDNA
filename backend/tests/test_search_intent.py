@@ -196,6 +196,29 @@ class SearchIntentTests(unittest.TestCase):
                     all(movie.country == country for movie, _score in ranked)
                 )
 
+    def test_canonical_country_names_filter_results(self):
+        for country in ("Brazil", "France", "India", "Japan", "South Korea", "USA"):
+            with self.subTest(country=country):
+                intent = parse_search_intent(f"movies from {country}", MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.preferred_countries, [country])
+                self.assertTrue(ranked)
+                self.assertTrue(
+                    all(movie.country == country for movie, _score in ranked)
+                )
+
+    def test_not_from_country_excludes_that_country(self):
+        intent = parse_search_intent("movies not from India", MOVIES)
+        ranked = rank_movies(MOVIES, intent, limit=20)
+
+        self.assertEqual(intent.preferred_countries, [])
+        self.assertEqual(intent.excluded_countries, ["India"])
+        self.assertTrue(ranked)
+        self.assertTrue(
+            all(movie.country != "India" for movie, _score in ranked)
+        )
+
     def test_regional_indian_languages_are_recognized(self):
         for query in (
             "a Telugu action movie",

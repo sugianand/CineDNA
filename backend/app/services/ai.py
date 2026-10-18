@@ -105,15 +105,15 @@ THEME_ALIASES = {
 }
 
 COUNTRY_ALIASES = {
-    "Brazil": ("brazilian",),
-    "France": ("french",),
+    "Brazil": ("brazil", "brazilian"),
+    "France": ("france", "french"),
     "India": (
-        "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
+        "india", "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
         "kannada", "bengali", "marathi", "punjabi", "gujarati",
     ),
-    "Japan": ("japanese", "anime"),
-    "South Korea": ("korean", "south korean"),
-    "USA": ("american", "hollywood", "us movie", "u.s."),
+    "Japan": ("japan", "japanese", "anime"),
+    "South Korea": ("south korea", "korean", "south korean"),
+    "USA": ("usa", "united states", "american", "hollywood", "us movie", "u.s."),
 }
 
 NEGATION_PREFIX = (
@@ -319,7 +319,10 @@ def _is_negated(query: str, term: str) -> bool:
     if _soft_preference_target(query, term) is not None:
         return False
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
-    pattern = rf"\b{NEGATION_PREFIX}\s+(?:(?:a|an|any|too\s+much)\s+)?{escaped}\b"
+    pattern = (
+        rf"\b{NEGATION_PREFIX}\s+"
+        rf"(?:(?:a|an|any|too\s+much|from)\s+)?{escaped}\b"
+    )
     if re.search(pattern, query):
         return True
 

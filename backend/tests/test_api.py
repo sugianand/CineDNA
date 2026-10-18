@@ -411,6 +411,36 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["intent"]["max_year"], 1999)
         self.assertEqual(body["results"], [])
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_canonical_country_names_are_applied_by_the_api(self, _configured):
+        french = self.client.post(
+            "/api/search",
+            json={"query": "movies from France", "limit": 6},
+        )
+        without_india = self.client.post(
+            "/api/search",
+            json={"query": "movies not from India", "limit": 20},
+        )
+
+        self.assertEqual(french.status_code, 200)
+        self.assertEqual(french.json()["intent"]["preferred_countries"], ["France"])
+        self.assertTrue(french.json()["results"])
+        self.assertTrue(all(
+            result["movie"]["country"] == "France"
+            for result in french.json()["results"]
+        ))
+
+        self.assertEqual(without_india.status_code, 200)
+        self.assertEqual(
+            without_india.json()["intent"]["excluded_countries"],
+            ["India"],
+        )
+        self.assertTrue(without_india.json()["results"])
+        self.assertTrue(all(
+            result["movie"]["country"] != "India"
+            for result in without_india.json()["results"]
+        ))
+
     def test_auto_mode_routes_anime_to_japanese_catalog(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

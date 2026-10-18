@@ -694,6 +694,31 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         search_tmdb.assert_not_called()
 
+    def test_auto_mode_keeps_reference_recommendations_out_of_title_search(self):
+        interstellar = next(movie for movie in MOVIES if movie.title == "Interstellar")
+        cases = (
+            ("Like Interstellar, but darker and less complicated", "darkness"),
+            ("Interstellar but funnier", "humor"),
+        )
+
+        for query, adjusted_dimension in cases:
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb, patch(
+                "app.main.discover_tmdb_movies", return_value=[]
+            ) as discover_tmdb:
+                response = self.client.post("/api/search", json={"query": query})
+
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                discover_tmdb.assert_called_once()
+                intent = response.json()["intent"]
+                self.assertEqual(intent["reference_titles"], ["Interstellar"])
+                self.assertNotEqual(
+                    intent["target_dimensions"][adjusted_dimension],
+                    interstellar.dimensions[adjusted_dimension],
+                )
+
     def test_external_movie_dna_drives_more_like_this_search(self):
         interstellar = next(movie for movie in MOVIES if movie.title == "Interstellar")
         external_reference = MovieDNA(

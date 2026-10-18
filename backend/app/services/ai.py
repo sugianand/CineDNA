@@ -24,6 +24,10 @@ SUSPENSE_TERMS = (
 MILD_PREFIXES = ("a little", "a bit", "somewhat", "slightly", "kind of", "kinda")
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
+REFERENCE_MODIFIER_TERMS = (
+    "but", "with", "without", "except", "more", "less",
+    "darker", "lighter", "funnier", "slower", "faster", "different",
+)
 
 DECADE_WORDS = {
     "thirties": 1930,
@@ -280,6 +284,22 @@ def _without_reference_titles(
                 break
 
     return " ".join(trait_query.split())
+
+
+def is_reference_recommendation(query: str, movies: List[MovieDNA]) -> bool:
+    """Return whether an auto-mode query asks for a variation on a movie."""
+    normalized_query = _normalize_text(query)
+    references = _find_reference_movies(normalized_query, movies)
+    if not references:
+        return False
+    if _reference_hint(normalized_query):
+        return True
+
+    trait_query = _without_reference_titles(normalized_query, references)
+    return any(
+        _contains_term(trait_query, term)
+        for term in REFERENCE_MODIFIER_TERMS
+    )
 
 
 def _apply_modifier(query: str, keyword: str, current: int) -> int:

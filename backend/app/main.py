@@ -7,7 +7,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.data.movies import MOVIES
 from app.models import MovieDNA, SearchIntent, SearchRequest, SearchResponse, SearchResult
-from app.services.ai import build_match_reason, parse_search_intent
+from app.services.ai import (
+    build_match_reason,
+    is_reference_recommendation,
+    parse_search_intent,
+)
 from app.services.scoring import rank_movies
 from app.services.tmdb import (
     discover_tmdb_movies,
@@ -106,8 +110,14 @@ def search_movies(request: SearchRequest):
         MOVIES,
         request.limit,
     )
+    reference_recommendation = (
+        request.mode == "auto"
+        and bool(intent.reference_titles)
+        and is_reference_recommendation(request.query, intent_movies)
+    )
     should_search_titles = request.mode == "title" or (
         request.mode == "auto"
+        and not reference_recommendation
         and (
             has_exact_local_title(request.query, MOVIES)
             or bool(local_title_matches)

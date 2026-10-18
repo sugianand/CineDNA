@@ -341,6 +341,7 @@ class SearchIntentTests(unittest.TestCase):
             ("movies between 2014 and 2018", 2014, 2018),
             ("movies between 2018 and 2014", 2014, 2018),
             ("movies from 2014 to 2018", 2014, 2018),
+            ("movies from 2014 through 2018", 2014, 2018),
             ("films released from 2018 to 2014", 2014, 2018),
             ("movies from 2014-2018", 2014, 2018),
             ("films from 2018–2014", 2014, 2018),

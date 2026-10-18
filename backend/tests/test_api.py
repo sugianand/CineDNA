@@ -581,6 +581,7 @@ class CineDNAAPITests(unittest.TestCase):
     def test_auto_mode_routes_natural_year_ranges_to_vibe_search(self):
         for query in (
             "movies from 2013 to 2016",
+            "movies from 2013 through 2016",
             "movies from 2013-2016",
             "movies from 2013–2016",
             "movies 2013-2016",

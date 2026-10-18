@@ -10,6 +10,14 @@ export function getMovieProfileHref(movie, currentSearch = '') {
   return `?${params.toString()}`
 }
 
+export function getMovieProfileExitHref(currentHref) {
+  const url = new URL(currentHref, 'http://localhost')
+  url.searchParams.delete('movie')
+  url.searchParams.delete('source')
+  url.searchParams.delete('source_id')
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
 export function parseMovieProfileLink(search) {
   const params = new URLSearchParams(search)
   const title = params.get('movie')

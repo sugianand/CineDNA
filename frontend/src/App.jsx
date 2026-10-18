@@ -14,7 +14,11 @@ import {
   X,
 } from 'lucide-react'
 import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
-import { getMovieProfileHref, parseMovieProfileLink } from './movieLinks.js'
+import {
+  getMovieProfileExitHref,
+  getMovieProfileHref,
+  parseMovieProfileLink,
+} from './movieLinks.js'
 import {
   getApiSearchMode,
   getEmptyResultsCopy,
@@ -221,11 +225,7 @@ function App() {
   }
 
   function closeMovie() {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('movie')
-    url.searchParams.delete('source')
-    url.searchParams.delete('source_id')
-    window.history.replaceState(null, '', url)
+    window.history.replaceState(null, '', getMovieProfileExitHref(window.location.href))
     setSelected(null)
     setProfileError('')
     setProfileLoading(false)
@@ -303,6 +303,7 @@ function App() {
   async function findMoreLike(movie) {
     const nextQuery = `Like ${movie.title}, but show me a different movie with similar DNA`
     setMode('vibe')
+    window.history.replaceState(null, '', getMovieProfileExitHref(window.location.href))
     setSelected(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     await runSearch(nextQuery, 'vibe', movie)

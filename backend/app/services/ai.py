@@ -579,7 +579,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
                 else soft_target
             )
         elif dimension == "darkness" and matched in LIGHT_TONE_TERMS:
-            current = 80 if negated else 20
+            current = 80 if negated or _is_reduced(trait_query, matched) else 20
         elif negated:
             current = 10
             if excluded_theme := NEGATED_THEME_ALIASES.get(matched):

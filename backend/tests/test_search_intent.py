@@ -574,6 +574,34 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(intent.target_dimensions["darkness"], target)
                 self.assertNotIn("horror", intent.exclude_themes)
 
+    def test_reduced_light_tone_terms_request_a_darker_movie(self):
+        light_movie = MovieDNA(
+            title="Bright Day",
+            year=2026,
+            country="USA",
+            genres=["Comedy"],
+            themes=[],
+            dimensions={"darkness": 15},
+            summary="A light test movie.",
+        )
+        dark_movie = MovieDNA(
+            title="Bleak Night",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"darkness": 90},
+            summary="A dark test movie.",
+        )
+
+        for query in ("less lighthearted", "less uplifting"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies([light_movie, dark_movie], intent, limit=2)
+
+                self.assertEqual(intent.target_dimensions["darkness"], 80)
+                self.assertEqual(ranked[0][0].title, "Bleak Night")
+
     def test_reference_movie_matches_unique_title_before_subtitle(self):
         intent = parse_search_intent(
             "Something like Dune but funnier",

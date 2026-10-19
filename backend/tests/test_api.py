@@ -349,6 +349,24 @@ class CineDNAAPITests(unittest.TestCase):
                     35,
                 )
 
+    def test_auto_mode_routes_less_lighthearted_to_darker_results(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "less lighthearted", "limit": 1},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 80)
+        self.assertGreaterEqual(
+            body["results"][0]["movie"]["dimensions"]["darkness"],
+            70,
+        )
+
     def test_auto_mode_routes_rom_com_description_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

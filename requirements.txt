@@ -1,2 +1,7 @@
-# Vercel installs Python dependencies from the repository root.
--r backend/requirements.txt
+# Keep pins in sync with backend/requirements.txt (checked by CI).
+# Vercel's function build requires these dependencies directly in this file.
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+httpx==0.28.1
+python-dotenv==1.1.1

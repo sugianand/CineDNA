@@ -150,11 +150,15 @@ def _contains_term(query: str, term: str) -> bool:
 
 
 def _most_specific_term(query: str, terms: Tuple[str, ...]) -> str | None:
-    return max(
-        (term for term in terms if _contains_term(query, term)),
-        key=lambda term: len(_normalize_text(term)),
-        default=None,
-    )
+    normalized_query = f" {_normalize_text(query)} "
+    matches = []
+    for term in terms:
+        normalized_term = _normalize_text(term)
+        position = normalized_query.find(f" {normalized_term} ")
+        if normalized_term and position >= 0:
+            matches.append((position, -len(normalized_term), term))
+
+    return min(matches)[2] if matches else None
 
 
 def _contains_title(query: str, title: str) -> bool:

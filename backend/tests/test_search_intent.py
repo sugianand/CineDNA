@@ -946,6 +946,32 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["humor"], 10)
         self.assertEqual([movie.title for movie, _score in ranked], ["Hidden Clue"])
 
+    def test_earlier_positive_trait_survives_later_negated_alias(self):
+        dark_drama = MovieDNA(
+            title="Shadow Drama",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"darkness": 80},
+            summary="A dark test drama.",
+        )
+        light_drama = MovieDNA(
+            title="Sunny Drama",
+            year=2026,
+            country="USA",
+            genres=["Drama"],
+            themes=[],
+            dimensions={"darkness": 15},
+            summary="A light test drama.",
+        )
+        intent = parse_search_intent("dark but not scary", MOVIES)
+        ranked = rank_movies([light_drama, dark_drama], intent, limit=2)
+
+        self.assertEqual(intent.target_dimensions["darkness"], 75)
+        self.assertEqual(intent.exclude_themes, ["horror"])
+        self.assertEqual(ranked[0][0].title, "Shadow Drama")
+
     def test_soft_preferences_do_not_become_hard_exclusions(self):
         intent = parse_search_intent(
             "I want something not too dark and kind of funny",

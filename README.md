@@ -16,7 +16,7 @@ framework preset, and use **Node.js 22.x**. The root `vercel.json` supplies:
 | Build command | `npm --prefix frontend run build` |
 | Output directory | `frontend/dist` |
 | Python runtime | 3.12, pinned in `.python-version` |
-| Python dependencies | Root `requirements.txt` includes `backend/requirements.txt` |
+| Python dependencies | Root `requirements.txt` directly lists the backend's pinned dependencies; CI checks both files stay in sync |
 
 The React SPA is served as static assets. `api/index.py` exports the existing
 FastAPI ASGI app without starting Uvicorn or binding a port. API rewrites precede

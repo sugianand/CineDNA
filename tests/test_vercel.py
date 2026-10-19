@@ -2,6 +2,7 @@
 
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -12,6 +13,19 @@ from api.index import app
 class VercelEntrypointTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
+
+    def test_vercel_dependencies_are_self_contained_and_match_backend(self):
+        root = Path(__file__).resolve().parents[1]
+
+        def requirements(path):
+            return [
+                line.strip() for line in path.read_text().splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            ]
+
+        deployed = requirements(root / "requirements.txt")
+        self.assertFalse(any(line.startswith("-") for line in deployed))
+        self.assertEqual(deployed, requirements(root / "backend/requirements.txt"))
 
     def test_health_revision_uses_vercel_then_render_then_local(self):
         cases = [

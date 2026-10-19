@@ -486,10 +486,19 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(intent.target_dimensions["humor"], 75)
                 self.assertEqual(ranked[0][0].title, "Date Night")
 
-        excluded = parse_search_intent("anything but a rom-com", MOVIES)
-        self.assertEqual(excluded.exclude_themes, ["comedy", "romance"])
-        self.assertEqual(excluded.target_dimensions["romance"], 10)
-        self.assertEqual(excluded.target_dimensions["humor"], 10)
+        for query in (
+            "anything but a rom-com",
+            "not a romantic comedy",
+            "no romantic comedy",
+            "without romantic comedy",
+        ):
+            with self.subTest(query=query):
+                excluded = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(excluded.include_themes, [])
+                self.assertEqual(excluded.exclude_themes, ["comedy", "romance"])
+                self.assertEqual(excluded.target_dimensions["romance"], 10)
+                self.assertEqual(excluded.target_dimensions["humor"], 10)
 
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(

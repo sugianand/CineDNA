@@ -149,6 +149,14 @@ def _contains_term(query: str, term: str) -> bool:
     return bool(normalized_term) and f" {normalized_term} " in f" {query} "
 
 
+def _most_specific_term(query: str, terms: Tuple[str, ...]) -> str | None:
+    return max(
+        (term for term in terms if _contains_term(query, term)),
+        key=lambda term: len(_normalize_text(term)),
+        default=None,
+    )
+
+
 def _contains_title(query: str, title: str) -> bool:
     return _contains_term(query, title)
 
@@ -512,13 +520,9 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         if (normalized := _normalize_text(genre)) and normalized != "movie"
     }
     for theme in THEME_VOCAB | catalog_genres:
-        matched = next(
-            (
-                term
-                for term in (theme, *THEME_ALIASES.get(theme, ()))
-                if _contains_term(trait_query, term)
-            ),
-            None,
+        matched = _most_specific_term(
+            trait_query,
+            (theme, *THEME_ALIASES.get(theme, ())),
         )
         if not matched:
             continue
@@ -532,14 +536,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
             include_themes.append(theme)
 
     for dimension, keywords in DIMENSION_RULES.items():
-        matched = next(
-            (
-                keyword
-                for keyword in keywords
-                if _contains_term(trait_query, keyword)
-            ),
-            None,
-        )
+        matched = _most_specific_term(trait_query, keywords)
         if not matched:
             continue
 

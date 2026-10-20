@@ -1173,6 +1173,39 @@ class CineDNAAPITests(unittest.TestCase):
             "Fast Five",
         )
 
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_auto_mode_recognizes_lowercase_title_containing_vibe_word(
+        self,
+        _configured,
+        search_tmdb,
+    ):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Darkman",
+                year=1990,
+                country="USA",
+                genres=["Action", "Science Fiction"],
+                themes=["revenge"],
+                dimensions={"action": 85, "darkness": 70},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="9556",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "darkman"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with("darkman", 6)
+        self.assertEqual(
+            response.json()["results"][0]["movie"]["title"],
+            "Darkman",
+        )
+
     @patch("app.main.tmdb_is_configured", return_value=False)
     def test_short_title_does_not_match_inside_unrelated_words(self, _configured):
         response = self.client.post(

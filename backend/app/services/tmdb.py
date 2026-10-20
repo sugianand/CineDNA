@@ -111,7 +111,10 @@ def looks_like_title_query(
         return True
     if has_vibe_preferences:
         return False
-    return not any(term in cleaned for term in TITLE_BLOCKERS)
+    return not any(
+        _contains_term(cleaned, term.strip())
+        for term in TITLE_BLOCKERS
+    )
 
 
 def _clamp(value: int) -> int:

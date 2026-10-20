@@ -88,6 +88,11 @@ class TMDBProfileTests(unittest.TestCase):
         self.assertFalse(looks_like_title_query("space movie", True))
         self.assertTrue(looks_like_title_query("Space Movie", True))
 
+    def test_title_blockers_do_not_match_inside_larger_words(self):
+        for title in ("darkman", "darkness falls", "breakfast at tiffanys"):
+            with self.subTest(title=title):
+                self.assertTrue(looks_like_title_query(title))
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_invalid_catalog_json_fails_closed(self, get):

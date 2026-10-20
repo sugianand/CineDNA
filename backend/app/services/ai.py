@@ -390,6 +390,45 @@ def _is_reduced(query: str, term: str) -> bool:
     return bool(re.search(rf"\bless\s+{escaped}\b", query))
 
 
+def _positive_dimension_term(query: str, terms: Tuple[str, ...]) -> str | None:
+    """Prefer an explicit positive trait over a separate negated alias."""
+    modified_spans = []
+    for term in terms:
+        if not (
+            _is_negated(query, term)
+            or _is_reduced(query, term)
+            or _soft_preference_target(query, term) is not None
+        ):
+            continue
+        escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
+        modified_spans.extend(
+            match.span()
+            for match in re.finditer(rf"\b{escaped}\b", query)
+        )
+
+    matches = []
+    for term in terms:
+        if (
+            _is_negated(query, term)
+            or _is_reduced(query, term)
+            or _soft_preference_target(query, term) is not None
+        ):
+            continue
+        normalized_term = _normalize_text(term)
+        escaped = re.escape(normalized_term).replace(r"\ ", r"\s+")
+        for match in re.finditer(rf"\b{escaped}\b", query):
+            start, end = match.span()
+            if any(
+                modified_start <= start and end <= modified_end
+                for modified_start, modified_end in modified_spans
+            ):
+                continue
+            matches.append((start, -len(normalized_term), term))
+            break
+
+    return min(matches)[2] if matches else None
+
+
 def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
@@ -543,6 +582,13 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         matched = _most_specific_term(trait_query, keywords)
         if not matched:
             continue
+
+        if (
+            _is_negated(trait_query, matched)
+            or _is_reduced(trait_query, matched)
+            or _soft_preference_target(trait_query, matched) is not None
+        ):
+            matched = _positive_dimension_term(trait_query, keywords) or matched
 
         current = target.get(dimension, 75)
         soft_target = _soft_preference_target(trait_query, matched)

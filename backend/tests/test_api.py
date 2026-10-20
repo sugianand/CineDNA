@@ -320,23 +320,28 @@ class CineDNAAPITests(unittest.TestCase):
         self,
         _configured,
     ):
-        response = self.client.post(
-            "/api/search",
-            json={"query": "dark but not scary", "limit": 6},
-        )
+        for query in ("dark but not scary", "not scary but dark"):
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 6},
+                )
 
-        self.assertEqual(response.status_code, 200)
-        body = response.json()
-        self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 75)
-        self.assertEqual(body["intent"]["exclude_themes"], ["horror"])
-        self.assertTrue(body["results"])
-        self.assertTrue(
-            all("Horror" not in result["movie"]["genres"] for result in body["results"])
-        )
-        self.assertGreaterEqual(
-            body["results"][0]["movie"]["dimensions"]["darkness"],
-            65,
-        )
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 75)
+                self.assertEqual(body["intent"]["exclude_themes"], ["horror"])
+                self.assertTrue(body["results"])
+                self.assertTrue(
+                    all(
+                        "Horror" not in result["movie"]["genres"]
+                        for result in body["results"]
+                    )
+                )
+                self.assertGreaterEqual(
+                    body["results"][0]["movie"]["dimensions"]["darkness"],
+                    65,
+                )
 
     def test_auto_mode_keeps_not_too_much_as_a_soft_preference(self):
         response = self.client.post(

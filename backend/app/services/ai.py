@@ -18,6 +18,7 @@ LIGHT_TONE_TERMS = (
     "uplifting", "comforting", "easy watch",
 )
 ROM_COM_TERMS = ("rom com", "romantic comedy")
+ACTION_COMEDY_TERMS = ("action comedy", "action comedies")
 SUSPENSE_TERMS = (
     "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
 )
@@ -56,11 +57,15 @@ DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "mystery": ("mystery", "mysterious", "detective", "whodunit", "suspenseful"),
     "romance": ("romance", "romantic", "love story") + ROM_COM_TERMS,
     "darkness": ("dark", "bleak", "grim", "scary", "disturbing") + LIGHT_TONE_TERMS,
-    "humor": ("funny", "comedy", "humor", "hilarious", "fun") + ROM_COM_TERMS,
+    "humor": (
+        "funny", "comedy", "humor", "hilarious", "fun",
+    ) + ROM_COM_TERMS + ACTION_COMEDY_TERMS,
     "plot_twists": (
         "twist", "twists", "twisty", "unpredictable", "shocking", "surprising",
     ),
-    "action": ("action", "fight", "fights", "fighting", "explosive", "combat"),
+    "action": (
+        "action", "fight", "fights", "fighting", "explosive", "combat",
+    ) + ACTION_COMEDY_TERMS,
     "character_depth": (
         "character driven", "character-driven", "deep characters", "strong characters",
         "character focused", "character-focused",
@@ -96,9 +101,10 @@ THEME_VOCAB = {
 }
 
 THEME_ALIASES = {
+    "action": ACTION_COMEDY_TERMS,
     "adventure": ("adventurous", "adventures"),
     "animation": ("animated", "cartoon", "cartoons"),
-    "comedy": ROM_COM_TERMS + ("comedies",),
+    "comedy": ROM_COM_TERMS + ACTION_COMEDY_TERMS + ("comedies",),
     "drama": ("dramatic", "dramas"),
     "fantasy": ("magical", "magic", "fantasies"),
     "horror": ("scary", "spooky", "frightening", "horrors"),

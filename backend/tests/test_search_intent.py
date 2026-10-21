@@ -503,6 +503,29 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(excluded.target_dimensions["romance"], 10)
                 self.assertEqual(excluded.target_dimensions["humor"], 10)
 
+    def test_action_comedy_aliases_combine_action_and_comedy(self):
+        for query in ("an action comedy", "action comedies"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.include_themes, ["action", "comedy"])
+                self.assertEqual(intent.exclude_themes, [])
+                self.assertEqual(intent.target_dimensions["action"], 75)
+                self.assertEqual(intent.target_dimensions["humor"], 75)
+
+        for query in (
+            "not an action comedy",
+            "no action comedy",
+            "without action comedies",
+        ):
+            with self.subTest(query=query):
+                excluded = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(excluded.include_themes, [])
+                self.assertEqual(excluded.exclude_themes, ["action", "comedy"])
+                self.assertEqual(excluded.target_dimensions["action"], 10)
+                self.assertEqual(excluded.target_dimensions["humor"], 10)
+
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

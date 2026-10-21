@@ -1184,6 +1184,39 @@ class CineDNAAPITests(unittest.TestCase):
 
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_auto_mode_recognizes_title_cased_something_title(
+        self,
+        _configured,
+        search_tmdb,
+    ):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Something Borrowed",
+                year=2011,
+                country="USA",
+                genres=["Comedy", "Romance"],
+                themes=["friendship", "love"],
+                dimensions={"humor": 70, "romance": 80},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="49022",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Something Borrowed"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with("Something Borrowed", 6)
+        self.assertEqual(
+            response.json()["results"][0]["movie"]["title"],
+            "Something Borrowed",
+        )
+
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
     def test_auto_mode_recognizes_lowercase_title_containing_vibe_word(
         self,
         _configured,

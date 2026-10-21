@@ -68,6 +68,7 @@ class TMDBProfileTests(unittest.TestCase):
             "Fast Five",
             "Dark City",
             "Scary Movie",
+            "Something Borrowed",
             "The Fast and the Furious",
         ):
             with self.subTest(title=title):

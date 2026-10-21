@@ -74,7 +74,7 @@ TITLE_BLOCKERS = {
     "movie with", "film with", "less ", "more ",
 }
 TITLE_QUERY_STRUCTURE = {
-    "like ", "something", "movie with", "film with", "less ", "more ",
+    "like ", "movie with", "film with", "less ", "more ",
 }
 TITLE_CONNECTORS = {
     "a", "an", "and", "as", "at", "but", "by", "for", "from",

@@ -127,7 +127,7 @@ COUNTRY_ALIASES = {
 }
 
 NEGATION_PREFIX = (
-    r"(?:without|no|non|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
+    r"(?:without|no|non|neither|avoid(?:ing)?|exclud(?:e|ing)|not|except|anything\s+but|"
     r"(?:do\s+not|don\s+t)\s+(?:want|like))"
 )
 
@@ -382,8 +382,8 @@ def _is_negated(query: str, term: str) -> bool:
         if (
             len(prefix.split()) <= 8
             and (
-                re.search(r"\b(?:and|or)\s*$", prefix)
-                or re.search(r"\b(?:and|or)\b", suffix)
+                re.search(r"\b(?:and|or|nor)\s*$", prefix)
+                or re.search(r"\b(?:and|or|nor)\b", suffix)
             )
         ):
             return True

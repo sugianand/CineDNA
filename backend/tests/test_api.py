@@ -324,6 +324,31 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    def test_vibe_mode_honors_neither_nor_exclusions(self):
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "neither action nor comedy",
+                "limit": 20,
+                "mode": "vibe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["include_themes"], [])
+        self.assertEqual(
+            body["intent"]["exclude_themes"],
+            ["action", "comedy"],
+        )
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(
+                not {"Action", "Comedy"}.intersection(result["movie"]["genres"])
+                for result in body["results"]
+            )
+        )
+
     @patch("app.main.tmdb_is_configured", return_value=False)
     def test_auto_mode_preserves_dark_request_while_excluding_scary_movies(
         self,

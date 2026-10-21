@@ -1038,6 +1038,26 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.excluded_countries, ["India", "South Korea"])
         self.assertEqual(intent.preferred_countries, [])
 
+    def test_neither_nor_excludes_each_coordinated_preference(self):
+        theme_intent = parse_search_intent(
+            "neither action nor comedy",
+            MOVIES,
+        )
+        country_intent = parse_search_intent(
+            "neither Indian nor Korean movies",
+            MOVIES,
+        )
+
+        self.assertEqual(theme_intent.include_themes, [])
+        self.assertEqual(theme_intent.exclude_themes, ["action", "comedy"])
+        self.assertEqual(theme_intent.target_dimensions["action"], 10)
+        self.assertEqual(theme_intent.target_dimensions["humor"], 10)
+        self.assertEqual(country_intent.preferred_countries, [])
+        self.assertEqual(
+            country_intent.excluded_countries,
+            ["India", "South Korea"],
+        )
+
     def test_negation_carries_across_comma_separated_lists(self):
         theme_intent = parse_search_intent(
             "no action, comedy, or romance movies",

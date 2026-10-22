@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
 import {
+  getAppHomeHref,
   getMovieProfileExitHref,
   getMovieProfileHref,
   parseMovieProfileLink,
@@ -344,7 +345,11 @@ function App() {
   return (
     <main className="app-shell">
       <header className="site-header">
-        <a className="brand" href="#" aria-label="CineDNA home">
+        <a
+          className="brand"
+          href={getAppHomeHref(window.location.href)}
+          aria-label="CineDNA home"
+        >
           <span className="brand-mark"><Dna size={18} /></span>
           <span>CineDNA</span>
         </a>

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  getAppHomeHref,
   getMovieProfileExitHref,
   getMovieProfileHref,
   parseMovieProfileLink,
@@ -37,4 +38,12 @@ test('leaving a movie profile clears only profile parameters', () => {
   )
 
   assert.equal(href, '/discover?campaign=shared#results')
+})
+
+test('home links clear profile state and page fragments', () => {
+  const href = getAppHomeHref(
+    'https://cinedna.example/discover?campaign=shared&movie=Dune&source=tmdb&source_id=693134#results',
+  )
+
+  assert.equal(href, '/discover?campaign=shared')
 })

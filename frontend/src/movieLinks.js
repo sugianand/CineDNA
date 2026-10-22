@@ -18,6 +18,14 @@ export function getMovieProfileExitHref(currentHref) {
   return `${url.pathname}${url.search}${url.hash}`
 }
 
+export function getAppHomeHref(currentHref) {
+  const url = new URL(currentHref, 'http://localhost')
+  url.searchParams.delete('movie')
+  url.searchParams.delete('source')
+  url.searchParams.delete('source_id')
+  return `${url.pathname}${url.search}`
+}
+
 export function parseMovieProfileLink(search) {
   const params = new URLSearchParams(search)
   const title = params.get('movie')

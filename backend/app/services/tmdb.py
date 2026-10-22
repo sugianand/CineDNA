@@ -238,6 +238,19 @@ def _from_tmdb(item: dict) -> MovieDNA:
     )
 
 
+def _is_usable_catalog_item(item: dict) -> bool:
+    """Return whether a TMDB result can support a stable profile link."""
+    movie_id = item.get("id")
+    title = item.get("title") or item.get("original_title")
+    return (
+        isinstance(movie_id, int)
+        and not isinstance(movie_id, bool)
+        and movie_id > 0
+        and isinstance(title, str)
+        and bool(title.strip())
+    )
+
+
 def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
     token = os.getenv("TMDB_READ_TOKEN", "").strip()
     if not token:
@@ -274,7 +287,7 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
     for item in results:
         if len(movies) >= limit:
             break
-        if not isinstance(item, dict):
+        if not isinstance(item, dict) or not _is_usable_catalog_item(item):
             continue
         try:
             movies.append(_from_tmdb(item))
@@ -466,7 +479,7 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
     for item in payload["results"]:
         if len(movies) >= limit:
             break
-        if not isinstance(item, dict):
+        if not isinstance(item, dict) or not _is_usable_catalog_item(item):
             continue
         try:
             movie = _from_tmdb(item)

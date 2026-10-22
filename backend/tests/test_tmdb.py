@@ -129,6 +129,27 @@ class TMDBProfileTests(unittest.TestCase):
 
         self.assertEqual([movie.title for movie in movies], ["Valid Movie"])
 
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_catalog_items_require_a_stable_profile_identity(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                {"title": "Missing ID"},
+                {"id": 0, "title": "Invalid ID"},
+                {"id": "123", "title": "String ID"},
+                {"id": 4, "title": "   ", "original_title": ""},
+                {"id": 5, "original_title": "Stable Original Title"},
+            ]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("Stable Original Title", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Stable Original Title"])
+        self.assertEqual(movies[0].source_id, "5")
+
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")

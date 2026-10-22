@@ -64,6 +64,19 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         get_movie.assert_called_once_with("999999")
 
+    @patch("app.main.get_tmdb_movie")
+    def test_external_profile_without_id_does_not_fall_back_to_local_title(
+        self,
+        get_movie,
+    ):
+        response = self.client.get("/api/movie", params={
+            "title": "Dune", "source": "tmdb",
+        })
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Movie profile not found")
+        get_movie.assert_not_called()
+
     @patch("app.main.tmdb_is_configured", return_value=False)
     def test_missing_movie_profile_returns_404(self, _configured):
         response = self.client.get("/api/movie", params={"title": "No Such Movie"})

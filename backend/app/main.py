@@ -69,13 +69,15 @@ def get_movie_profile(
     source_id: str | None = None,
 ):
     """Resolve movie details for a URL that can be refreshed or shared."""
-    if source == "tmdb" and source_id:
-        movie = get_tmdb_movie(source_id)
-        if movie is not None:
-            return movie
+    if source == "tmdb":
+        if source_id:
+            movie = get_tmdb_movie(source_id)
+            if movie is not None:
+                return movie
         # A TMDB ID identifies one specific movie. Falling back to a fuzzy
         # title match can silently replace it with a remake, sequel, or an
-        # entirely different movie when the ID is stale or unavailable.
+        # entirely different movie when the ID is missing, stale, or
+        # unavailable.
         raise HTTPException(status_code=404, detail="Movie profile not found")
 
     local_matches = search_local_movies(title, MOVIES, limit=1)

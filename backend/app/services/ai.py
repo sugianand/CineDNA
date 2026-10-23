@@ -521,10 +521,19 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         second_year = int(range_match.group(2))
         return min(first_year, second_year), max(first_year, second_year)
 
-    inclusive_min_match = re.search(
+    inclusive_min_patterns = (
         r"\b(?:from\s+)?((?:19|20)\d{2})\s+"
         r"(?:(?:or|and)\s+)?(?:later|newer|onwards?)\b",
-        query,
+        r"\b(?:not\s+before|no\s+earlier\s+than|on\s+or\s+after)\s+"
+        r"((?:19|20)\d{2})\b",
+    )
+    inclusive_min_match = next(
+        (
+            match
+            for pattern in inclusive_min_patterns
+            if (match := re.search(pattern, query)) is not None
+        ),
+        None,
     )
     if inclusive_min_match:
         return int(inclusive_min_match.group(1)), None
@@ -532,6 +541,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
         r"\b(?:up\s+to|through)\s+((?:19|20)\d{2})\b",
+        r"\b(?:not\s+after|no\s+later\s+than|on\s+or\s+before)\s+"
+        r"((?:19|20)\d{2})\b",
     )
     inclusive_max_match = next(
         (

@@ -772,8 +772,14 @@ class CineDNAAPITests(unittest.TestCase):
         cases = (
             ("movies from 2015 onwards", 2015, None),
             ("movies 2015 or later", 2015, None),
+            ("movies not before 2015", 2015, None),
+            ("movies no earlier than 2015", 2015, None),
+            ("movies released on or after 2015", 2015, None),
             ("movies up to 2015", None, 2015),
             ("2015 or earlier films", None, 2015),
+            ("movies not after 2015", None, 2015),
+            ("movies no later than 2015", None, 2015),
+            ("movies released on or before 2015", None, 2015),
         )
 
         for query, min_year, max_year in cases:

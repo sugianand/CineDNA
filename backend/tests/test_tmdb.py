@@ -40,7 +40,29 @@ class TMDBProfileTests(unittest.TestCase):
         with patch("app.services.tmdb.httpx.get") as get:
             self.assertIsNone(get_tmdb_movie("../search"))
             self.assertIsNone(get_tmdb_movie("bad"))
+            self.assertIsNone(get_tmdb_movie("0"))
             get.assert_not_called()
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_movie_detail_requires_the_requested_identity(self, get):
+        from app.services.tmdb import get_tmdb_movie
+        response = Mock()
+        response.raise_for_status.return_value = None
+        get.return_value = response
+
+        invalid_payloads = (
+            {"title": "Missing ID"},
+            {"id": 0, "title": "Invalid ID"},
+            {"id": "256040", "title": "String ID"},
+            {"id": 999, "title": "Different Movie"},
+            {"id": 256040, "title": "   ", "original_title": ""},
+        )
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                response.json.return_value = payload
+
+                self.assertIsNone(get_tmdb_movie("256040"))
 
 
     def test_local_title_search_normalizes_unicode(self):

@@ -302,6 +302,9 @@ def get_tmdb_movie(movie_id: str) -> MovieDNA | None:
     token = os.getenv("TMDB_READ_TOKEN", "").strip()
     if not token or not movie_id.isdecimal() or len(movie_id) > 12:
         return None
+    requested_id = int(movie_id)
+    if requested_id <= 0:
+        return None
     try:
         response = httpx.get(
             f"{TMDB_API_URL}/movie/{movie_id}",
@@ -311,7 +314,11 @@ def get_tmdb_movie(movie_id: str) -> MovieDNA | None:
         )
         response.raise_for_status()
         item = response.json()
-        if not isinstance(item, dict):
+        if (
+            not isinstance(item, dict)
+            or not _is_usable_catalog_item(item)
+            or item["id"] != requested_id
+        ):
             return None
         genre_ids = [
             genre["id"] for genre in item.get("genres", [])

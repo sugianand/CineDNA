@@ -494,19 +494,37 @@ def _positive_dimension_term(query: str, terms: Tuple[str, ...]) -> str | None:
     return min(matches)[2] if matches else None
 
 
+def _expand_abbreviated_year(anchor_year: int, value: str) -> int:
+    """Expand a two-digit range endpoint to the nearest supported full year."""
+    if len(value) == 4:
+        return int(value)
+
+    suffix = int(value)
+    century = (anchor_year // 100) * 100
+    candidates = (
+        century - 100 + suffix,
+        century + suffix,
+        century + 100 + suffix,
+    )
+    supported = (year for year in candidates if 1900 <= year <= 2099)
+    return min(supported, key=lambda year: (abs(year - anchor_year), year))
+
+
 def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
 
     range_patterns = (
         r"\bbetween\s+((?:19|20)\d{2})\s+(?:and\s+|to\s+)?"
-        r"((?:19|20)\d{2})\b",
+        r"((?:19|20)\d{2}|\d{2})\b",
         r"\b(?:(?:movies?|films?)\s+)?(?:released\s+)?from\s+"
-        r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?((?:19|20)\d{2})\b",
+        r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"((?:19|20)\d{2}|\d{2})\b",
         r"\b(?:movies?|films?)\s+(?:released\s+)?"
-        r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?((?:19|20)\d{2})\b",
+        r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"((?:19|20)\d{2}|\d{2})\b",
         r"\b(?:released\s+)?((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
-        r"((?:19|20)\d{2})\s+(?:movies?|films?)\b",
+        r"((?:19|20)\d{2}|\d{2})\s+(?:movies?|films?)\b",
     )
     range_match = next(
         (
@@ -518,7 +536,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     )
     if range_match:
         first_year = int(range_match.group(1))
-        second_year = int(range_match.group(2))
+        second_year = _expand_abbreviated_year(first_year, range_match.group(2))
         return min(first_year, second_year), max(first_year, second_year)
 
     inclusive_min_patterns = (

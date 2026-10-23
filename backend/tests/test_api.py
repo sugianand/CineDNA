@@ -744,6 +744,8 @@ class CineDNAAPITests(unittest.TestCase):
             "movies from 2013 through 2016",
             "movies from 2013-2016",
             "movies from 2013–2016",
+            "movies from 2013-16",
+            "movies from 2016-13",
             "movies 2013-2016",
             "2013 to 2016 films",
         ):

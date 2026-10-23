@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from difflib import SequenceMatcher
+from functools import lru_cache
 from typing import Dict, List, Tuple
 
 from app.models import MovieDNA, SearchIntent
@@ -353,6 +354,63 @@ def _soft_preference_target(query: str, term: str) -> int | None:
     return None
 
 
+@lru_cache(maxsize=1)
+def _preference_list_terms() -> Tuple[str, ...]:
+    raw_terms = set(THEME_VOCAB) | set(THEME_ALIASES)
+    raw_terms.update(
+        term
+        for aliases in THEME_ALIASES.values()
+        for term in aliases
+    )
+    raw_terms.update(
+        term
+        for aliases in COUNTRY_ALIASES.values()
+        for term in aliases
+    )
+    raw_terms.update(
+        term
+        for keywords in DIMENSION_RULES.values()
+        for term in keywords
+    )
+    normalized_terms = {_normalize_text(term) for term in raw_terms}
+    return tuple(sorted(
+        (term for term in normalized_terms if term),
+        key=lambda term: (len(term.split()), len(term)),
+        reverse=True,
+    ))
+
+
+def _is_preference_list_prefix(prefix: str) -> bool:
+    """Recognize earlier items in a punctuation-stripped preference list."""
+    remaining = prefix.strip()
+    if not remaining:
+        return False
+
+    filler = re.compile(
+        r"^(?:a|an|any|and|or|nor|movie|movies|film|films|"
+        r"title|titles|genre|genres)\b\s*"
+    )
+    while remaining:
+        filler_match = filler.match(remaining)
+        if filler_match:
+            remaining = remaining[filler_match.end():].strip()
+            continue
+
+        matched = next(
+            (
+                term
+                for term in _preference_list_terms()
+                if remaining == term or remaining.startswith(f"{term} ")
+            ),
+            None,
+        )
+        if matched is None:
+            return False
+        remaining = remaining[len(matched):].strip()
+
+    return True
+
+
 def _is_negated(query: str, term: str) -> bool:
     if _soft_preference_target(query, term) is not None:
         return False
@@ -384,6 +442,7 @@ def _is_negated(query: str, term: str) -> bool:
             and (
                 re.search(r"\b(?:and|or|nor)\s*$", prefix)
                 or re.search(r"\b(?:and|or|nor)\b", suffix)
+                or _is_preference_list_prefix(prefix)
             )
         ):
             return True

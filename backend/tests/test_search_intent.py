@@ -1059,25 +1059,35 @@ class SearchIntentTests(unittest.TestCase):
         )
 
     def test_negation_carries_across_comma_separated_lists(self):
-        theme_intent = parse_search_intent(
+        for query in (
             "no action, comedy, or romance movies",
-            MOVIES,
-        )
-        country_intent = parse_search_intent(
-            "movies without Indian, Korean, or Japanese titles",
-            MOVIES,
-        )
+            "no action, comedy, romance movies",
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                self.assertEqual(
+                    intent.exclude_themes,
+                    ["action", "comedy", "romance"],
+                )
+                self.assertEqual(intent.include_themes, [])
 
-        self.assertEqual(
-            theme_intent.exclude_themes,
-            ["action", "comedy", "romance"],
-        )
-        self.assertEqual(theme_intent.include_themes, [])
-        self.assertEqual(
-            country_intent.excluded_countries,
-            ["India", "Japan", "South Korea"],
-        )
-        self.assertEqual(country_intent.preferred_countries, [])
+        for query in (
+            "movies without Indian, Korean, or Japanese titles",
+            "movies without Indian, Korean, Japanese titles",
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                self.assertEqual(
+                    intent.excluded_countries,
+                    ["India", "Japan", "South Korea"],
+                )
+                self.assertEqual(intent.preferred_countries, [])
+
+    def test_negation_list_does_not_absorb_a_positive_clause(self):
+        intent = parse_search_intent("not horror, just comedy", MOVIES)
+
+        self.assertEqual(intent.exclude_themes, ["horror"])
+        self.assertEqual(intent.include_themes, ["comedy"])
 
     def test_negation_does_not_cross_contrasting_clause(self):
         intent = parse_search_intent(

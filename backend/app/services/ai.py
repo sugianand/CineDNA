@@ -41,6 +41,12 @@ DECADE_WORDS = {
     "nineties": 1990,
 }
 
+DECADE_SEGMENTS = {
+    "early": (0, 3),
+    "mid": (4, 6),
+    "late": (7, 9),
+}
+
 DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     "emotional_intensity": (
         "emotional", "moving", "heartfelt", "sad", "cry", "intense", "powerful",
@@ -510,6 +516,18 @@ def _expand_abbreviated_year(anchor_year: int, value: str) -> int:
     return min(supported, key=lambda year: (abs(year - anchor_year), year))
 
 
+def _decade_bounds(query: str, match: re.Match, start_year: int) -> Tuple[int, int]:
+    segment_match = re.search(
+        r"\b(?:the\s+)?(early|mid|late)\s*$",
+        query[:match.start()],
+    )
+    if segment_match is None:
+        return start_year, start_year + 9
+
+    start_offset, end_offset = DECADE_SEGMENTS[segment_match.group(1)]
+    return start_year + start_offset, start_year + end_offset
+
+
 def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
@@ -595,21 +613,31 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     # (though nonstandard) spellings "1990's" and "1990’s".
     decade_match = re.search(r"\b((?:19|20)\d{2})\s*s\b", query)
     if decade_match:
-        min_year = int(decade_match.group(1))
-        max_year = min_year + 9
+        min_year, max_year = _decade_bounds(
+            query,
+            decade_match,
+            int(decade_match.group(1)),
+        )
     else:
         short_decade_match = re.search(
             r"(?<!\w)(?:the\s+)?([3-9]\d)\s*s\b",
             query,
         )
         if short_decade_match:
-            min_year = 1900 + int(short_decade_match.group(1))
-            max_year = min_year + 9
+            min_year, max_year = _decade_bounds(
+                query,
+                short_decade_match,
+                1900 + int(short_decade_match.group(1)),
+            )
         else:
             for word, start_year in DECADE_WORDS.items():
-                if _contains_term(query, word):
-                    min_year = start_year
-                    max_year = start_year + 9
+                word_match = re.search(rf"\b{word}\b", query)
+                if word_match:
+                    min_year, max_year = _decade_bounds(
+                        query,
+                        word_match,
+                        start_year,
+                    )
                     break
 
     after_match = re.search(r"\b(?:after|newer\s+than)\s+((?:19|20)\d{2})\b", query)

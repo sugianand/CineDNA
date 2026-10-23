@@ -409,6 +409,20 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(intent.min_year, min_year)
                 self.assertEqual(intent.max_year, max_year)
 
+    def test_decade_segments_are_normalized(self):
+        for query, min_year, max_year in (
+            ("movies from the early 2000s", 2000, 2003),
+            ("movies from the mid-2010s", 2014, 2016),
+            ("movies from the late 2010's", 2017, 2019),
+            ("films from the early '90s", 1990, 1993),
+            ("late nineties movies", 1997, 1999),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+
     def test_exact_release_year_has_natural_match_reason(self):
         intent = parse_search_intent("movies released in 2015", MOVIES)
 

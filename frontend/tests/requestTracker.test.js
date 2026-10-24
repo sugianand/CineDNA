@@ -32,3 +32,21 @@ test('finishing an old request does not clear the current request', () => {
 
   assert.equal(tracker.isActive(second), true)
 })
+
+test('cancelled async work cannot commit a late result', async () => {
+  const tracker = createRequestTracker()
+  const request = tracker.start()
+  let release
+  let committed = false
+  const pending = new Promise((resolve) => {
+    release = resolve
+  }).then(() => {
+    if (tracker.isActive(request)) committed = true
+  })
+
+  tracker.cancel()
+  release()
+  await pending
+
+  assert.equal(committed, false)
+})

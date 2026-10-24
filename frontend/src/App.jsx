@@ -88,9 +88,13 @@ function App() {
   const [error, setError] = useState('')
   const [expandedCatalog, setExpandedCatalog] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
-  const activeSearch = useRef(null)
+  const searchRequests = useRef(null)
   const profileRequests = useRef(null)
   const searchInput = useRef(null)
+
+  if (searchRequests.current === null) {
+    searchRequests.current = createRequestTracker()
+  }
 
   if (profileRequests.current === null) {
     profileRequests.current = createRequestTracker()
@@ -158,7 +162,7 @@ function App() {
     }
   }, [])
 
-  useEffect(() => () => activeSearch.current?.abort(), [])
+  useEffect(() => () => searchRequests.current.cancel(), [])
 
   useEffect(() => {
     if (!selected) return undefined
@@ -265,9 +269,8 @@ function App() {
     }
     const apiSearchMode = getApiSearchMode(searchMode, referenceMovie)
 
-    activeSearch.current?.abort()
-    const controller = new AbortController()
-    activeSearch.current = controller
+    const requestTracker = searchRequests.current
+    const controller = requestTracker.start()
 
     setQuery(cleanedQuery)
     setLoading(true)
@@ -289,18 +292,19 @@ function App() {
 
       if (!res.ok) throw new Error('Search failed')
       const body = await res.json()
+      if (!requestTracker.isActive(controller)) return
       const resolvedMode = getResponseMode(searchMode, body.ai_provider)
       setResponse(body)
       setResponseMode(resolvedMode)
       setMode(resolvedMode)
       rememberSearch(cleanedQuery, resolvedMode, referenceMovie)
     } catch (searchError) {
-      if (searchError.name !== 'AbortError') {
+      if (searchError.name !== 'AbortError' && requestTracker.isActive(controller)) {
         setError('We could not search CineDNA right now. Try again in a moment.')
       }
     } finally {
-      if (activeSearch.current === controller) {
-        activeSearch.current = null
+      if (requestTracker.isActive(controller)) {
+        requestTracker.finish(controller)
         setLoading(false)
       }
     }
@@ -326,8 +330,7 @@ function App() {
   }
 
   function chooseMode(nextMode) {
-    activeSearch.current?.abort()
-    activeSearch.current = null
+    searchRequests.current.cancel()
     setLoading(false)
     setMode(nextMode)
     setResponse(null)

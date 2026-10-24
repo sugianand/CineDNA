@@ -560,7 +560,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     inclusive_min_patterns = (
         r"\b(?:from\s+)?((?:19|20)\d{2})\s+"
         r"(?:(?:or|and)\s+)?(?:later|newer|onwards?)\b",
-        r"\b(?:not\s+before|no\s+earlier\s+than|on\s+or\s+after)\s+"
+        r"\b(?:not\s+before|no\s+earlier\s+than|on\s+or\s+after|at\s+least|"
+        r"(?:no|not)\s+older\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
     inclusive_min_match = next(
@@ -577,7 +578,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
         r"\b(?:up\s+to|through)\s+((?:19|20)\d{2})\b",
-        r"\b(?:not\s+after|no\s+later\s+than|on\s+or\s+before)\s+"
+        r"\b(?:not\s+after|no\s+later\s+than|on\s+or\s+before|at\s+most|"
+        r"(?:no|not)\s+newer\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
     inclusive_max_match = next(

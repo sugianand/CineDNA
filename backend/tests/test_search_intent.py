@@ -365,12 +365,18 @@ class SearchIntentTests(unittest.TestCase):
             ("movies not before 2015", 2015, None),
             ("movies no earlier than 2015", 2015, None),
             ("movies released on or after 2015", 2015, None),
+            ("movies at least 2015", 2015, None),
+            ("movies no older than 2015", 2015, None),
+            ("movies not older than 2015", 2015, None),
             ("movies up to 2015", None, 2015),
             ("movies through 2015", None, 2015),
             ("2015 or earlier movies", None, 2015),
             ("movies not after 2015", None, 2015),
             ("movies no later than 2015", None, 2015),
             ("movies released on or before 2015", None, 2015),
+            ("movies at most 2015", None, 2015),
+            ("movies no newer than 2015", None, 2015),
+            ("movies not newer than 2015", None, 2015),
         )
 
         for query, min_year, max_year in cases:

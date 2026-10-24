@@ -25,6 +25,7 @@ import {
   getEmptyResultsCopy,
   getResponseMode,
 } from './searchRouting.js'
+import { createRequestTracker } from './requestTracker.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
@@ -88,7 +89,12 @@ function App() {
   const [expandedCatalog, setExpandedCatalog] = useState(false)
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches)
   const activeSearch = useRef(null)
+  const profileRequests = useRef(null)
   const searchInput = useRef(null)
+
+  if (profileRequests.current === null) {
+    profileRequests.current = createRequestTracker()
+  }
 
   const examples = useMemo(() => (
     mode === 'title'
@@ -173,11 +179,11 @@ function App() {
   }, [selected])
 
   useEffect(() => {
-    let controller = null
     let active = true
+    const requestTracker = profileRequests.current
 
     async function restoreMovieLink() {
-      controller?.abort()
+      requestTracker.cancel()
       const link = parseMovieProfileLink(window.location.search)
       if (!link) {
         setSelected(null)
@@ -185,8 +191,7 @@ function App() {
         setProfileError('')
         return
       }
-      const nextController = new AbortController()
-      controller = nextController
+      const nextController = requestTracker.start()
       setProfileLoading(true)
       setProfileError('')
       try {
@@ -195,16 +200,19 @@ function App() {
         const res = await fetch(`${API}/api/movie?${params}`, { signal: nextController.signal })
         if (!res.ok) throw new Error('Movie not found')
         const movie = await res.json()
-        if (active && controller === nextController) {
+        if (active && requestTracker.isActive(nextController)) {
           setSelected({ movie, score: null, why: 'Movie DNA profile' })
         }
       } catch (error) {
-        if (error.name !== 'AbortError' && active && controller === nextController) {
+        if (error.name !== 'AbortError' && active && requestTracker.isActive(nextController)) {
           setSelected(null)
           setProfileError('Could not load this movie. Try searching for its title again.')
         }
       } finally {
-        if (active && controller === nextController) setProfileLoading(false)
+        if (active && requestTracker.isActive(nextController)) {
+          requestTracker.finish(nextController)
+          setProfileLoading(false)
+        }
       }
     }
 
@@ -212,12 +220,13 @@ function App() {
     restoreMovieLink()
     return () => {
       active = false
-      controller?.abort()
+      requestTracker.cancel()
       window.removeEventListener('popstate', restoreMovieLink)
     }
   }, [])
 
   function openMovie(movie, score, why) {
+    profileRequests.current.cancel()
     const target = getMovieProfileHref(movie, window.location.search)
     window.history.pushState(null, '', target)
     setProfileError('')
@@ -226,6 +235,7 @@ function App() {
   }
 
   function closeMovie() {
+    profileRequests.current.cancel()
     window.history.replaceState(null, '', getMovieProfileExitHref(window.location.href))
     setSelected(null)
     setProfileError('')

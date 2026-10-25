@@ -704,6 +704,23 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.reference_titles, ["Up in the Air"])
         self.assertEqual(intent.target_dimensions["emotional_intensity"], 80)
 
+    def test_reference_query_blends_distinct_movie_dna_profiles(self):
+        intent = parse_search_intent(
+            "Like Interstellar and Arrival",
+            MOVIES,
+        )
+        references = [
+            next(movie for movie in MOVIES if movie.title == title)
+            for title in ("Interstellar", "Arrival")
+        ]
+
+        self.assertEqual(intent.reference_titles, ["Interstellar", "Arrival"])
+        self.assertEqual(
+            intent.target_dimensions["narrative_complexity"],
+            round(sum(movie.dimensions["narrative_complexity"] for movie in references) / 2),
+        )
+        self.assertIn("Interstellar and Arrival", intent.explanation)
+
     def test_reference_movie_matching_normalizes_unicode(self):
         movies = [
             MovieDNA(

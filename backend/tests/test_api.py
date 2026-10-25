@@ -104,6 +104,26 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(scores, sorted(scores, reverse=True))
         self.assertTrue(all(0 <= score <= 100 for score in scores))
 
+    def test_multi_reference_search_excludes_every_source_movie(self):
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "Like Interstellar and Arrival",
+                "limit": 20,
+                "mode": "auto",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(
+            body["intent"]["reference_titles"],
+            ["Interstellar", "Arrival"],
+        )
+        result_titles = {result["movie"]["title"] for result in body["results"]}
+        self.assertNotIn("Interstellar", result_titles)
+        self.assertNotIn("Arrival", result_titles)
+
 
     @patch("app.main.discover_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)

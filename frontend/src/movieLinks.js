@@ -30,7 +30,11 @@ export function parseMovieProfileLink(search) {
   const params = new URLSearchParams(search)
   const title = params.get('movie')
   if (!title || !title.trim() || title.length > 200) return null
-  const source = params.get('source') === 'tmdb' ? 'tmdb' : 'cinedna'
+  const sourceParam = params.get('source')
+  if (sourceParam !== null && sourceParam !== 'cinedna' && sourceParam !== 'tmdb') {
+    return null
+  }
+  const source = sourceParam || 'cinedna'
   const sourceId = params.get('source_id')
   return {
     title: title.trim(),

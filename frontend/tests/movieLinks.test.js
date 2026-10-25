@@ -28,6 +28,8 @@ test('external movie links retain a stable TMDB identity', () => {
 test('malformed movie links do not allow unbounded identifiers', () => {
   assert.equal(parseMovieProfileLink('?movie='), null)
   assert.equal(parseMovieProfileLink('?q=test'), null)
+  assert.equal(parseMovieProfileLink('?movie=Dune&source=bogus'), null)
+  assert.equal(parseMovieProfileLink('?movie=Dune&source='), null)
   const parsed = parseMovieProfileLink('?movie=Test&source=tmdb&source_id=../bad')
   assert.equal(parsed.sourceId, null)
 })

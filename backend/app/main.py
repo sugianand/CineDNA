@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,7 +66,7 @@ def list_movies():
 @app.get("/api/movie", response_model=MovieDNA)
 def get_movie_profile(
     title: str = Query(min_length=1, max_length=200),
-    source: str = "cinedna",
+    source: Literal["cinedna", "tmdb"] = "cinedna",
     source_id: str | None = None,
 ):
     """Resolve movie details for a URL that can be refreshed or shared."""

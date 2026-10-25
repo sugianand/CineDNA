@@ -133,6 +133,23 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertNotIn("Interstellar", result_titles)
         self.assertNotIn("Arrival", result_titles)
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_excludes_a_negated_movie_title(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Not Titanic", "limit": 20, "mode": "auto"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["reference_titles"], [])
+        self.assertEqual(body["intent"]["excluded_titles"], ["Titanic"])
+        self.assertNotEqual(body["ai_provider"], "cinedna-title-catalog")
+        self.assertNotIn(
+            "Titanic",
+            {result["movie"]["title"] for result in body["results"]},
+        )
+
 
     @patch("app.main.discover_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)

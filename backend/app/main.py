@@ -109,6 +109,7 @@ def search_movies(request: SearchRequest):
         intent.preferred_countries,
         intent.excluded_countries,
         intent.reference_titles,
+        intent.excluded_titles,
         intent.min_year is not None,
         intent.max_year is not None,
     ))
@@ -125,6 +126,7 @@ def search_movies(request: SearchRequest):
     should_search_titles = request.mode == "title" or (
         request.mode == "auto"
         and not reference_recommendation
+        and not intent.excluded_titles
         and (
             has_exact_local_title(request.query, MOVIES)
             or bool(local_title_matches)

@@ -51,6 +51,7 @@ class SearchIntent(BaseModel):
     preferred_countries: List[str] = []
     excluded_countries: List[str] = []
     reference_titles: List[str] = []
+    excluded_titles: List[str] = []
     min_year: Optional[int] = None
     max_year: Optional[int] = None
 

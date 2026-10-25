@@ -223,27 +223,29 @@ def _fuzzy_title_variants(movie: MovieDNA) -> set[str]:
     return {variant for variant in variants if len(variant) >= 4}
 
 
-def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
-    normalized_query = _normalize_text(query)
+def _find_title_matches(
+    normalized_query: str,
+    movies: List[MovieDNA],
+) -> List[Tuple[MovieDNA, int, int, str]]:
     exact_matches = []
     for movie in movies:
         for candidate in (movie.title, movie.original_title or ""):
             normalized_title = _normalize_text(candidate)
             exact_matches.extend(
-                (movie, start, end, len(normalized_title))
+                (movie, start, end, len(normalized_title), normalized_title)
                 for start, end in _term_spans(normalized_query, candidate)
             )
 
-    reference_matches = []
-    for movie, start, end, length in exact_matches:
+    title_matches = []
+    for movie, start, end, length, normalized_title in exact_matches:
         is_part_of_longer_title = any(
             other_start <= start
             and end <= other_end
             and other_length > length
-            for _other_movie, other_start, other_end, other_length in exact_matches
+            for _other_movie, other_start, other_end, other_length, _term in exact_matches
         )
         if not is_part_of_longer_title:
-            reference_matches.append((movie, start, end))
+            title_matches.append((movie, start, end, normalized_title))
 
     base_matches: Dict[str, List[MovieDNA]] = {}
     for movie in movies:
@@ -257,15 +259,45 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
         for start, end in _term_spans(normalized_query, base):
             if any(
                 exact_start <= start and end <= exact_end
-                for _movie, exact_start, exact_end in reference_matches
+                for _movie, exact_start, exact_end, _term in title_matches
             ):
                 continue
-            reference_matches.append((candidates[0], start, end))
+            title_matches.append((candidates[0], start, end, base))
+
+    return title_matches
+
+
+def _find_excluded_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
+    normalized_query = _normalize_text(query)
+    excluded = []
+    seen = set()
+    for movie, _start, _end, matched_title in sorted(
+        _find_title_matches(normalized_query, movies),
+        key=lambda match: match[1],
+    ):
+        identity = (movie.title.casefold(), movie.year)
+        if _is_negated(normalized_query, matched_title) and identity not in seen:
+            excluded.append(movie)
+            seen.add(identity)
+    return excluded
+
+
+def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]:
+    normalized_query = _normalize_text(query)
+    excluded_identities = {
+        (movie.title.casefold(), movie.year)
+        for movie in _find_excluded_movies(normalized_query, movies)
+    }
+    reference_matches = [
+        match
+        for match in _find_title_matches(normalized_query, movies)
+        if (match[0].title.casefold(), match[0].year) not in excluded_identities
+    ]
 
     if reference_matches:
         references = []
         seen = set()
-        for movie, _start, _end in sorted(reference_matches, key=lambda match: match[1]):
+        for movie, _start, _end, _term in sorted(reference_matches, key=lambda match: match[1]):
             identity = (movie.title.casefold(), movie.year)
             if identity not in seen:
                 references.append(movie)
@@ -678,6 +710,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
 
 def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
     lowered = _normalize_text(query)
+    excluded_movies = _find_excluded_movies(lowered, movies)
     references = _find_reference_movies(lowered, movies)
     trait_query = _without_reference_titles(lowered, references)
 
@@ -799,14 +832,22 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         target["humor"] = min(100, target.get("humor", 55) + 25)
 
     reference_titles = [movie.title for movie in references]
+    excluded_titles = [movie.title for movie in excluded_movies]
     reference_label = (
         reference_titles[0]
         if len(reference_titles) == 1
         else f"{', '.join(reference_titles[:-1])} and {reference_titles[-1]}"
     ) if reference_titles else ""
+    excluded_label = (
+        excluded_titles[0]
+        if len(excluded_titles) == 1
+        else f"{', '.join(excluded_titles[:-1])} and {excluded_titles[-1]}"
+    ) if excluded_titles else ""
     explanation = (
         f"Started from the Movie DNA of {reference_label} and adjusted it using your request."
         if reference_titles
+        else f"Excluded {excluded_label} and converted the rest of your request into Movie DNA."
+        if excluded_titles
         else "Converted your natural-language request into Movie DNA traits and themes."
     )
 
@@ -817,6 +858,7 @@ def parse_search_intent(query: str, movies: List[MovieDNA]) -> SearchIntent:
         preferred_countries=preferred_countries,
         excluded_countries=excluded_countries,
         reference_titles=reference_titles,
+        excluded_titles=excluded_titles,
         min_year=min_year,
         max_year=max_year,
         explanation=explanation,

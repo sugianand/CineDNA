@@ -25,6 +25,9 @@ function getStrictConstraints(intent) {
   if (intent.excluded_countries?.length) {
     constraints.push(`excluded countries (${formatValues(intent.excluded_countries)})`)
   }
+  if (intent.excluded_titles?.length) {
+    constraints.push(`excluded movies (${formatValues(intent.excluded_titles)})`)
+  }
 
   if (intent.min_year != null && intent.max_year != null) {
     constraints.push(intent.min_year === intent.max_year

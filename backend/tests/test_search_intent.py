@@ -721,6 +721,24 @@ class SearchIntentTests(unittest.TestCase):
         )
         self.assertIn("Interstellar and Arrival", intent.explanation)
 
+    def test_negated_movie_title_is_excluded_instead_of_used_as_a_reference(self):
+        for query in ("Not Titanic", "Avoid Titanic", "Anything but Titanic"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.reference_titles, [])
+                self.assertEqual(intent.excluded_titles, ["Titanic"])
+                self.assertNotIn(
+                    "Titanic",
+                    [movie.title for movie, _score in ranked],
+                )
+                self.assertIn("Excluded Titanic", intent.explanation)
+
+        reference_intent = parse_search_intent("Like Titanic", MOVIES)
+        self.assertEqual(reference_intent.reference_titles, ["Titanic"])
+        self.assertEqual(reference_intent.excluded_titles, [])
+
     def test_reference_movie_matching_normalizes_unicode(self):
         movies = [
             MovieDNA(

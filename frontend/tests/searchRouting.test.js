@@ -29,12 +29,14 @@ test('empty vibe results explain which strict constraints can be widened', () =>
     max_year: 1999,
     include_themes: ['mystery'],
     exclude_themes: ['horror'],
+    excluded_titles: ['Titanic'],
   })
 
   assert.equal(copy.heading, 'No movies matched every filter.')
   assert.match(copy.description, /country \(India\)/)
   assert.match(copy.description, /release years \(1990\u20131999\)/)
   assert.match(copy.description, /excluded genres or themes \(horror\)/)
+  assert.match(copy.description, /excluded movies \(Titanic\)/)
   assert.doesNotMatch(copy.description, /mystery/)
   assert.equal(copy.action, 'Edit this search')
 })

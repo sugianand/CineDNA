@@ -138,9 +138,9 @@ def rank_movies(
     limit: int = 6,
 ) -> List[Tuple[MovieDNA, float]]:
     catalog_movies = list(movies)
-    reference_titles = {
+    blocked_titles = {
         normalized
-        for title in intent.reference_titles
+        for title in [*intent.reference_titles, *intent.excluded_titles]
         if (normalized := _normalize_title(title))
     }
     excluded_countries = {
@@ -150,7 +150,7 @@ def rank_movies(
         movie
         for movie in catalog_movies
         if not any(
-            _normalize_title(candidate) in reference_titles
+            _normalize_title(candidate) in blocked_titles
             for candidate in (movie.title, movie.original_title or "")
             if candidate
         )

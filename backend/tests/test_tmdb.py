@@ -212,6 +212,24 @@ class TMDBProfileTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
+    def test_discovery_excludes_any_requested_genre(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"results": []}
+        get.return_value = response
+
+        discover_tmdb_movies(SearchIntent(
+            target_dimensions={},
+            exclude_themes=["horror", "comedy", "horror"],
+        ))
+
+        self.assertEqual(
+            get.call_args.kwargs["params"]["without_genres"],
+            "27|35",
+        )
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
     def test_discovery_filters_newly_supported_countries(self, get):
         response = Mock()
         response.raise_for_status.return_value = None

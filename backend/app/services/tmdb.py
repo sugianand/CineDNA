@@ -454,7 +454,10 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
     if genres:
         params["with_genres"] = "|".join(map(str, dict.fromkeys(genres)))
     if excluded_genres:
-        params["without_genres"] = ",".join(map(str, dict.fromkeys(excluded_genres)))
+        # TMDB treats commas as AND and pipes as OR. Exclude movies matching
+        # any unwanted genre so the bounded discovery page is not filled with
+        # candidates CineDNA will discard during final ranking.
+        params["without_genres"] = "|".join(map(str, dict.fromkeys(excluded_genres)))
     if len(intent.preferred_countries) == 1:
         country_code = ORIGIN_COUNTRY_CODES.get(intent.preferred_countries[0])
         if country_code:

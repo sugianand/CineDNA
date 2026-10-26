@@ -230,6 +230,24 @@ class TMDBProfileTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
+    def test_discovery_filters_genres_missing_from_offline_catalog(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"results": []}
+        get.return_value = response
+
+        discover_tmdb_movies(SearchIntent(
+            target_dimensions={},
+            include_themes=["documentary", "history", "music", "western"],
+        ))
+
+        self.assertEqual(
+            get.call_args.kwargs["params"]["with_genres"],
+            "99|36|10402|37",
+        )
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
     def test_discovery_filters_newly_supported_countries(self, get):
         response = Mock()
         response.raise_for_status.return_value = None

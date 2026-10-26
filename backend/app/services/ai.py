@@ -104,7 +104,8 @@ THEME_VOCAB = {
     "morality", "justice", "crime", "deception", "murder", "greed", "friendship",
     "education", "mythology", "power", "destiny", "religion", "war", "love",
     "trauma", "truth", "dreams", "language", "grief", "communication", "action", "animation",
-    "comedy", "fantasy", "horror", "mystery", "romance", "thriller", "science fiction",
+    "comedy", "documentary", "fantasy", "history", "horror", "music", "mystery",
+    "romance", "thriller", "science fiction", "western",
 }
 
 THEME_ALIASES = {
@@ -112,13 +113,17 @@ THEME_ALIASES = {
     "adventure": ("adventurous", "adventures"),
     "animation": ("animated", "cartoon", "cartoons"),
     "comedy": ROM_COM_TERMS + ACTION_COMEDY_TERMS + ("comedies",),
+    "documentary": ("documentaries", "nonfiction", "non fiction"),
     "drama": ("dramatic", "dramas"),
     "fantasy": ("magical", "magic", "fantasies"),
+    "history": ("historical",),
     "horror": ("scary", "spooky", "frightening", "horrors"),
+    "music": ("musical", "musicals"),
     "mystery": ("mysteries",),
     "romance": ROM_COM_TERMS + ("romances",),
     "science fiction": ("sci fi", "scifi", "space opera"),
     "thriller": SUSPENSE_TERMS + ("thrillers",),
+    "western": ("westerns", "cowboy movie", "cowboy movies"),
 }
 
 COUNTRY_ALIASES = {

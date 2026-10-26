@@ -323,6 +323,25 @@ class SearchIntentTests(unittest.TestCase):
             all("Adventure" not in movie.genres for movie, _score in excluded_ranked)
         )
 
+    def test_tmdb_only_genre_aliases_become_search_preferences(self):
+        cases = (
+            ("a nature documentary", "documentary"),
+            ("nonfiction movies", "documentary"),
+            ("a historical film", "history"),
+            ("a musical", "music"),
+            ("cowboy movies", "western"),
+        )
+
+        for query, genre in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertIn(genre, intent.include_themes)
+
+        excluded = parse_search_intent("no documentaries or westerns", MOVIES)
+        self.assertEqual(excluded.include_themes, [])
+        self.assertEqual(excluded.exclude_themes, ["documentary", "western"])
+
     def test_release_periods_filter_ranked_movies(self):
         cases = (
             ("movies from the 1970s", 1970, 1979),

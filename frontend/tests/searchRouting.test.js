@@ -5,7 +5,33 @@ import {
   getApiSearchMode,
   getEmptyResultsCopy,
   getResponseMode,
+  MAX_SEARCH_QUERY_LENGTH,
+  validateSearchQuery,
 } from '../src/searchRouting.js'
+
+test('search validation normalizes whitespace before enforcing limits', () => {
+  assert.deepEqual(validateSearchQuery('  dark   mystery  ', 'vibe'), {
+    query: 'dark mystery',
+    error: '',
+  })
+  assert.deepEqual(validateSearchQuery(' x ', 'title'), {
+    query: 'x',
+    error: '',
+  })
+})
+
+test('search validation explains mode-specific minimum lengths', () => {
+  assert.match(validateSearchQuery('  x  ', 'vibe').error, /at least 3 characters/)
+  assert.match(validateSearchQuery('   ', 'title').error, /movie title/)
+})
+
+test('search validation rejects queries beyond the API limit', () => {
+  assert.equal(validateSearchQuery('x'.repeat(MAX_SEARCH_QUERY_LENGTH), 'vibe').error, '')
+  assert.match(
+    validateSearchQuery('x'.repeat(MAX_SEARCH_QUERY_LENGTH + 1), 'vibe').error,
+    /500 characters or fewer/,
+  )
+})
 
 test('explicit search modes stay explicit', () => {
   assert.equal(getApiSearchMode('vibe'), 'vibe')

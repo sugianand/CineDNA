@@ -3,6 +3,33 @@ const TITLE_PROVIDERS = new Set([
   'tmdb-catalog+heuristic-dna',
 ])
 
+export const MAX_SEARCH_QUERY_LENGTH = 500
+
+export function validateSearchQuery(query, displayMode) {
+  const normalized = typeof query === 'string'
+    ? query.trim().replace(/\s+/g, ' ')
+    : ''
+  const minimumLength = displayMode === 'vibe' ? 3 : 1
+
+  if (normalized.length < minimumLength) {
+    return {
+      query: normalized,
+      error: displayMode === 'vibe'
+        ? 'Describe your movie vibe in at least 3 characters.'
+        : 'Enter a movie title to search.',
+    }
+  }
+
+  if (normalized.length > MAX_SEARCH_QUERY_LENGTH) {
+    return {
+      query: normalized,
+      error: `Keep your search to ${MAX_SEARCH_QUERY_LENGTH} characters or fewer.`,
+    }
+  }
+
+  return { query: normalized, error: '' }
+}
+
 export function getApiSearchMode(displayMode, referenceMovie = null) {
   if (referenceMovie) return 'vibe'
   return displayMode

@@ -24,6 +24,8 @@ import {
   getApiSearchMode,
   getEmptyResultsCopy,
   getResponseMode,
+  MAX_SEARCH_QUERY_LENGTH,
+  validateSearchQuery,
 } from './searchRouting.js'
 import { createRequestTracker } from './requestTracker.js'
 
@@ -259,12 +261,15 @@ function App() {
   }
 
   async function runSearch(searchQuery, searchMode = mode, referenceMovie = null) {
-    const cleanedQuery = searchQuery.trim().replace(/\s+/g, ' ')
-    const minimumLength = searchMode === 'vibe' ? 3 : 1
-    if (cleanedQuery.length < minimumLength) {
-      setError(searchMode === 'vibe'
-        ? 'Describe your movie vibe in at least 3 characters.'
-        : 'Enter a movie title to search.')
+    const { query: cleanedQuery, error: validationError } = validateSearchQuery(
+      searchQuery,
+      searchMode,
+    )
+    if (validationError) {
+      searchRequests.current.cancel()
+      setLoading(false)
+      setResponse(null)
+      setError(validationError)
       return
     }
     const apiSearchMode = getApiSearchMode(searchMode, referenceMovie)
@@ -412,6 +417,7 @@ function App() {
             onChange={(event) => setQuery(event.target.value)}
             autoComplete="off"
             minLength={mode === 'vibe' ? 3 : 1}
+            maxLength={MAX_SEARCH_QUERY_LENGTH}
           />
           <button disabled={loading || query.trim().length < (mode === 'vibe' ? 3 : 1)}>
             {loading ? 'Analyzing…' : mode === 'title' ? 'Search title' : 'Find my movie'}

@@ -254,7 +254,19 @@ class TMDBProfileTests(unittest.TestCase):
         response.json.return_value = {"results": []}
         get.return_value = response
 
-        for country, country_code in (("Brazil", "BR"), ("France", "FR")):
+        for country, country_code in (
+            ("Australia", "AU"),
+            ("Brazil", "BR"),
+            ("Canada", "CA"),
+            ("China", "CN"),
+            ("France", "FR"),
+            ("Germany", "DE"),
+            ("Hong Kong", "HK"),
+            ("Italy", "IT"),
+            ("Mexico", "MX"),
+            ("Spain", "ES"),
+            ("United Kingdom", "GB"),
+        ):
             with self.subTest(country=country):
                 discover_tmdb_movies(SearchIntent(
                     target_dimensions={},

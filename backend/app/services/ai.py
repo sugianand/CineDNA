@@ -127,14 +127,25 @@ THEME_ALIASES = {
 }
 
 COUNTRY_ALIASES = {
+    "Australia": ("australia", "australian"),
     "Brazil": ("brazil", "brazilian"),
+    "Canada": ("canada", "canadian"),
+    "China": ("china", "chinese"),
     "France": ("france", "french"),
+    "Germany": ("germany", "german"),
+    "Hong Kong": ("hong kong",),
     "India": (
         "india", "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
         "kannada", "bengali", "marathi", "punjabi", "gujarati",
     ),
+    "Italy": ("italy", "italian"),
     "Japan": ("japan", "japanese", "anime"),
+    "Mexico": ("mexico", "mexican"),
     "South Korea": ("south korea", "korean", "south korean"),
+    "Spain": ("spain", "spanish"),
+    "United Kingdom": (
+        "united kingdom", "uk", "u.k.", "britain", "british",
+    ),
     "USA": ("usa", "united states", "american", "hollywood", "us movie", "u.s."),
 }
 

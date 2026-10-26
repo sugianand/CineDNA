@@ -196,6 +196,29 @@ class SearchIntentTests(unittest.TestCase):
                     all(movie.country == country for movie, _score in ranked)
                 )
 
+    def test_tmdb_country_aliases_become_search_preferences(self):
+        cases = (
+            ("Australian thrillers", "Australia"),
+            ("Canadian mysteries", "Canada"),
+            ("Chinese action movies", "China"),
+            ("German dramas", "Germany"),
+            ("Hong Kong cinema", "Hong Kong"),
+            ("Italian comedies", "Italy"),
+            ("Mexican films", "Mexico"),
+            ("Spanish movies", "Spain"),
+            ("British crime movies", "United Kingdom"),
+        )
+
+        for query, country in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.preferred_countries, [country])
+
+        excluded = parse_search_intent("no Canadian or Mexican movies", MOVIES)
+        self.assertEqual(excluded.preferred_countries, [])
+        self.assertEqual(excluded.excluded_countries, ["Canada", "Mexico"])
+
     def test_canonical_country_names_filter_results(self):
         for country in ("Brazil", "France", "India", "Japan", "South Korea", "USA"):
             with self.subTest(country=country):

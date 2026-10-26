@@ -38,11 +38,20 @@ GENRES = {
 
 GENRE_IDS = {name.casefold(): genre_id for genre_id, name in GENRES.items()}
 ORIGIN_COUNTRY_CODES = {
+    "Australia": "AU",
     "Brazil": "BR",
+    "Canada": "CA",
+    "China": "CN",
     "France": "FR",
+    "Germany": "DE",
+    "Hong Kong": "HK",
     "India": "IN",
+    "Italy": "IT",
     "Japan": "JP",
+    "Mexico": "MX",
     "South Korea": "KR",
+    "Spain": "ES",
+    "United Kingdom": "GB",
     "USA": "US",
 }
 

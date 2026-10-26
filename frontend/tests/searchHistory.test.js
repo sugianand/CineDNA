@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { parseRecentSearches, updateRecentSearches } from '../src/searchHistory.js'
+import { MAX_SEARCH_QUERY_LENGTH } from '../src/searchRouting.js'
 
 test('parseRecentSearches safely rejects malformed storage', () => {
   assert.deepEqual(parseRecentSearches('{broken'), [])
@@ -24,6 +25,49 @@ test('parseRecentSearches rejects reference DNA dimensions outside the scoring s
 
   assert.deepEqual(parseRecentSearches(JSON.stringify([
     { query: 'Like Corrupt Movie', mode: 'vibe', referenceMovie },
+  ])), [])
+})
+
+test('parseRecentSearches rejects malformed reference movie field types', () => {
+  const referenceMovie = {
+    title: 'Corrupt Movie',
+    year: 2026,
+    country: 'USA',
+    genres: ['Drama'],
+    themes: ['family'],
+    dimensions: { action: 42 },
+    summary: 'A malformed persisted reference movie.',
+    source: 'tmdb',
+    source_id: '123',
+    original_title: null,
+    poster_url: null,
+  }
+  const malformedFields = [
+    { genres: ['Drama', 42] },
+    { themes: ['family', null] },
+    { source: null },
+    { source_id: 123 },
+    { original_title: 123 },
+    { poster_url: {} },
+  ]
+
+  for (const malformedField of malformedFields) {
+    assert.deepEqual(parseRecentSearches(JSON.stringify([
+      {
+        query: 'Like Corrupt Movie',
+        mode: 'vibe',
+        referenceMovie: { ...referenceMovie, ...malformedField },
+      },
+    ])), [])
+  }
+})
+
+test('parseRecentSearches discards queries that exceed the API limit', () => {
+  const overlongQuery = 'x'.repeat(MAX_SEARCH_QUERY_LENGTH + 1)
+
+  assert.deepEqual(parseRecentSearches(JSON.stringify([
+    { query: overlongQuery, mode: 'title' },
+    overlongQuery,
   ])), [])
 })
 

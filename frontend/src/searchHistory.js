@@ -1,5 +1,17 @@
+import { MAX_SEARCH_QUERY_LENGTH } from './searchRouting.js'
+
 const VALID_SEARCH_MODES = new Set(['vibe', 'title'])
 const MAX_RECENT_SEARCHES = 5
+
+function isStringArray(value) {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string')
+}
+
+function isOptionalString(movie, key, nullable = true) {
+  if (!(key in movie)) return true
+  if (nullable && movie[key] === null) return true
+  return typeof movie[key] === 'string'
+}
 
 function isValidReferenceMovie(movie) {
   return Boolean(
@@ -8,8 +20,8 @@ function isValidReferenceMovie(movie) {
     && typeof movie.title === 'string'
     && Number.isInteger(movie.year)
     && typeof movie.country === 'string'
-    && Array.isArray(movie.genres)
-    && Array.isArray(movie.themes)
+    && isStringArray(movie.genres)
+    && isStringArray(movie.themes)
     && movie.dimensions
     && typeof movie.dimensions === 'object'
     && !Array.isArray(movie.dimensions)
@@ -17,13 +29,17 @@ function isValidReferenceMovie(movie) {
       (value) => Number.isInteger(value) && value >= 0 && value <= 100,
     )
     && typeof movie.summary === 'string'
+    && isOptionalString(movie, 'source', false)
+    && isOptionalString(movie, 'source_id')
+    && isOptionalString(movie, 'original_title')
+    && isOptionalString(movie, 'poster_url')
   )
 }
 
 function normalizeSearch(entry) {
   if (typeof entry === 'string') {
     const query = entry.trim().replace(/\s+/g, ' ')
-    if (!query) return null
+    if (!query || query.length > MAX_SEARCH_QUERY_LENGTH) return null
 
     // Legacy entries did not record their mode. Searches shorter than three
     // characters could only have succeeded as title searches.
@@ -35,7 +51,7 @@ function normalizeSearch(entry) {
   }
 
   const query = entry.query.trim().replace(/\s+/g, ' ')
-  if (!query) return null
+  if (!query || query.length > MAX_SEARCH_QUERY_LENGTH) return null
 
   if ('referenceMovie' in entry) {
     if (!isValidReferenceMovie(entry.referenceMovie)) return null

@@ -279,6 +279,25 @@ class TMDBProfileTests(unittest.TestCase):
                 )
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_discovery_combines_multiple_preferred_countries(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"results": []}
+        get.return_value = response
+
+        discover_tmdb_movies(SearchIntent(
+            target_dimensions={},
+            preferred_countries=["Canada", "Mexico", "Canada"],
+        ))
+
+        self.assertEqual(get.call_count, 1)
+        self.assertEqual(
+            get.call_args.kwargs["params"]["with_origin_country"],
+            "CA|MX",
+        )
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get", side_effect=__import__("httpx").TimeoutException("slow"))
     def test_discovery_timeout_preserves_offline_fallback(self, _get):
         self.assertEqual(discover_tmdb_movies(SearchIntent(target_dimensions={})), [])

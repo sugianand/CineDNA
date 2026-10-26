@@ -467,10 +467,15 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
         # any unwanted genre so the bounded discovery page is not filled with
         # candidates CineDNA will discard during final ranking.
         params["without_genres"] = "|".join(map(str, dict.fromkeys(excluded_genres)))
-    if len(intent.preferred_countries) == 1:
-        country_code = ORIGIN_COUNTRY_CODES.get(intent.preferred_countries[0])
-        if country_code:
-            params["with_origin_country"] = country_code
+    country_codes = [
+        ORIGIN_COUNTRY_CODES[country]
+        for country in intent.preferred_countries
+        if country in ORIGIN_COUNTRY_CODES
+    ]
+    if country_codes:
+        # A pipe asks TMDB for movies from any requested origin country while
+        # keeping multi-country discovery to the same single bounded page.
+        params["with_origin_country"] = "|".join(dict.fromkeys(country_codes))
     if intent.min_year is not None:
         params["primary_release_date.gte"] = f"{intent.min_year:04d}-01-01"
     if intent.max_year is not None:

@@ -212,6 +212,52 @@ class TMDBProfileTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
+    def test_single_country_filter_labels_results_without_origin_metadata(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [{
+                "id": 102,
+                "title": "French Discovery",
+                "release_date": "2024-03-01",
+                "genre_ids": [18],
+                "original_language": "en",
+            }]
+        }
+        get.return_value = response
+
+        movies = discover_tmdb_movies(SearchIntent(
+            target_dimensions={},
+            preferred_countries=["France"],
+        ))
+
+        self.assertEqual([movie.country for movie in movies], ["France"])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_explicit_origin_metadata_wins_over_country_filter_hint(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [{
+                "id": 103,
+                "title": "International Co-production",
+                "release_date": "2024-04-01",
+                "genre_ids": [18],
+                "origin_country": ["DE"],
+            }]
+        }
+        get.return_value = response
+
+        movies = discover_tmdb_movies(SearchIntent(
+            target_dimensions={},
+            preferred_countries=["France"],
+        ))
+
+        self.assertEqual([movie.country for movie in movies], ["Germany"])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
     def test_discovery_excludes_any_requested_genre(self, get):
         response = Mock()
         response.raise_for_status.return_value = None

@@ -203,13 +203,19 @@ def _themes_for(overview: str, genres: List[str]) -> List[str]:
     return list(dict.fromkeys(themes))[:6]
 
 
-def _country_label(origin_countries: object, language: str) -> str:
+def _country_label(
+    origin_countries: object,
+    language: str,
+    country_hint: str | None = None,
+) -> str:
     if isinstance(origin_countries, list):
         for country_code in origin_countries:
             if isinstance(country_code, str):
                 country = COUNTRY_NAMES.get(country_code.upper())
                 if country:
                     return country
+    if country_hint:
+        return country_hint
     if language in INDIAN_LANGUAGES:
         return "India"
     if language == "ja":
@@ -219,7 +225,7 @@ def _country_label(origin_countries: object, language: str) -> str:
     return "International"
 
 
-def _from_tmdb(item: dict) -> MovieDNA:
+def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
     overview = (item.get("overview") or "").strip()
     release_date = item.get("release_date") or ""
@@ -236,6 +242,7 @@ def _from_tmdb(item: dict) -> MovieDNA:
         country=_country_label(
             item.get("origin_country"),
             item.get("original_language") or "",
+            country_hint,
         ),
         genres=genres or ["Movie"],
         themes=_themes_for(overview, genres),
@@ -467,15 +474,17 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
         # any unwanted genre so the bounded discovery page is not filled with
         # candidates CineDNA will discard during final ranking.
         params["without_genres"] = "|".join(map(str, dict.fromkeys(excluded_genres)))
-    country_codes = [
-        ORIGIN_COUNTRY_CODES[country]
+    country_filters = list(dict.fromkeys(
+        (country, ORIGIN_COUNTRY_CODES[country])
         for country in intent.preferred_countries
         if country in ORIGIN_COUNTRY_CODES
-    ]
-    if country_codes:
+    ))
+    if country_filters:
         # A pipe asks TMDB for movies from any requested origin country while
         # keeping multi-country discovery to the same single bounded page.
-        params["with_origin_country"] = "|".join(dict.fromkeys(country_codes))
+        params["with_origin_country"] = "|".join(
+            country_code for _country, country_code in country_filters
+        )
     if intent.min_year is not None:
         params["primary_release_date.gte"] = f"{intent.min_year:04d}-01-01"
     if intent.max_year is not None:
@@ -500,13 +509,17 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
         return []
 
     movies = []
+    country_hint = country_filters[0][0] if len(country_filters) == 1 else None
     for item in payload["results"]:
         if len(movies) >= limit:
             break
         if not isinstance(item, dict) or not _is_usable_catalog_item(item):
             continue
         try:
-            movie = _from_tmdb(item)
+            # TMDB applies with_origin_country to discovery but list results do
+            # not consistently include origin_country. A single requested
+            # country is therefore a safe fallback for the generated profile.
+            movie = _from_tmdb(item, country_hint=country_hint)
         except (TypeError, ValueError):
             continue
         if movie.year > 0 and movie.title != "Untitled":

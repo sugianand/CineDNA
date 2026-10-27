@@ -1,9 +1,14 @@
+function isValidTmdbSourceId(value) {
+  const sourceId = String(value || '')
+  return /^\d{1,12}$/.test(sourceId) && /[1-9]/.test(sourceId)
+}
+
 export function getMovieProfileHref(movie, currentSearch = '') {
   const params = new URLSearchParams(currentSearch)
   params.set('movie', movie.title)
   params.delete('source')
   params.delete('source_id')
-  if (movie.source === 'tmdb' && /^\d+$/.test(String(movie.source_id || ''))) {
+  if (movie.source === 'tmdb' && isValidTmdbSourceId(movie.source_id)) {
     params.set('source', 'tmdb')
     params.set('source_id', String(movie.source_id))
   }
@@ -36,9 +41,10 @@ export function parseMovieProfileLink(search) {
   }
   const source = sourceParam || 'cinedna'
   const sourceId = params.get('source_id')
+  if (source === 'tmdb' && !isValidTmdbSourceId(sourceId)) return null
   return {
     title: title.trim(),
     source,
-    sourceId: source === 'tmdb' && /^\d{1,12}$/.test(sourceId || '') ? sourceId : null,
+    sourceId: source === 'tmdb' ? sourceId : null,
   }
 }

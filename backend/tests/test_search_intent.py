@@ -437,6 +437,26 @@ class SearchIntentTests(unittest.TestCase):
                     )
                 )
 
+    def test_compound_year_boundaries_preserve_both_limits(self):
+        cases = (
+            ("movies from 2010 or later but before 2019", 2010, 2018),
+            ("movies after 2010 but 2019 or earlier", 2011, 2019),
+            ("movies on or after 2010 and on or before 2018", 2010, 2018),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+                self.assertTrue(ranked)
+                self.assertTrue(all(
+                    min_year <= movie.year <= max_year
+                    for movie, _score in ranked
+                ))
+
     def test_year_in_title_is_not_treated_as_release_filter(self):
         intent = parse_search_intent("Blade Runner 2049", MOVIES)
 

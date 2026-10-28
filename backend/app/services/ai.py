@@ -640,7 +640,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         None,
     )
     if inclusive_min_match:
-        return int(inclusive_min_match.group(1)), None
+        min_year = int(inclusive_min_match.group(1))
 
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
@@ -658,7 +658,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         None,
     )
     if inclusive_max_match:
-        return None, int(inclusive_max_match.group(1))
+        max_year = int(inclusive_max_match.group(1))
 
     exact_patterns = (
         r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"
@@ -666,60 +666,70 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"\breleased\s+(?:in\s+)?((?:19|20)\d{2})\b",
         r"\b((?:19|20)\d{2})\s+(?:movies?|films?)\b",
     )
-    exact_match = next(
-        (
-            match
-            for pattern in exact_patterns
-            if (match := re.search(pattern, query)) is not None
-        ),
-        None,
-    )
-    if exact_match:
-        year = int(exact_match.group(1))
-        return year, year
+    if min_year is None and max_year is None:
+        exact_match = next(
+            (
+                match
+                for pattern in exact_patterns
+                if (match := re.search(pattern, query)) is not None
+            ),
+            None,
+        )
+        if exact_match:
+            year = int(exact_match.group(1))
+            return year, year
 
-    # Apostrophes normalize to spaces, so accept both "1990s" and the common
-    # (though nonstandard) spellings "1990's" and "1990’s".
-    decade_match = re.search(r"\b((?:19|20)\d{2})\s*s\b", query)
-    if decade_match:
-        min_year, max_year = _decade_bounds(
-            query,
-            decade_match,
-            int(decade_match.group(1)),
-        )
-    else:
-        short_decade_match = re.search(
-            r"(?<!\w)(?:the\s+)?([3-9]\d)\s*s\b",
-            query,
-        )
-        if short_decade_match:
+        # Apostrophes normalize to spaces, so accept both "1990s" and the
+        # common (though nonstandard) spellings "1990's" and "1990’s".
+        decade_match = re.search(r"\b((?:19|20)\d{2})\s*s\b", query)
+        if decade_match:
             min_year, max_year = _decade_bounds(
                 query,
-                short_decade_match,
-                1900 + int(short_decade_match.group(1)),
+                decade_match,
+                int(decade_match.group(1)),
             )
         else:
-            for word, start_year in DECADE_WORDS.items():
-                word_match = re.search(rf"\b{word}\b", query)
-                if word_match:
-                    min_year, max_year = _decade_bounds(
-                        query,
-                        word_match,
-                        start_year,
-                    )
-                    break
+            short_decade_match = re.search(
+                r"(?<!\w)(?:the\s+)?([3-9]\d)\s*s\b",
+                query,
+            )
+            if short_decade_match:
+                min_year, max_year = _decade_bounds(
+                    query,
+                    short_decade_match,
+                    1900 + int(short_decade_match.group(1)),
+                )
+            else:
+                for word, start_year in DECADE_WORDS.items():
+                    word_match = re.search(rf"\b{word}\b", query)
+                    if word_match:
+                        min_year, max_year = _decade_bounds(
+                            query,
+                            word_match,
+                            start_year,
+                        )
+                        break
 
-    after_match = re.search(r"\b(?:after|newer\s+than)\s+((?:19|20)\d{2})\b", query)
+    after_match = re.search(
+        r"(?<!not )(?<!no )(?<!or )\b(?:after|newer\s+than)\s+"
+        r"((?:19|20)\d{2})\b",
+        query,
+    )
     if after_match:
-        min_year = int(after_match.group(1)) + 1
+        min_year = max(min_year or 0, int(after_match.group(1)) + 1)
 
     since_match = re.search(r"\bsince\s+((?:19|20)\d{2})\b", query)
     if since_match:
-        min_year = int(since_match.group(1))
+        min_year = max(min_year or 0, int(since_match.group(1)))
 
-    before_match = re.search(r"\b(?:before|older\s+than)\s+((?:19|20)\d{2})\b", query)
+    before_match = re.search(
+        r"(?<!not )(?<!no )(?<!or )\b(?:before|older\s+than)\s+"
+        r"((?:19|20)\d{2})\b",
+        query,
+    )
     if before_match:
-        max_year = int(before_match.group(1)) - 1
+        before_year = int(before_match.group(1)) - 1
+        max_year = min(max_year or before_year, before_year)
 
     return min_year, max_year
 

@@ -328,9 +328,15 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
         if not isinstance(item, dict) or not _is_usable_catalog_item(item):
             continue
         try:
-            movies.append(_from_tmdb(item))
+            movie = _from_tmdb(item)
         except (TypeError, ValueError):
             continue
+        # TMDB can return loose keyword matches. Do not let an unrelated item
+        # consume the bounded result limit or suppress a later credible title
+        # match. This also checks original titles through search_local_movies.
+        if not search_local_movies(query, [movie], limit=1):
+            continue
+        movies.append(movie)
     return movies
 
 

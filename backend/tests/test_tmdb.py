@@ -177,6 +177,31 @@ class TMDBProfileTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
+    def test_title_search_skips_irrelevant_results_before_applying_limit(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                {
+                    "id": 1,
+                    "title": "Completely Different",
+                    "release_date": "2024-01-01",
+                },
+                {
+                    "id": 2,
+                    "title": "Dune: Part Two",
+                    "release_date": "2024-03-01",
+                },
+            ]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("Dune", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Dune: Part Two"])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
     def test_catalog_items_require_a_stable_profile_identity(self, get):
         response = Mock()
         response.raise_for_status.return_value = None

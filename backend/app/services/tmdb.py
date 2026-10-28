@@ -225,6 +225,28 @@ def _country_label(
     return "International"
 
 
+def _origin_country_codes(item: dict) -> List[str]:
+    """Collect country codes from TMDB list and detail response shapes."""
+    codes = []
+    origin_countries = item.get("origin_country")
+    if isinstance(origin_countries, list):
+        codes.extend(
+            code for code in origin_countries
+            if isinstance(code, str)
+        )
+
+    production_countries = item.get("production_countries")
+    if isinstance(production_countries, list):
+        codes.extend(
+            country["iso_3166_1"]
+            for country in production_countries
+            if isinstance(country, dict)
+            and isinstance(country.get("iso_3166_1"), str)
+        )
+
+    return list(dict.fromkeys(codes))
+
+
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
     overview = (item.get("overview") or "").strip()
@@ -240,7 +262,7 @@ def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
         original_title=item.get("original_title"),
         year=year,
         country=_country_label(
-            item.get("origin_country"),
+            _origin_country_codes(item),
             item.get("original_language") or "",
             country_hint,
         ),

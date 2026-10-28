@@ -35,6 +35,30 @@ class TMDBProfileTests(unittest.TestCase):
         self.assertEqual(movie.source_id, "256040")
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_movie_detail_uses_production_country_when_origin_is_missing(self, get):
+        from app.services.tmdb import get_tmdb_movie
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "id": 42,
+            "title": "French Profile",
+            "genres": [{"id": 18, "name": "Drama"}],
+            "production_countries": [
+                {"iso_3166_1": "FR", "name": "France"},
+            ],
+            "original_language": "en",
+            "release_date": "2024-05-10",
+            "overview": "A profile loaded from TMDB movie details.",
+            "vote_average": 7.2,
+        }
+        get.return_value = response
+
+        movie = get_tmdb_movie("42")
+
+        self.assertEqual(movie.country, "France")
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     def test_invalid_movie_id_does_not_trigger_network(self):
         from app.services.tmdb import get_tmdb_movie
         with patch("app.services.tmdb.httpx.get") as get:

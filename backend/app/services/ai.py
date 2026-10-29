@@ -115,6 +115,10 @@ THEME_ALIASES = {
     "comedy": ROM_COM_TERMS + ACTION_COMEDY_TERMS + ("comedies",),
     "documentary": ("documentaries", "nonfiction", "non fiction"),
     "drama": ("dramatic", "dramas"),
+    "family": (
+        "family friendly", "kid friendly", "kids movie", "kids movies",
+        "children's movie", "children's movies",
+    ),
     "fantasy": ("magical", "magic", "fantasies"),
     "history": ("historical",),
     "horror": ("scary", "spooky", "frightening", "horrors"),

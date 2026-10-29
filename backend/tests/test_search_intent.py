@@ -365,6 +365,17 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(excluded.include_themes, [])
         self.assertEqual(excluded.exclude_themes, ["documentary", "western"])
 
+    def test_family_audience_aliases_become_search_preferences(self):
+        for query in ("kids movies", "kid-friendly films", "children's movies"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.include_themes, ["family"])
+
+        excluded = parse_search_intent("no kids movies", MOVIES)
+        self.assertEqual(excluded.include_themes, [])
+        self.assertEqual(excluded.exclude_themes, ["family"])
+
     def test_release_periods_filter_ranked_movies(self):
         cases = (
             ("movies from the 1970s", 1970, 1979),

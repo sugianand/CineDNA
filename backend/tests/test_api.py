@@ -963,6 +963,7 @@ class CineDNAAPITests(unittest.TestCase):
         for query, theme in (
             ("space movie", "space"),
             ("family movie", "family"),
+            ("kids movies", "family"),
             ("war movie", "war"),
         ):
             with self.subTest(query=query), patch(

@@ -211,7 +211,7 @@ class TMDBProfileTests(unittest.TestCase):
                 {"id": 0, "title": "Invalid ID"},
                 {"id": "123", "title": "String ID"},
                 {"id": 4, "title": "   ", "original_title": ""},
-                {"id": 5, "original_title": "Stable Original Title"},
+                {"id": 5, "title": "   ", "original_title": "Stable Original Title"},
             ]
         }
         get.return_value = response
@@ -219,6 +219,7 @@ class TMDBProfileTests(unittest.TestCase):
         movies = search_tmdb_movies("Stable Original Title", limit=1)
 
         self.assertEqual([movie.title for movie in movies], ["Stable Original Title"])
+        self.assertEqual(movies[0].original_title, "Stable Original Title")
         self.assertEqual(movies[0].source_id, "5")
 
 

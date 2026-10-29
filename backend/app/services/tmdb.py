@@ -247,6 +247,14 @@ def _origin_country_codes(item: dict) -> List[str]:
     return list(dict.fromkeys(codes))
 
 
+def _clean_title(value: object) -> str | None:
+    """Return a display-safe title or None for blank/non-string values."""
+    if not isinstance(value, str):
+        return None
+    title = value.strip()
+    return title or None
+
+
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
     overview = (item.get("overview") or "").strip()
@@ -257,9 +265,11 @@ def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     poster_path = item.get("poster_path")
     poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
 
+    original_title = _clean_title(item.get("original_title"))
+
     return MovieDNA(
-        title=item.get("title") or item.get("original_title") or "Untitled",
-        original_title=item.get("original_title"),
+        title=_clean_title(item.get("title")) or original_title or "Untitled",
+        original_title=original_title,
         year=year,
         country=_country_label(
             _origin_country_codes(item),
@@ -279,13 +289,12 @@ def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
 def _is_usable_catalog_item(item: dict) -> bool:
     """Return whether a TMDB result can support a stable profile link."""
     movie_id = item.get("id")
-    title = item.get("title") or item.get("original_title")
+    title = _clean_title(item.get("title")) or _clean_title(item.get("original_title"))
     return (
         isinstance(movie_id, int)
         and not isinstance(movie_id, bool)
         and movie_id > 0
-        and isinstance(title, str)
-        and bool(title.strip())
+        and title is not None
     )
 
 

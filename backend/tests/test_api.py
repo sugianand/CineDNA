@@ -213,6 +213,41 @@ class CineDNAAPITests(unittest.TestCase):
         titles = [item["movie"]["title"] for item in response.json()["results"]]
         self.assertEqual(titles.count(MOVIES[0].title), 1)
 
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_discovery_deduplicates_normalized_title_variants(
+        self,
+        _configured,
+        discover,
+    ):
+        discover.return_value = [
+            MovieDNA(
+                title="Amelie",
+                original_title="Le Fabuleux Destin d'Amelie Poulain",
+                year=2001,
+                country="France",
+                genres=["Comedy", "Romance"],
+                themes=["love"],
+                dimensions={"romance": 85, "humor": 65},
+                summary="The same movie returned without title diacritics.",
+                source="tmdb",
+                source_id="194",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "a French romantic comedy",
+                "mode": "vibe",
+                "limit": 20,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        titles = [item["movie"]["title"] for item in response.json()["results"]]
+        self.assertEqual(sum(title in {"Amélie", "Amelie"} for title in titles), 1)
+
     def test_empty_search_rejected(self):
         response = self.client.post("/api/search", json={"query": ""})
         self.assertEqual(response.status_code, 422)

@@ -41,6 +41,23 @@ app.add_middleware(
 )
 
 
+def _is_duplicate_catalog_movie(
+    movie: MovieDNA,
+    candidates: list[MovieDNA],
+) -> bool:
+    """Match one release across translated, punctuated, and accented titles."""
+    aliases = [movie.title, movie.original_title or ""]
+    return any(
+        candidate.year == movie.year
+        and any(
+            has_exact_local_title(alias, [candidate])
+            for alias in aliases
+            if alias
+        )
+        for candidate in candidates
+    )
+
+
 @app.get("/api/health")
 @app.get("/health")
 def health():
@@ -194,12 +211,9 @@ def search_movies(request: SearchRequest):
     # the small hand-curated catalog. Keep the offline catalog on API failures.
     candidates = list(MOVIES)
     external_movies = discover_tmdb_movies(intent) if tmdb_is_configured() else []
-    seen = {(movie.title.casefold(), movie.year) for movie in candidates}
     for movie in external_movies:
-        identity = (movie.title.casefold(), movie.year)
-        if identity not in seen:
+        if not _is_duplicate_catalog_movie(movie, candidates):
             candidates.append(movie)
-            seen.add(identity)
     ranked = rank_movies(candidates, intent, request.limit)
 
     results = [

@@ -88,6 +88,22 @@ class TMDBProfileTests(unittest.TestCase):
 
                 self.assertIsNone(get_tmdb_movie("256040"))
 
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_movie_detail_rejects_adult_content(self, get):
+        from app.services.tmdb import get_tmdb_movie
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "id": 256040,
+            "title": "Restricted Movie",
+            "adult": True,
+            "genres": [{"id": 18, "name": "Drama"}],
+        }
+        get.return_value = response
+
+        self.assertIsNone(get_tmdb_movie("256040"))
+
 
     def test_local_title_search_normalizes_unicode(self):
         amelie = MovieDNA(

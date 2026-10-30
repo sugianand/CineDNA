@@ -294,6 +294,7 @@ def _is_usable_catalog_item(item: dict) -> bool:
         isinstance(movie_id, int)
         and not isinstance(movie_id, bool)
         and movie_id > 0
+        and item.get("adult") is not True
         and title is not None
     )
 

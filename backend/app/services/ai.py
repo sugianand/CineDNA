@@ -599,6 +599,14 @@ def _decade_bounds(query: str, match: re.Match, start_year: int) -> Tuple[int, i
     return start_year + start_offset, start_year + end_offset
 
 
+def _matching_years(query: str, patterns: Tuple[str, ...]) -> List[int]:
+    return [
+        int(match.group(1))
+        for pattern in patterns
+        for match in re.finditer(pattern, query)
+    ]
+
+
 def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
@@ -635,16 +643,9 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"(?:no|not)\s+older\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
-    inclusive_min_match = next(
-        (
-            match
-            for pattern in inclusive_min_patterns
-            if (match := re.search(pattern, query)) is not None
-        ),
-        None,
-    )
-    if inclusive_min_match:
-        min_year = int(inclusive_min_match.group(1))
+    inclusive_min_years = _matching_years(query, inclusive_min_patterns)
+    if inclusive_min_years:
+        min_year = max(inclusive_min_years)
 
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
@@ -653,16 +654,9 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"(?:no|not)\s+newer\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
-    inclusive_max_match = next(
-        (
-            match
-            for pattern in inclusive_max_patterns
-            if (match := re.search(pattern, query)) is not None
-        ),
-        None,
-    )
-    if inclusive_max_match:
-        max_year = int(inclusive_max_match.group(1))
+    inclusive_max_years = _matching_years(query, inclusive_max_patterns)
+    if inclusive_max_years:
+        max_year = min(inclusive_max_years)
 
     exact_patterns = (
         r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"
@@ -714,26 +708,35 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
                         )
                         break
 
-    after_match = re.search(
+    after_pattern = (
         r"(?<!not )(?<!no )(?<!or )\b(?:after|newer\s+than)\s+"
-        r"((?:19|20)\d{2})\b",
-        query,
+        r"((?:19|20)\d{2})\b"
     )
-    if after_match:
-        min_year = max(min_year or 0, int(after_match.group(1)) + 1)
+    after_years = [
+        int(match.group(1)) + 1
+        for match in re.finditer(after_pattern, query)
+    ]
+    if after_years:
+        min_year = max(min_year or 0, *after_years)
 
-    since_match = re.search(r"\bsince\s+((?:19|20)\d{2})\b", query)
-    if since_match:
-        min_year = max(min_year or 0, int(since_match.group(1)))
+    since_years = _matching_years(
+        query,
+        (r"\bsince\s+((?:19|20)\d{2})\b",),
+    )
+    if since_years:
+        min_year = max(min_year or 0, *since_years)
 
-    before_match = re.search(
+    before_pattern = (
         r"(?<!not )(?<!no )(?<!or )\b(?:before|older\s+than)\s+"
-        r"((?:19|20)\d{2})\b",
-        query,
+        r"((?:19|20)\d{2})\b"
     )
-    if before_match:
-        before_year = int(before_match.group(1)) - 1
-        max_year = min(max_year or before_year, before_year)
+    before_years = [
+        int(match.group(1)) - 1
+        for match in re.finditer(before_pattern, query)
+    ]
+    if before_years:
+        strictest_before = min(before_years)
+        max_year = min(max_year or strictest_before, strictest_before)
 
     return min_year, max_year
 

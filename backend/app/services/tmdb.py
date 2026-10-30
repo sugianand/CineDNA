@@ -257,7 +257,7 @@ def _clean_title(value: object) -> str | None:
 
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
-    overview = (item.get("overview") or "").strip()
+    overview = _clean_title(item.get("overview")) or ""
     release_date = item.get("release_date") or ""
     year = int(release_date[:4]) if re.match(r"^\d{4}", release_date) else 0
     rating = float(item.get("vote_average") or 0)

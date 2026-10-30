@@ -468,6 +468,25 @@ class SearchIntentTests(unittest.TestCase):
                     for movie, _score in ranked
                 ))
 
+    def test_explicit_year_ranges_honor_additional_boundaries(self):
+        cases = (
+            ("movies between 2000 and 2020 but after 2010", 2011, 2020),
+            ("movies from 2000 to 2020 but before 2015", 2000, 2014),
+            ("movies between 2000 and 2020 but no later than 2015", 2000, 2015),
+            (
+                "movies from 2000 to 2020, on or after 2010 and on or before 2018",
+                2010,
+                2018,
+            ),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+
     def test_repeated_year_boundaries_use_the_strictest_limit(self):
         cases = (
             ("movies after 2000 but after 2010", 2011, None),

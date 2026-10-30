@@ -634,7 +634,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     if range_match:
         first_year = int(range_match.group(1))
         second_year = _expand_abbreviated_year(first_year, range_match.group(2))
-        return min(first_year, second_year), max(first_year, second_year)
+        min_year = min(first_year, second_year)
+        max_year = max(first_year, second_year)
 
     inclusive_min_patterns = (
         r"\b(?:from\s+)?((?:19|20)\d{2})\s+"
@@ -645,7 +646,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     )
     inclusive_min_years = _matching_years(query, inclusive_min_patterns)
     if inclusive_min_years:
-        min_year = max(inclusive_min_years)
+        min_year = max(min_year or 0, *inclusive_min_years)
 
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
@@ -656,7 +657,11 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     )
     inclusive_max_years = _matching_years(query, inclusive_max_patterns)
     if inclusive_max_years:
-        max_year = min(inclusive_max_years)
+        strictest_max = min(inclusive_max_years)
+        max_year = min(
+            max_year if max_year is not None else strictest_max,
+            strictest_max,
+        )
 
     exact_patterns = (
         r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"

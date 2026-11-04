@@ -20,11 +20,13 @@ LIGHT_TONE_TERMS = (
 )
 ROM_COM_TERMS = ("rom com", "romantic comedy")
 ACTION_COMEDY_TERMS = ("action comedy", "action comedies")
-VIOLENCE_TERMS = ("violence", "violent")
+VIOLENCE_TERMS = ("violence", "violent", "nonviolent")
 SUSPENSE_TERMS = (
     "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
 )
 MILD_PREFIXES = ("a little", "a bit", "somewhat", "slightly", "kind of", "kinda")
+LOW_PREFERENCE_PREFIXES = ("low", "minimal", "minimum", "very little")
+COMPACT_NEGATED_TERMS = ("nonviolent",)
 POSITIVE_TRAIT_TARGET = 75
 INTENSIFIED_TRAIT_TARGET = 85
 REFERENCE_MODIFIER_TERMS = (
@@ -423,6 +425,12 @@ def _soft_preference_target(query: str, term: str) -> int | None:
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
     if re.search(rf"\bnot\s+too(?:\s+much)?\s+{escaped}\b", query):
         return 40
+    low_prefix = "|".join(
+        re.escape(prefix).replace(r"\ ", r"\s+")
+        for prefix in LOW_PREFERENCE_PREFIXES
+    )
+    if re.search(rf"\b(?:{low_prefix})\s+{escaped}\b", query):
+        return 30
     mild_prefix = "|".join(
         re.escape(prefix).replace(r"\ ", r"\s+")
         for prefix in MILD_PREFIXES
@@ -492,7 +500,13 @@ def _is_preference_list_prefix(prefix: str) -> bool:
 def _is_negated(query: str, term: str) -> bool:
     if _soft_preference_target(query, term) is not None:
         return False
-    escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
+    normalized_term = _normalize_text(term)
+    if (
+        normalized_term in COMPACT_NEGATED_TERMS
+        and _contains_term(query, normalized_term)
+    ):
+        return True
+    escaped = re.escape(normalized_term).replace(r"\ ", r"\s+")
     pattern = (
         rf"\b{NEGATION_PREFIX}\s+"
         rf"(?:(?:a|an|any|too\s+much|from)\s+)?{escaped}\b"

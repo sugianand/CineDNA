@@ -681,6 +681,21 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(excluded.exclude_themes, ["action"])
                 self.assertEqual(excluded.target_dimensions["action"], 10)
 
+    def test_low_and_compact_nonviolent_preferences_reduce_action(self):
+        for query in ("low violence movies", "minimal violence movies"):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.include_themes, [])
+                self.assertEqual(intent.exclude_themes, [])
+                self.assertEqual(intent.target_dimensions["action"], 30)
+
+        nonviolent = parse_search_intent("nonviolent movies", MOVIES)
+
+        self.assertEqual(nonviolent.include_themes, [])
+        self.assertEqual(nonviolent.exclude_themes, ["action"])
+        self.assertEqual(nonviolent.target_dimensions["action"], 10)
+
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

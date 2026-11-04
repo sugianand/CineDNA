@@ -623,6 +623,27 @@ class CineDNAAPITests(unittest.TestCase):
             terms = {term.casefold() for term in movie["genres"] + movie["themes"]}
             self.assertNotIn("action", terms)
 
+    def test_auto_mode_routes_compact_nonviolent_to_vibe_search(self):
+        with patch("app.main.tmdb_is_configured", return_value=True), patch(
+            "app.main.search_tmdb_movies"
+        ) as search_tmdb:
+            response = self.client.post(
+                "/api/search",
+                json={"query": "nonviolent movies", "limit": 20},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_not_called()
+        body = response.json()
+        self.assertEqual(body["intent"]["include_themes"], [])
+        self.assertEqual(body["intent"]["exclude_themes"], ["action"])
+        self.assertEqual(body["intent"]["target_dimensions"]["action"], 10)
+        self.assertTrue(body["results"])
+        for result in body["results"]:
+            movie = result["movie"]
+            terms = {term.casefold() for term in movie["genres"] + movie["themes"]}
+            self.assertNotIn("action", terms)
+
     def test_auto_mode_honors_comma_only_exclusion_lists(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

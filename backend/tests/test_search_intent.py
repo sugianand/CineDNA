@@ -663,6 +663,24 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(excluded.target_dimensions["action"], 10)
                 self.assertEqual(excluded.target_dimensions["humor"], 10)
 
+    def test_violence_terms_map_to_action_preferences(self):
+        positive = parse_search_intent("a violent movie", MOVIES)
+        reduced = parse_search_intent("something less violent", MOVIES)
+
+        self.assertEqual(positive.include_themes, ["action"])
+        self.assertEqual(positive.target_dimensions["action"], 75)
+        self.assertEqual(reduced.include_themes, [])
+        self.assertEqual(reduced.exclude_themes, [])
+        self.assertEqual(reduced.target_dimensions["action"], 50)
+
+        for query in ("no violence", "without violent movies"):
+            with self.subTest(query=query):
+                excluded = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(excluded.include_themes, [])
+                self.assertEqual(excluded.exclude_themes, ["action"])
+                self.assertEqual(excluded.target_dimensions["action"], 10)
+
     def test_pacing_terms_set_the_requested_speed(self):
         slow_movie = MovieDNA(
             title="Quiet Journey",

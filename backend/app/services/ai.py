@@ -20,6 +20,7 @@ LIGHT_TONE_TERMS = (
 )
 ROM_COM_TERMS = ("rom com", "romantic comedy")
 ACTION_COMEDY_TERMS = ("action comedy", "action comedies")
+VIOLENCE_TERMS = ("violence", "violent")
 SUSPENSE_TERMS = (
     "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
 )
@@ -72,7 +73,7 @@ DIMENSION_RULES: Dict[str, Tuple[str, ...]] = {
     ),
     "action": (
         "action", "fight", "fights", "fighting", "explosive", "combat",
-    ) + ACTION_COMEDY_TERMS,
+    ) + ACTION_COMEDY_TERMS + VIOLENCE_TERMS,
     "character_depth": (
         "character driven", "character-driven", "deep characters", "strong characters",
         "character focused", "character-focused",
@@ -109,7 +110,7 @@ THEME_VOCAB = {
 }
 
 THEME_ALIASES = {
-    "action": ACTION_COMEDY_TERMS,
+    "action": ACTION_COMEDY_TERMS + VIOLENCE_TERMS,
     "adventure": ("adventurous", "adventures"),
     "animation": ("animated", "cartoon", "cartoons"),
     "comedy": ROM_COM_TERMS + ACTION_COMEDY_TERMS + ("comedies",),

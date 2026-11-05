@@ -119,8 +119,10 @@ THEME_ALIASES = {
     "documentary": ("documentaries", "nonfiction", "non fiction"),
     "drama": ("dramatic", "dramas"),
     "family": (
-        "family friendly", "kid friendly", "kids movie", "kids movies",
-        "children's movie", "children's movies",
+        "family friendly", "kid friendly", "child friendly", "children friendly",
+        "kids movie", "kids movies", "children's movie", "children's movies",
+        "for kids", "for children", "safe for kids", "safe for children",
+        "suitable for kids", "suitable for children",
     ),
     "fantasy": ("magical", "magic", "fantasies"),
     "history": ("historical",),

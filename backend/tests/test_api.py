@@ -1006,6 +1006,7 @@ class CineDNAAPITests(unittest.TestCase):
             ("space movie", "space"),
             ("family movie", "family"),
             ("kids movies", "family"),
+            ("movies for kids", "family"),
             ("war movie", "war"),
         ):
             with self.subTest(query=query), patch(

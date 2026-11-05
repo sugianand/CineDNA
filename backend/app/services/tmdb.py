@@ -4,6 +4,7 @@ import os
 import re
 import unicodedata
 from difflib import SequenceMatcher
+from math import isfinite
 from typing import Dict, List, Sequence
 
 import httpx
@@ -130,6 +131,23 @@ def looks_like_title_query(
 
 def _clamp(value: int) -> int:
     return max(0, min(100, value))
+
+
+def _release_year(value: object) -> int:
+    if not isinstance(value, str):
+        return 0
+    match = re.match(r"^(\d{4})", value)
+    return int(match.group(1)) if match else 0
+
+
+def _rating(value: object) -> float:
+    if isinstance(value, bool):
+        return 0.0
+    try:
+        rating = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return rating if isfinite(rating) else 0.0
 
 
 def _contains_term(text: str, term: str) -> bool:
@@ -260,9 +278,8 @@ def _clean_title(value: object) -> str | None:
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
     overview = _clean_title(item.get("overview")) or ""
-    release_date = item.get("release_date") or ""
-    year = int(release_date[:4]) if re.match(r"^\d{4}", release_date) else 0
-    rating = float(item.get("vote_average") or 0)
+    year = _release_year(item.get("release_date"))
+    rating = _rating(item.get("vote_average"))
 
     poster_path = item.get("poster_path")
     poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None

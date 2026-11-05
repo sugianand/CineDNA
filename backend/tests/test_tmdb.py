@@ -152,6 +152,7 @@ class TMDBProfileTests(unittest.TestCase):
             "Scary Movie",
             "Something Borrowed",
             "The Fast and the Furious",
+            "The Assassination of Jesse James by the Coward Robert Ford",
         ):
             with self.subTest(title=title):
                 self.assertTrue(looks_like_title_query(title))

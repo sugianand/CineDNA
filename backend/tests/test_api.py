@@ -1470,6 +1470,40 @@ class CineDNAAPITests(unittest.TestCase):
 
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_auto_mode_recognizes_long_title_cased_external_title(
+        self,
+        _configured,
+        search_tmdb,
+    ):
+        title = "The Assassination of Jesse James by the Coward Robert Ford"
+        search_tmdb.return_value = [
+            MovieDNA(
+                title=title,
+                year=2007,
+                country="USA",
+                genres=["Drama", "Western"],
+                themes=["crime"],
+                dimensions={"character_depth": 88, "pacing": 35},
+                summary="A fictional TMDB-backed test movie.",
+                source="tmdb",
+                source_id="4512",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": title},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with(title, 6)
+        self.assertEqual(
+            response.json()["results"][0]["movie"]["title"],
+            title,
+        )
+
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
     def test_auto_mode_recognizes_title_cased_something_title(
         self,
         _configured,

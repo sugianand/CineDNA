@@ -196,16 +196,15 @@ def search_movies(request: SearchRequest):
                 ai_provider="cinedna-title-catalog",
             )
 
-        if request.mode == "title":
-            return SearchResponse(
-                query=request.query,
-                intent=SearchIntent(
-                    target_dimensions={},
-                    explanation="No movie title matched. Check the spelling or switch to Describe a vibe.",
-                ),
-                results=[],
-                ai_provider="cinedna-title-catalog",
-            )
+        return SearchResponse(
+            query=request.query,
+            intent=SearchIntent(
+                target_dimensions={},
+                explanation="No movie title matched. Check the spelling or switch to Describe a vibe.",
+            ),
+            results=[],
+            ai_provider="cinedna-title-catalog",
+        )
 
     # Discover a larger candidate pool instead of limiting vibe results to
     # the small hand-curated catalog. Keep the offline catalog on API failures.

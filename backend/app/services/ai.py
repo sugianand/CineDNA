@@ -238,6 +238,7 @@ def _fuzzy_title_variants(movie: MovieDNA) -> set[str]:
             movie.title,
             movie.original_title or "",
             _title_base(movie.title),
+            _title_base(movie.original_title or ""),
         )
         if candidate
     }

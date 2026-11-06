@@ -828,6 +828,29 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent.target_dimensions["visual_spectacle"], dune.dimensions["visual_spectacle"])
         self.assertGreater(intent.target_dimensions["humor"], dune.dimensions["humor"])
 
+    def test_reference_movie_matches_original_title_before_subtitle(self):
+        movie = MovieDNA(
+            title="Localized Fortress",
+            original_title=(
+                "Kakushi Toride no San Akunin: "
+                "The Last Princess"
+            ),
+            year=1958,
+            country="Japan",
+            genres=["Adventure"],
+            themes=[],
+            dimensions={"action": 72},
+            summary="A localized-title test movie.",
+        )
+
+        intent = parse_search_intent(
+            "Movies like Kakushi Toride no San Akunin",
+            [movie],
+        )
+
+        self.assertEqual(intent.reference_titles, ["Localized Fortress"])
+        self.assertEqual(intent.target_dimensions["action"], 72)
+
     def test_reference_movie_prefers_longest_overlapping_title(self):
         overlapping_movies = [
             MovieDNA(

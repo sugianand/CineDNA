@@ -16,6 +16,33 @@ from app.services.tmdb import (
 
 class TMDBProfileTests(unittest.TestCase):
 
+    def test_generated_profiles_only_use_valid_tmdb_poster_paths(self):
+        item = {
+            "id": 42,
+            "title": "Poster Test",
+            "release_date": "2024-01-01",
+        }
+
+        for poster_path in (
+            {"unexpected": "shape"},
+            ["/poster.jpg"],
+            "https://example.com/poster.jpg",
+            "//example.com/poster.jpg",
+            "poster.jpg",
+            "   ",
+        ):
+            with self.subTest(poster_path=poster_path):
+                movie = _from_tmdb({**item, "poster_path": poster_path})
+
+                self.assertIsNone(movie.poster_url)
+
+        movie = _from_tmdb({**item, "poster_path": " /poster.jpg "})
+
+        self.assertEqual(
+            movie.poster_url,
+            "https://image.tmdb.org/t/p/w500/poster.jpg",
+        )
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_movie_detail_fetch_by_id(self, get):

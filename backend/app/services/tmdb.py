@@ -288,6 +288,20 @@ def _clean_title(value: object) -> str | None:
     return title or None
 
 
+def _poster_url(value: object) -> str | None:
+    """Build an image URL only from TMDB's relative poster-path shape."""
+    if not isinstance(value, str):
+        return None
+    path = value.strip()
+    if (
+        not re.fullmatch(r"/[A-Za-z0-9._/-]+", path)
+        or path.startswith("//")
+        or ".." in path
+    ):
+        return None
+    return f"{TMDB_IMAGE_BASE}{path}"
+
+
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     genres = [
         GENRES[genre_id]
@@ -298,8 +312,7 @@ def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
     year = _release_year(item.get("release_date"))
     rating = _rating(item.get("vote_average"))
 
-    poster_path = item.get("poster_path")
-    poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
+    poster_url = _poster_url(item.get("poster_path"))
 
     original_title = _clean_title(item.get("original_title"))
 

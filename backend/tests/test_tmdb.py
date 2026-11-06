@@ -164,6 +164,24 @@ class TMDBProfileTests(unittest.TestCase):
         self.assertEqual(movie.title, "Stable Movie")
         self.assertEqual(movie.genres, ["Movie"])
 
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_movie_detail_tolerates_malformed_optional_language(self, get):
+        from app.services.tmdb import get_tmdb_movie
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "id": 256040,
+            "title": "Stable Movie",
+            "original_language": ["unexpected", "shape"],
+            "release_date": "2024-01-01",
+        }
+        get.return_value = response
+
+        movie = get_tmdb_movie("256040")
+
+        self.assertEqual(movie.title, "Stable Movie")
+        self.assertEqual(movie.country, "International")
 
     def test_local_title_search_normalizes_unicode(self):
         amelie = MovieDNA(
@@ -312,6 +330,26 @@ class TMDBProfileTests(unittest.TestCase):
 
         self.assertEqual([movie.title for movie in movies], ["Valid Movie"])
         self.assertEqual(movies[0].genres, ["Movie"])
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_title_search_tolerates_malformed_optional_language(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [{
+                "id": 3,
+                "title": "Valid Movie",
+                "original_language": {"unexpected": "shape"},
+                "release_date": "2024-01-01",
+            }]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("Valid Movie", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Valid Movie"])
+        self.assertEqual(movies[0].country, "International")
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")

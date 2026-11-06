@@ -237,7 +237,7 @@ def _themes_for(overview: str, genres: List[str]) -> List[str]:
 
 def _country_label(
     origin_countries: object,
-    language: str,
+    language: object,
     country_hint: str | None = None,
 ) -> str:
     if isinstance(origin_countries, list):
@@ -248,6 +248,7 @@ def _country_label(
                     return country
     if country_hint:
         return country_hint
+    language = language.strip().casefold() if isinstance(language, str) else ""
     if language in INDIAN_LANGUAGES:
         return "India"
     if language == "ja":

@@ -150,6 +150,18 @@ def _rating(value: object) -> float:
     return rating if isfinite(rating) else 0.0
 
 
+def _genre_ids(value: object) -> List[int]:
+    if not isinstance(value, list):
+        return []
+
+    genre_ids = []
+    for genre in value:
+        genre_id = genre.get("id") if isinstance(genre, dict) else genre
+        if isinstance(genre_id, int) and not isinstance(genre_id, bool):
+            genre_ids.append(genre_id)
+    return genre_ids
+
+
 def _contains_term(text: str, term: str) -> bool:
     return bool(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text, re.IGNORECASE))
 
@@ -276,7 +288,11 @@ def _clean_title(value: object) -> str | None:
 
 
 def _from_tmdb(item: dict, country_hint: str | None = None) -> MovieDNA:
-    genres = [GENRES[genre_id] for genre_id in item.get("genre_ids", []) if genre_id in GENRES]
+    genres = [
+        GENRES[genre_id]
+        for genre_id in _genre_ids(item.get("genre_ids"))
+        if genre_id in GENRES
+    ]
     overview = _clean_title(item.get("overview")) or ""
     year = _release_year(item.get("release_date"))
     rating = _rating(item.get("vote_average"))
@@ -393,10 +409,7 @@ def get_tmdb_movie(movie_id: str) -> MovieDNA | None:
             or item["id"] != requested_id
         ):
             return None
-        genre_ids = [
-            genre["id"] for genre in item.get("genres", [])
-            if isinstance(genre, dict) and isinstance(genre.get("id"), int)
-        ]
+        genre_ids = _genre_ids(item.get("genres"))
         return _from_tmdb({**item, "genre_ids": genre_ids})
     except (httpx.HTTPError, ValueError, TypeError):
         return None

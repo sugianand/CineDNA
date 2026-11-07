@@ -43,6 +43,7 @@ ORIGIN_COUNTRY_CODES = {
     "Brazil": "BR",
     "Canada": "CA",
     "China": "CN",
+    "Denmark": "DK",
     "France": "FR",
     "Germany": "DE",
     "Hong Kong": "HK",
@@ -50,8 +51,11 @@ ORIGIN_COUNTRY_CODES = {
     "Italy": "IT",
     "Japan": "JP",
     "Mexico": "MX",
+    "Nigeria": "NG",
+    "Norway": "NO",
     "South Korea": "KR",
     "Spain": "ES",
+    "Sweden": "SE",
     "United Kingdom": "GB",
     "USA": "US",
 }
@@ -64,6 +68,7 @@ COUNTRY_NAMES = {
     "CA": "Canada",
     "CN": "China",
     "DE": "Germany",
+    "DK": "Denmark",
     "ES": "Spain",
     "FR": "France",
     "GB": "United Kingdom",
@@ -73,6 +78,9 @@ COUNTRY_NAMES = {
     "JP": "Japan",
     "KR": "South Korea",
     "MX": "Mexico",
+    "NG": "Nigeria",
+    "NO": "Norway",
+    "SE": "Sweden",
     "US": "USA",
 }
 

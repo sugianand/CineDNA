@@ -691,15 +691,25 @@ class CineDNAAPITests(unittest.TestCase):
         search_tmdb,
         discover,
     ):
-        response = self.client.post(
-            "/api/search",
-            json={"query": "Canadian mystery", "limit": 6},
-        )
+        for query, country in (
+            ("Canadian mystery", "Canada"),
+            ("Nollywood drama", "Nigeria"),
+            ("Swedish thriller", "Sweden"),
+        ):
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 6},
+                )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["intent"]["preferred_countries"], ["Canada"])
-        search_tmdb.assert_not_called()
-        discover.assert_called_once()
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    response.json()["intent"]["preferred_countries"],
+                    [country],
+                )
+                search_tmdb.assert_not_called()
+                discover.assert_called_once()
+                discover.reset_mock()
 
     def test_auto_mode_limits_bengali_mystery_to_indian_catalog(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(

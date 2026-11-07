@@ -566,7 +566,11 @@ class TMDBProfileTests(unittest.TestCase):
             ("Hong Kong", "HK"),
             ("Italy", "IT"),
             ("Mexico", "MX"),
+            ("Nigeria", "NG"),
+            ("Norway", "NO"),
             ("Spain", "ES"),
+            ("Sweden", "SE"),
+            ("Denmark", "DK"),
             ("United Kingdom", "GB"),
         ):
             with self.subTest(country=country):
@@ -654,6 +658,10 @@ class TMDBProfileTests(unittest.TestCase):
                 "United Kingdom",
             ),
             ({"origin_country": ["IN"], "original_language": "en"}, "India"),
+            ({"origin_country": ["NG"], "original_language": "en"}, "Nigeria"),
+            ({"origin_country": ["NO"], "original_language": "no"}, "Norway"),
+            ({"origin_country": ["SE"], "original_language": "sv"}, "Sweden"),
+            ({"origin_country": ["DK"], "original_language": "da"}, "Denmark"),
             ({"origin_country": [], "original_language": "ja"}, "Japan"),
             ({"original_language": "ko"}, "South Korea"),
             (

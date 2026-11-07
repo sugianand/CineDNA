@@ -205,7 +205,11 @@ class SearchIntentTests(unittest.TestCase):
             ("Hong Kong cinema", "Hong Kong"),
             ("Italian comedies", "Italy"),
             ("Mexican films", "Mexico"),
+            ("Nollywood dramas", "Nigeria"),
+            ("Norwegian mysteries", "Norway"),
             ("Spanish movies", "Spain"),
+            ("Swedish thrillers", "Sweden"),
+            ("Danish crime movies", "Denmark"),
             ("British crime movies", "United Kingdom"),
         )
 

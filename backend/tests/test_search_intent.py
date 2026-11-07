@@ -895,6 +895,28 @@ class SearchIntentTests(unittest.TestCase):
         )
         self.assertIn("Interstellar and Arrival", intent.explanation)
 
+    def test_reference_query_fuzzy_matches_an_unmatched_list_item(self):
+        references = [
+            next(movie for movie in MOVIES if movie.title == title)
+            for title in ("Interstellar", "Arrival")
+        ]
+        expected_complexity = round(
+            sum(movie.dimensions["narrative_complexity"] for movie in references) / 2
+        )
+
+        for query, expected_titles in (
+            ("Like Interstellar and Arival", ["Interstellar", "Arrival"]),
+            ("Like Arival and Interstellar", ["Arrival", "Interstellar"]),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.reference_titles, expected_titles)
+                self.assertEqual(
+                    intent.target_dimensions["narrative_complexity"],
+                    expected_complexity,
+                )
+
     def test_negated_movie_title_is_excluded_instead_of_used_as_a_reference(self):
         for query in ("Not Titanic", "Avoid Titanic", "Anything but Titanic"):
             with self.subTest(query=query):

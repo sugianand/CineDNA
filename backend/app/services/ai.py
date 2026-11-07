@@ -231,6 +231,39 @@ def _reference_hint(query: str) -> str:
     return ""
 
 
+def _reference_list_hints(query: str) -> List[Tuple[str, int]]:
+    """Return coordinated title hints after an explicit reference cue."""
+    cue_patterns = (
+        r"(?:^|\b(?:movie|movies|film|films|something|anything|one)\s+)like\s+",
+        r"\bsimilar\s+to\s+",
+        r"\bsame\s+(?:vibe|dna|feel)\s+as\s+",
+    )
+    for pattern in cue_patterns:
+        match = re.search(pattern, query)
+        if not match:
+            continue
+
+        clause = query[match.end():]
+        modifier = re.search(
+            r"\s+(?:but|with|without|except)\b|\s+and\s+(?:more|less)\b|;",
+            clause,
+        )
+        if modifier:
+            clause = clause[:modifier.start()]
+
+        hints = []
+        cursor = 0
+        for part in re.split(r"\s*(?:,|\band\b|\bor\b)\s*", clause):
+            hint = part.strip()
+            if not hint:
+                continue
+            local_start = clause.find(hint, cursor)
+            hints.append((hint, match.end() + local_start))
+            cursor = local_start + len(hint)
+        return hints
+    return []
+
+
 def _fuzzy_title_variants(movie: MovieDNA) -> set[str]:
     variants = {
         _normalize_text(candidate)
@@ -247,6 +280,36 @@ def _fuzzy_title_variants(movie: MovieDNA) -> set[str]:
         for variant in tuple(variants)
     )
     return {variant for variant in variants if len(variant) >= 4}
+
+
+def _fuzzy_reference_match(
+    hint: str,
+    movies: List[MovieDNA],
+    excluded_identities: set[Tuple[str, int]],
+) -> MovieDNA | None:
+    fuzzy_matches = []
+    for movie in movies:
+        identity = (movie.title.casefold(), movie.year)
+        if identity in excluded_identities:
+            continue
+        variants = _fuzzy_title_variants(movie)
+        if variants:
+            fuzzy_matches.append((
+                max(
+                    SequenceMatcher(None, hint, variant).ratio()
+                    for variant in variants
+                ),
+                movie,
+            ))
+    fuzzy_matches.sort(key=lambda match: match[0])
+    if not fuzzy_matches:
+        return None
+
+    best_score, best_movie = fuzzy_matches[-1]
+    next_score = fuzzy_matches[-2][0] if len(fuzzy_matches) > 1 else 0.0
+    if best_score < 0.8 or best_score - next_score < 0.05:
+        return None
+    return best_movie
 
 
 def _find_title_matches(
@@ -321,39 +384,40 @@ def _find_reference_movies(query: str, movies: List[MovieDNA]) -> List[MovieDNA]
     ]
 
     if reference_matches:
-        references = []
+        ordered_references = []
         seen = set()
-        for movie, _start, _end, _term in sorted(reference_matches, key=lambda match: match[1]):
+        for movie, start, _end, _term in reference_matches:
             identity = (movie.title.casefold(), movie.year)
             if identity not in seen:
-                references.append(movie)
+                ordered_references.append((start, movie))
                 seen.add(identity)
-        return references
+
+        exact_spans = [(start, end) for _movie, start, end, _term in reference_matches]
+        for hint, start in _reference_list_hints(normalized_query):
+            if len(hint) < 4 or any(
+                exact_start <= start < exact_end
+                for exact_start, exact_end in exact_spans
+            ):
+                continue
+            movie = _fuzzy_reference_match(
+                hint,
+                movies,
+                excluded_identities | seen,
+            )
+            if movie is None:
+                continue
+            identity = (movie.title.casefold(), movie.year)
+            ordered_references.append((start, movie))
+            seen.add(identity)
+
+        return [movie for _start, movie in sorted(ordered_references, key=lambda item: item[0])]
 
     hint = _reference_hint(normalized_query)
     if len(hint) < 4:
         return []
 
-    fuzzy_matches = []
-    for movie in movies:
-        variants = _fuzzy_title_variants(movie)
-        if variants:
-            fuzzy_matches.append((
-                max(
-                    SequenceMatcher(None, hint, variant).ratio()
-                    for variant in variants
-                ),
-                movie,
-            ))
-    fuzzy_matches.sort(key=lambda match: match[0])
-    if not fuzzy_matches:
-        return []
-
-    best_score, best_movie = fuzzy_matches[-1]
-    next_score = fuzzy_matches[-2][0] if len(fuzzy_matches) > 1 else 0.0
-    if best_score < 0.8 or best_score - next_score < 0.05:
-        return []
-    return [best_movie]
+    fuzzy_match = _fuzzy_reference_match(hint, movies, excluded_identities)
+    return [fuzzy_match] if fuzzy_match is not None else []
 
 
 def _without_reference_titles(

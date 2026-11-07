@@ -339,11 +339,15 @@ def _is_usable_catalog_item(item: dict) -> bool:
     """Return whether a TMDB result can support a stable profile link."""
     movie_id = item.get("id")
     title = _clean_title(item.get("title")) or _clean_title(item.get("original_title"))
+    adult = item.get("adult")
     return (
         isinstance(movie_id, int)
         and not isinstance(movie_id, bool)
         and movie_id > 0
-        and item.get("adult") is not True
+        # TMDB defines this as a boolean. Treat every malformed value as
+        # restricted instead of allowing uncertain content through the
+        # title, discovery, or shareable-profile paths.
+        and (adult is None or adult is False)
         and title is not None
     )
 

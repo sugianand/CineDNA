@@ -618,6 +618,9 @@ def discover_tmdb_movies(intent: SearchIntent, limit: int = 20) -> List[MovieDNA
             movie = _from_tmdb(item, country_hint=country_hint)
         except (TypeError, ValueError):
             continue
-        if movie.year > 0 and movie.title != "Untitled":
-            movies.append(movie)
+        # Release dates are optional TMDB metadata. Preserve an otherwise
+        # usable candidate with CineDNA's year=0 representation; final
+        # ranking already removes unknown years when a search explicitly
+        # requests a year range.
+        movies.append(movie)
     return movies

@@ -608,6 +608,39 @@ class TMDBProfileTests(unittest.TestCase):
     def test_discovery_timeout_preserves_offline_fallback(self, _get):
         self.assertEqual(discover_tmdb_movies(SearchIntent(target_dimensions={})), [])
 
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_discovery_preserves_movies_with_unknown_release_year(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                {
+                    "id": 104,
+                    "title": "Undated Discovery",
+                    "genre_ids": [18],
+                },
+                {
+                    "id": 105,
+                    "title": "Malformed Date Discovery",
+                    "genre_ids": [18],
+                    "release_date": {"unexpected": "shape"},
+                },
+            ]
+        }
+        get.return_value = response
+
+        movies = discover_tmdb_movies(
+            SearchIntent(target_dimensions={}),
+            limit=2,
+        )
+
+        self.assertEqual(
+            [movie.title for movie in movies],
+            ["Undated Discovery", "Malformed Date Discovery"],
+        )
+        self.assertEqual([movie.year for movie in movies], [0, 0])
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": ""})
     @patch("app.services.tmdb.httpx.get")
     def test_discovery_requires_token(self, get):

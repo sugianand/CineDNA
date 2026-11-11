@@ -693,8 +693,11 @@ class CineDNAAPITests(unittest.TestCase):
     ):
         for query, country in (
             ("Canadian mystery", "Canada"),
+            ("Irish comedy", "Ireland"),
             ("Nollywood drama", "Nigeria"),
+            ("South African thriller", "South Africa"),
             ("Swedish thriller", "Sweden"),
+            ("Turkish drama", "Turkey"),
         ):
             with self.subTest(query=query):
                 response = self.client.post(

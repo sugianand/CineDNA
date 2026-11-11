@@ -557,6 +557,7 @@ class TMDBProfileTests(unittest.TestCase):
         get.return_value = response
 
         for country, country_code in (
+            ("Argentina", "AR"),
             ("Australia", "AU"),
             ("Brazil", "BR"),
             ("Canada", "CA"),
@@ -564,13 +565,18 @@ class TMDBProfileTests(unittest.TestCase):
             ("France", "FR"),
             ("Germany", "DE"),
             ("Hong Kong", "HK"),
+            ("Ireland", "IE"),
             ("Italy", "IT"),
             ("Mexico", "MX"),
+            ("New Zealand", "NZ"),
             ("Nigeria", "NG"),
             ("Norway", "NO"),
+            ("Poland", "PL"),
+            ("South Africa", "ZA"),
             ("Spain", "ES"),
             ("Sweden", "SE"),
             ("Denmark", "DK"),
+            ("Turkey", "TR"),
             ("United Kingdom", "GB"),
         ):
             with self.subTest(country=country):
@@ -695,6 +701,12 @@ class TMDBProfileTests(unittest.TestCase):
             ({"origin_country": ["NO"], "original_language": "no"}, "Norway"),
             ({"origin_country": ["SE"], "original_language": "sv"}, "Sweden"),
             ({"origin_country": ["DK"], "original_language": "da"}, "Denmark"),
+            ({"origin_country": ["AR"], "original_language": "es"}, "Argentina"),
+            ({"origin_country": ["IE"], "original_language": "en"}, "Ireland"),
+            ({"origin_country": ["NZ"], "original_language": "en"}, "New Zealand"),
+            ({"origin_country": ["PL"], "original_language": "pl"}, "Poland"),
+            ({"origin_country": ["ZA"], "original_language": "en"}, "South Africa"),
+            ({"origin_country": ["TR"], "original_language": "tr"}, "Turkey"),
             ({"origin_country": [], "original_language": "ja"}, "Japan"),
             ({"original_language": "ko"}, "South Korea"),
             (

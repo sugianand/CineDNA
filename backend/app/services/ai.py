@@ -136,6 +136,7 @@ THEME_ALIASES = {
 }
 
 COUNTRY_ALIASES = {
+    "Argentina": ("argentina", "argentine", "argentinian"),
     "Australia": ("australia", "australian"),
     "Brazil": ("brazil", "brazilian"),
     "Canada": ("canada", "canadian"),
@@ -148,14 +149,19 @@ COUNTRY_ALIASES = {
         "india", "indian", "bollywood", "hindi", "telugu", "tamil", "malayalam",
         "kannada", "bengali", "marathi", "punjabi", "gujarati",
     ),
+    "Ireland": ("ireland", "irish"),
     "Italy": ("italy", "italian"),
     "Japan": ("japan", "japanese", "anime"),
     "Mexico": ("mexico", "mexican"),
+    "New Zealand": ("new zealand", "new zealander"),
     "Nigeria": ("nigeria", "nigerian", "nollywood"),
     "Norway": ("norway", "norwegian"),
+    "Poland": ("poland", "polish"),
+    "South Africa": ("south africa", "south african"),
     "South Korea": ("south korea", "korean", "south korean"),
     "Spain": ("spain", "spanish"),
     "Sweden": ("sweden", "swedish"),
+    "Turkey": ("turkey", "turkish"),
     "United Kingdom": (
         "united kingdom", "uk", "u.k.", "britain", "british",
     ),

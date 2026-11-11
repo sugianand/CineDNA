@@ -39,6 +39,7 @@ GENRES = {
 
 GENRE_IDS = {name.casefold(): genre_id for genre_id, name in GENRES.items()}
 ORIGIN_COUNTRY_CODES = {
+    "Argentina": "AR",
     "Australia": "AU",
     "Brazil": "BR",
     "Canada": "CA",
@@ -48,14 +49,19 @@ ORIGIN_COUNTRY_CODES = {
     "Germany": "DE",
     "Hong Kong": "HK",
     "India": "IN",
+    "Ireland": "IE",
     "Italy": "IT",
     "Japan": "JP",
     "Mexico": "MX",
+    "New Zealand": "NZ",
     "Nigeria": "NG",
     "Norway": "NO",
+    "Poland": "PL",
+    "South Africa": "ZA",
     "South Korea": "KR",
     "Spain": "ES",
     "Sweden": "SE",
+    "Turkey": "TR",
     "United Kingdom": "GB",
     "USA": "US",
 }
@@ -63,6 +69,7 @@ ORIGIN_COUNTRY_CODES = {
 INDIAN_LANGUAGES = {"hi", "te", "ta", "ml", "kn", "bn", "mr", "pa", "gu"}
 
 COUNTRY_NAMES = {
+    "AR": "Argentina",
     "AU": "Australia",
     "BR": "Brazil",
     "CA": "Canada",
@@ -74,14 +81,19 @@ COUNTRY_NAMES = {
     "GB": "United Kingdom",
     "HK": "Hong Kong",
     "IN": "India",
+    "IE": "Ireland",
     "IT": "Italy",
     "JP": "Japan",
     "KR": "South Korea",
     "MX": "Mexico",
+    "NZ": "New Zealand",
     "NG": "Nigeria",
     "NO": "Norway",
+    "PL": "Poland",
     "SE": "Sweden",
+    "TR": "Turkey",
     "US": "USA",
+    "ZA": "South Africa",
 }
 
 TITLE_BLOCKERS = {

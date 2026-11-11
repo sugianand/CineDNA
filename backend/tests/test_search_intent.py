@@ -198,18 +198,24 @@ class SearchIntentTests(unittest.TestCase):
 
     def test_tmdb_country_aliases_become_search_preferences(self):
         cases = (
+            ("Argentine crime dramas", "Argentina"),
             ("Australian thrillers", "Australia"),
             ("Canadian mysteries", "Canada"),
             ("Chinese action movies", "China"),
             ("German dramas", "Germany"),
             ("Hong Kong cinema", "Hong Kong"),
+            ("Irish comedies", "Ireland"),
             ("Italian comedies", "Italy"),
             ("Mexican films", "Mexico"),
+            ("New Zealand adventures", "New Zealand"),
             ("Nollywood dramas", "Nigeria"),
             ("Norwegian mysteries", "Norway"),
+            ("Polish dramas", "Poland"),
+            ("South African thrillers", "South Africa"),
             ("Spanish movies", "Spain"),
             ("Swedish thrillers", "Sweden"),
             ("Danish crime movies", "Denmark"),
+            ("Turkish dramas", "Turkey"),
             ("British crime movies", "United Kingdom"),
         )
 

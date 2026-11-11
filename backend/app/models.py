@@ -1,5 +1,5 @@
 from typing import Dict, List, Literal, Optional
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, StrictInt, field_validator, model_validator
 
 
 class MovieDNA(BaseModel):
@@ -8,7 +8,7 @@ class MovieDNA(BaseModel):
     country: str
     genres: List[str]
     themes: List[str]
-    dimensions: Dict[str, int]
+    dimensions: Dict[str, StrictInt]
     summary: str
     source: str = "cinedna"
     source_id: Optional[str] = None

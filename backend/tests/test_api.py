@@ -287,6 +287,31 @@ class CineDNAAPITests(unittest.TestCase):
                 )
                 self.assertEqual(response.status_code, 422)
 
+    def test_reference_movie_rejects_coerced_dna_dimensions(self):
+        reference_movie = {
+            "title": "Corrupt Movie",
+            "year": 2026,
+            "country": "USA",
+            "genres": ["Drama"],
+            "themes": ["family"],
+            "dimensions": {"action": 50},
+            "summary": "A malformed persisted reference movie.",
+        }
+
+        for score in (True, "50", 50.0):
+            with self.subTest(score=score):
+                reference_movie["dimensions"]["action"] = score
+                response = self.client.post(
+                    "/api/search",
+                    json={
+                        "query": "Like Corrupt Movie, but different",
+                        "mode": "vibe",
+                        "reference_movie": reference_movie,
+                    },
+                )
+
+                self.assertEqual(response.status_code, 422)
+
     @patch("app.main.search_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
     def test_short_title_search_is_normalized(self, _configured, search_tmdb):

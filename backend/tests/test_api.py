@@ -998,7 +998,12 @@ class CineDNAAPITests(unittest.TestCase):
 
     def test_auto_mode_routes_inclusive_year_boundaries_to_vibe_search(self):
         cases = (
+            ("after 2018 movies", 2019, None),
+            ("newer than 2018 movies", 2019, None),
             ("post-2010 movies", 2011, None),
+            ("since 2019 movies", 2019, None),
+            ("before 2010 movies", None, 2009),
+            ("older than 2010 movies", None, 2009),
             ("pre-2010 movies", None, 2009),
             ("movies from 2015 onwards", 2015, None),
             ("movies 2015 or later", 2015, None),

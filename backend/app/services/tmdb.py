@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import unicodedata
+from datetime import date
 from difflib import SequenceMatcher
 from math import isfinite
 from typing import Dict, List, Sequence
@@ -154,10 +155,15 @@ def _clamp(value: int) -> int:
 
 
 def _release_year(value: object) -> int:
-    if not isinstance(value, str):
+    if (
+        not isinstance(value, str)
+        or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value)
+    ):
         return 0
-    match = re.match(r"^(\d{4})", value)
-    return int(match.group(1)) if match else 0
+    try:
+        return date.fromisoformat(value).year
+    except ValueError:
+        return 0
 
 
 def _rating(value: object) -> float:

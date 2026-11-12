@@ -43,6 +43,27 @@ class TMDBProfileTests(unittest.TestCase):
             "https://image.tmdb.org/t/p/w500/poster.jpg",
         )
 
+    def test_generated_profiles_require_valid_iso_release_dates(self):
+        item = {
+            "id": 42,
+            "title": "Release Date Test",
+        }
+
+        for release_date in (
+            "2024-02-30",
+            "2024-99-99",
+            "2024 garbage",
+            "2024",
+        ):
+            with self.subTest(release_date=release_date):
+                movie = _from_tmdb({**item, "release_date": release_date})
+
+                self.assertEqual(movie.year, 0)
+
+        movie = _from_tmdb({**item, "release_date": "2024-02-29"})
+
+        self.assertEqual(movie.year, 2024)
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_movie_detail_fetch_by_id(self, get):

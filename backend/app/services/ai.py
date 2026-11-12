@@ -759,7 +759,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"
         r"((?:19|20)\d{2})\b",
         r"\breleased\s+(?:in\s+)?((?:19|20)\d{2})\b",
-        r"\b((?:19|20)\d{2})\s+(?:movies?|films?)\b",
+        r"\b(?<!pre )(?<!post )((?:19|20)\d{2})\s+(?:movies?|films?)\b",
     )
     if min_year is None and max_year is None:
         exact_match = next(
@@ -806,7 +806,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
                         break
 
     after_pattern = (
-        r"(?<!not )(?<!no )(?<!or )\b(?:after|newer\s+than)\s+"
+        r"(?<!not )(?<!no )(?<!or )\b(?:after|post|newer\s+than)\s+"
         r"((?:19|20)\d{2})\b"
     )
     after_years = [
@@ -824,7 +824,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         min_year = max(min_year or 0, *since_years)
 
     before_pattern = (
-        r"(?<!not )(?<!no )(?<!or )\b(?:before|older\s+than)\s+"
+        r"(?<!not )(?<!no )(?<!or )\b(?:before|pre|older\s+than)\s+"
         r"((?:19|20)\d{2})\b"
     )
     before_years = [

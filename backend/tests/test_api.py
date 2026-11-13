@@ -248,6 +248,43 @@ class CineDNAAPITests(unittest.TestCase):
         titles = [item["movie"]["title"] for item in response.json()["results"]]
         self.assertEqual(sum(title in {"Amélie", "Amelie"} for title in titles), 1)
 
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_multi_country_discovery_keeps_results_without_origin_metadata(
+        self,
+        _configured,
+        discover,
+    ):
+        discover.return_value = [
+            MovieDNA(
+                title="Borderless Discovery",
+                year=2024,
+                country="International",
+                genres=["Drama"],
+                themes=["family"],
+                dimensions={"emotional_intensity": 70},
+                summary=(
+                    "TMDB matched a requested origin country but omitted "
+                    "origin metadata from its list response."
+                ),
+                source="tmdb",
+                source_id="987654",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "American or Canadian movies",
+                "mode": "vibe",
+                "limit": 20,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        titles = [item["movie"]["title"] for item in response.json()["results"]]
+        self.assertIn("Borderless Discovery", titles)
+
     def test_empty_search_rejected(self):
         response = self.client.post("/api/search", json={"query": ""})
         self.assertEqual(response.status_code, 422)

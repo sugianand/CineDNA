@@ -102,12 +102,27 @@ def _theme_similarity(movie: MovieDNA, intent: SearchIntent) -> float:
     return max(0.0, min(1.0, include_score * 0.8 + exclusion_score * 0.2))
 
 
+def _matches_preferred_country(movie: MovieDNA, intent: SearchIntent) -> bool:
+    preferred = {country.casefold() for country in intent.preferred_countries}
+    if movie.country.casefold() in preferred:
+        return True
+
+    # TMDB applies CineDNA's multi-country origin filter before returning
+    # discovery results, but its list response can omit origin_country. Keep
+    # those already-filtered candidates eligible without assigning them an
+    # inaccurate single-country label.
+    return (
+        len(preferred) > 1
+        and movie.source == "tmdb"
+        and movie.country.casefold() == "international"
+    )
+
+
 def _country_bonus(movie: MovieDNA, intent: SearchIntent) -> float:
     if not intent.preferred_countries:
         return 0.0
 
-    preferred = {country.lower() for country in intent.preferred_countries}
-    return 0.08 if movie.country.lower() in preferred else -0.05
+    return 0.08 if _matches_preferred_country(movie, intent) else -0.05
 
 
 def score_movie(movie: MovieDNA, intent: SearchIntent) -> float:
@@ -159,16 +174,13 @@ def rank_movies(
         and _matches_year_range(movie, intent)
     ]
 
-    preferred_countries = {
-        country.casefold() for country in intent.preferred_countries
-    }
     preferred_movies = [
         movie
         for movie in eligible_movies
-        if movie.country.casefold() in preferred_countries
+        if _matches_preferred_country(movie, intent)
     ]
     has_preferred_country_coverage = any(
-        movie.country.casefold() in preferred_countries
+        _matches_preferred_country(movie, intent)
         for movie in catalog_movies
     )
     if has_preferred_country_coverage:

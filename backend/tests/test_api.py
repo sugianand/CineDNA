@@ -454,6 +454,44 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_country_exclusions_reject_unknown_external_origins(
+        self,
+        _configured,
+        discover,
+    ):
+        discover.return_value = [
+            MovieDNA(
+                title="Unknown Origin",
+                year=2024,
+                country="International",
+                genres=["Drama"],
+                themes=["family"],
+                dimensions={"emotional_intensity": 75},
+                summary="TMDB omitted origin metadata for this result.",
+                source="tmdb",
+                source_id="987654",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "emotional movies not from India",
+                "mode": "vibe",
+                "limit": 6,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["excluded_countries"], ["India"])
+        self.assertNotIn(
+            "Unknown Origin",
+            [item["movie"]["title"] for item in body["results"]],
+        )
+
     def test_vibe_mode_honors_coordinated_exclusions(self):
         response = self.client.post(
             "/api/search",

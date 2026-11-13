@@ -118,6 +118,22 @@ def _matches_preferred_country(movie: MovieDNA, intent: SearchIntent) -> bool:
     )
 
 
+def _matches_excluded_country(movie: MovieDNA, intent: SearchIntent) -> bool:
+    excluded = {country.casefold() for country in intent.excluded_countries}
+    if movie.country.casefold() in excluded:
+        return True
+
+    # Without a positive TMDB origin filter, missing country metadata cannot
+    # prove that a discovery result satisfies a strict country exclusion.
+    # Fail closed instead of allowing an unknown origin to bypass the request.
+    return (
+        bool(excluded)
+        and not intent.preferred_countries
+        and movie.source == "tmdb"
+        and movie.country.casefold() == "international"
+    )
+
+
 def _country_bonus(movie: MovieDNA, intent: SearchIntent) -> float:
     if not intent.preferred_countries:
         return 0.0
@@ -158,9 +174,6 @@ def rank_movies(
         for title in [*intent.reference_titles, *intent.excluded_titles]
         if (normalized := _normalize_title(title))
     }
-    excluded_countries = {
-        country.casefold() for country in intent.excluded_countries
-    }
     eligible_movies = [
         movie
         for movie in catalog_movies
@@ -169,7 +182,7 @@ def rank_movies(
             for candidate in (movie.title, movie.original_title or "")
             if candidate
         )
-        and movie.country.casefold() not in excluded_countries
+        and not _matches_excluded_country(movie, intent)
         and not _matching_preferences(movie, intent.exclude_themes)
         and _matches_year_range(movie, intent)
     ]

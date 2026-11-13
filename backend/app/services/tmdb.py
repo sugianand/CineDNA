@@ -173,7 +173,7 @@ def _rating(value: object) -> float:
         rating = float(value)
     except (TypeError, ValueError):
         return 0.0
-    return rating if isfinite(rating) else 0.0
+    return rating if isfinite(rating) and 0 <= rating <= 10 else 0.0
 
 
 def _genre_ids(value: object) -> List[int]:

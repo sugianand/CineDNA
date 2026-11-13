@@ -64,6 +64,28 @@ class TMDBProfileTests(unittest.TestCase):
 
         self.assertEqual(movie.year, 2024)
 
+    def test_generated_profiles_reject_out_of_range_ratings(self):
+        item = {
+            "id": 42,
+            "title": "Rating Test",
+            "release_date": "2024-01-01",
+        }
+
+        for vote_average in (-1, 10.1, "100"):
+            with self.subTest(vote_average=vote_average):
+                movie = _from_tmdb(
+                    {**item, "vote_average": vote_average}
+                )
+
+                self.assertEqual(
+                    movie.dimensions["rewatchability"],
+                    35,
+                )
+
+        movie = _from_tmdb({**item, "vote_average": 7.5})
+
+        self.assertEqual(movie.dimensions["rewatchability"], 80)
+
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
     def test_movie_detail_fetch_by_id(self, get):

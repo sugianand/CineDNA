@@ -732,6 +732,10 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     inclusive_min_patterns = (
         r"\b(?:from\s+)?((?:19|20)\d{2})\s+"
         r"(?:(?:or|and)\s+)?(?:later|newer|onwards?)\b",
+        r"\b(?:from\s+)?((?:19|20)\d{2})\s+"
+        r"(?:to|through|until)\s+(?:the\s+)?(?:present|now|today)\b",
+        r"\bbetween\s+((?:19|20)\d{2})\s+and\s+"
+        r"(?:the\s+)?(?:present|now|today)\b",
         r"\b(?:not\s+before|no\s+earlier\s+than|on\s+or\s+after|at\s+least|"
         r"(?:no|not)\s+older\s+than)\s+"
         r"((?:19|20)\d{2})\b",

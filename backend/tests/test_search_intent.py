@@ -1083,6 +1083,7 @@ class SearchIntentTests(unittest.TestCase):
             ("I don't want a horror movie", "horror"),
             ("Anything but comedy", "comedy"),
             ("I do not like romance", "romance"),
+            ("Movies other than romance", "romance"),
         )
 
         for query, excluded_theme in cases:

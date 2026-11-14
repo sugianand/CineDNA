@@ -563,6 +563,28 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    def test_vibe_mode_honors_other_than_exclusion(self):
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "movies other than romance",
+                "limit": 20,
+                "mode": "vibe",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["include_themes"], [])
+        self.assertEqual(body["intent"]["exclude_themes"], ["romance"])
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(
+                "Romance" not in result["movie"]["genres"]
+                for result in body["results"]
+            )
+        )
+
     @patch("app.main.tmdb_is_configured", return_value=False)
     def test_auto_mode_preserves_dark_request_while_excluding_scary_movies(
         self,

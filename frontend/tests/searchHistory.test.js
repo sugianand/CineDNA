@@ -28,6 +28,22 @@ test('parseRecentSearches rejects reference DNA dimensions outside the scoring s
   ])), [])
 })
 
+test('parseRecentSearches rejects reference movies without DNA dimensions', () => {
+  const referenceMovie = {
+    title: 'Empty Profile',
+    year: 2026,
+    country: 'USA',
+    genres: ['Drama'],
+    themes: ['family'],
+    dimensions: {},
+    summary: 'A persisted profile without usable Movie DNA.',
+  }
+
+  assert.deepEqual(parseRecentSearches(JSON.stringify([
+    { query: 'Like Empty Profile', mode: 'vibe', referenceMovie },
+  ])), [])
+})
+
 test('parseRecentSearches rejects malformed reference movie field types', () => {
   const referenceMovie = {
     title: 'Corrupt Movie',

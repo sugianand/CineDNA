@@ -25,6 +25,7 @@ function isValidReferenceMovie(movie) {
     && movie.dimensions
     && typeof movie.dimensions === 'object'
     && !Array.isArray(movie.dimensions)
+    && Object.keys(movie.dimensions).length > 0
     && Object.values(movie.dimensions).every(
       (value) => Number.isInteger(value) && value >= 0 && value <= 100,
     )

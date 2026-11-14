@@ -324,6 +324,26 @@ class CineDNAAPITests(unittest.TestCase):
                 )
                 self.assertEqual(response.status_code, 422)
 
+    def test_reference_movie_rejects_empty_dna_dimensions(self):
+        response = self.client.post(
+            "/api/search",
+            json={
+                "query": "Like Empty Profile, but different",
+                "mode": "vibe",
+                "reference_movie": {
+                    "title": "Empty Profile",
+                    "year": 2026,
+                    "country": "USA",
+                    "genres": ["Drama"],
+                    "themes": ["family"],
+                    "dimensions": {},
+                    "summary": "A profile with no usable Movie DNA.",
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+
     def test_reference_movie_rejects_coerced_dna_dimensions(self):
         reference_movie = {
             "title": "Corrupt Movie",

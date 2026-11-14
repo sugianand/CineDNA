@@ -40,6 +40,8 @@ class SearchRequest(BaseModel):
     def validate_vibe_query(self):
         if self.mode == "vibe" and len(self.query) < 3:
             raise ValueError("vibe searches must contain at least 3 characters")
+        if self.reference_movie is not None and not self.reference_movie.dimensions:
+            raise ValueError("reference movie DNA dimensions must not be empty")
         return self
 
 

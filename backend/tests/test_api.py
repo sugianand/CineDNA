@@ -474,6 +474,25 @@ class CineDNAAPITests(unittest.TestCase):
             )
         )
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_honors_outside_country_exclusions(self, _configured):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "movies outside India and Japan", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["preferred_countries"], [])
+        self.assertEqual(body["intent"]["excluded_countries"], ["India", "Japan"])
+        self.assertTrue(body["results"])
+        self.assertTrue(
+            all(
+                result["movie"]["country"] not in {"India", "Japan"}
+                for result in body["results"]
+            )
+        )
+
     @patch("app.main.discover_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
     def test_country_exclusions_reject_unknown_external_origins(

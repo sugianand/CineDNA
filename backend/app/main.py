@@ -167,23 +167,46 @@ def search_movies(request: SearchRequest):
             else []
         )
         if external_movies:
+            title_movies = list(external_movies)
+            included_curated_exact = False
+            if (
+                has_exact_local_title(request.query, local_title_matches)
+                and not has_exact_local_title(request.query, external_movies)
+            ):
+                for movie in local_title_matches:
+                    if has_exact_local_title(request.query, [movie]):
+                        title_movies.append(movie)
+                        included_curated_exact = True
+
             intent = SearchIntent(
                 target_dimensions={},
-                explanation="Matched your title against TMDB's movie catalog, including alternate and translated titles.",
+                explanation=(
+                    "Matched your title across TMDB's movie catalog and "
+                    "CineDNA's curated catalog."
+                    if included_curated_exact
+                    else "Matched your title against TMDB's movie catalog, "
+                    "including alternate and translated titles."
+                ),
             )
             results = [
                 SearchResult(
                     movie=movie,
                     score=title_match_score(request.query, movie),
-                    why="Title match from the TMDB catalog. Open the movie to inspect its generated CineDNA profile.",
+                    why=(
+                        "Exact title match from CineDNA's curated catalog. "
+                        "Open the movie to inspect its DNA profile."
+                        if movie.source == "cinedna"
+                        else "Title match from the TMDB catalog. Open the "
+                        "movie to inspect its generated CineDNA profile."
+                    ),
                 )
-                for movie in external_movies
+                for movie in title_movies
             ]
             results.sort(key=lambda item: item.score, reverse=True)
             return SearchResponse(
                 query=request.query,
                 intent=intent,
-                results=results,
+                results=results[:request.limit],
                 ai_provider="tmdb-catalog+heuristic-dna",
             )
 

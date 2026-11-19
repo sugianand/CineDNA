@@ -45,10 +45,20 @@ def _is_duplicate_catalog_movie(
     movie: MovieDNA,
     candidates: list[MovieDNA],
 ) -> bool:
-    """Match one release across translated, punctuated, and accented titles."""
+    """Match one release across translated, punctuated, and accented titles.
+
+    TMDB list responses can omit ``release_date``. Treat that unknown year as
+    compatible with an exact title alias so the incomplete copy does not sit
+    beside the curated movie. Keep same-title releases with two known,
+    different years distinct (for example, remakes).
+    """
     aliases = [movie.title, movie.original_title or ""]
     return any(
-        candidate.year == movie.year
+        (
+            candidate.year == movie.year
+            or candidate.year <= 0
+            or movie.year <= 0
+        )
         and any(
             has_exact_local_title(alias, [candidate])
             for alias in aliases
@@ -239,3 +249,4 @@ else:
     @app.get("/")
     def root():
         return {"name": "CineDNA API", "status": "online", "docs": "/docs"}
+

@@ -520,6 +520,12 @@ h1 { font-family: 'Playfair Display', serif; font-size: clamp(66px, 12vw, 130px)
 }
 .start-over:hover { color: #f1edf9; border-color: #494553; }
 
+.more-results {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
 .empty-state {
   min-height: 330px;
   display: grid;

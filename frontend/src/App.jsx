@@ -78,11 +78,16 @@ function MoviePoster({ movie, large = false }) {
   )
 }
 
+const INITIAL_VIBE_RESULTS = 12
+const MAX_VIBE_RESULTS = 20
+const TITLE_RESULT_LIMIT = 6
+
 function App() {
   const [query, setQuery] = useState('Like Interstellar, but darker and less complicated')
   const [mode, setMode] = useState('vibe')
   const [loading, setLoading] = useState(false)
   const [response, setResponse] = useState(null)
+  const [visibleVibeResults, setVisibleVibeResults] = useState(INITIAL_VIBE_RESULTS)
   const [responseMode, setResponseMode] = useState('vibe')
   const [selected, setSelected] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
@@ -288,7 +293,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: cleanedQuery,
-          limit: 6,
+          limit: apiSearchMode === 'vibe' ? MAX_VIBE_RESULTS : TITLE_RESULT_LIMIT,
           mode: apiSearchMode,
           ...(referenceMovie ? { reference_movie: referenceMovie } : {}),
         }),
@@ -299,6 +304,7 @@ function App() {
       const body = await res.json()
       if (!requestTracker.isActive(controller)) return
       const resolvedMode = getResponseMode(searchMode, body.ai_provider)
+      setVisibleVibeResults(INITIAL_VIBE_RESULTS)
       setResponse(body)
       setResponseMode(resolvedMode)
       setMode(resolvedMode)
@@ -355,6 +361,11 @@ function App() {
       searchInput.current?.select()
     })
   }
+
+  const visibleResults = responseMode === 'vibe'
+    ? response?.results.slice(0, visibleVibeResults)
+    : response?.results
+  const remainingResults = (response?.results.length ?? 0) - (visibleResults?.length ?? 0)
 
   const emptyResultsCopy = response
     ? getEmptyResultsCopy(responseMode, response.intent)
@@ -498,13 +509,16 @@ function App() {
                     ? 'No matching title found'
                     : 'No strong matches yet'}
               </h2>
+              {responseMode === 'vibe' && response.results.length > INITIAL_VIBE_RESULTS && (
+                <p role="status">Showing {visibleResults.length} of {response.results.length} ranked movies</p>
+              )}
             </div>
             <button className="start-over" onClick={() => setResponse(null)}>Start a new search</button>
           </div>
 
           {response.results.length > 0 ? (
             <div className="movie-grid">
-              {response.results.map(({ movie, score, why }, index) => (
+              {visibleResults.map(({ movie, score, why }, index) => (
                 <article
                   className="movie-card movie-card-clickable"
                   key={`${movie.source || 'cinedna'}-${movie.source_id || movie.title}`}
@@ -586,6 +600,13 @@ function App() {
                   {emptyResultsCopy.action} <ArrowRight size={15} />
                 </button>
               )}
+            </div>
+          )}
+          {remainingResults > 0 && (
+            <div className="more-results">
+              <button className="start-over" onClick={() => setVisibleVibeResults(MAX_VIBE_RESULTS)}>
+                Show {remainingResults} more {remainingResults === 1 ? 'movie' : 'movies'}
+              </button>
             </div>
           )}
         </section>

@@ -215,6 +215,66 @@ class CineDNAAPITests(unittest.TestCase):
 
     @patch("app.main.discover_tmdb_movies")
     @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_discovery_deduplicates_curated_title_without_release_year(
+        self,
+        _configured,
+        discover,
+    ):
+        curated = MOVIES[0]
+        discover.return_value = [
+            curated.model_copy(update={
+                "year": 0,
+                "source": "tmdb",
+                "source_id": "missing-release-date",
+            })
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "emotional science fiction", "mode": "vibe", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        matches = [
+            item["movie"]
+            for item in response.json()["results"]
+            if item["movie"]["title"] == curated.title
+        ]
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["year"], curated.year)
+        self.assertEqual(matches[0]["source"], "cinedna")
+
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_discovery_keeps_same_title_with_distinct_known_year(
+        self,
+        _configured,
+        discover,
+    ):
+        curated = MOVIES[0]
+        discover.return_value = [
+            curated.model_copy(update={
+                "year": 1980,
+                "source": "tmdb",
+                "source_id": "known-remake",
+            })
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "emotional science fiction", "mode": "vibe", "limit": 20},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        years = {
+            item["movie"]["year"]
+            for item in response.json()["results"]
+            if item["movie"]["title"] == curated.title
+        }
+        self.assertEqual(years, {1980, curated.year})
+
+    @patch("app.main.discover_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
     def test_discovery_deduplicates_normalized_title_variants(
         self,
         _configured,
@@ -1791,3 +1851,4 @@ class CineDNAAPITests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

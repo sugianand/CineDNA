@@ -91,6 +91,36 @@ class CineDNAAPITests(unittest.TestCase):
         response = self.client.get("/api/movie", params={"title": "No Such Movie"})
         self.assertEqual(response.status_code, 404)
 
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_missing_local_profile_does_not_switch_to_tmdb_movie(
+        self,
+        _configured,
+        search_tmdb,
+    ):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Remote Catalog Movie",
+                year=2026,
+                country="USA",
+                genres=["Drama"],
+                themes=["identity"],
+                dimensions={"character_depth": 75},
+                summary="A TMDB movie must not replace a missing local identity.",
+                source="tmdb",
+                source_id="987654",
+            )
+        ]
+
+        response = self.client.get(
+            "/api/movie",
+            params={"title": "Remote Catalog Movie", "source": "cinedna"},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Movie profile not found")
+        search_tmdb.assert_not_called()
+
     @patch.dict(os.environ, {"RENDER_GIT_COMMIT": "abc123"})
     def test_health_endpoint(self):
         response = self.client.get("/api/health")

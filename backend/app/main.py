@@ -111,12 +111,9 @@ def get_movie_profile(
     local_matches = search_local_movies(title, MOVIES, limit=1)
     if local_matches:
         return local_matches[0]
-    if tmdb_is_configured():
-        for movie in search_tmdb_movies(title, 10):
-            if (source_id and movie.source_id == source_id) or (
-                search_local_movies(title, [movie], limit=1)
-            ):
-                return movie
+    # A CineDNA link identifies the bundled catalog just as a TMDB link
+    # identifies one external record. Do not silently replace a removed,
+    # renamed, or misspelled local profile with a different external movie.
     raise HTTPException(status_code=404, detail="Movie profile not found")
 
 

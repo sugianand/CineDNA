@@ -25,7 +25,7 @@ class MovieDNA(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)
-    limit: int = Field(default=6, ge=1, le=20)
+    limit: StrictInt = Field(default=6, ge=1, le=20)
     mode: Literal["auto", "vibe", "title"] = "auto"
     reference_movie: Optional[MovieDNA] = None
 

@@ -148,3 +148,26 @@ test('similarity searches preserve reference DNA when stored and replayed', () =
   assert.deepEqual(parseRecentSearches(JSON.stringify(updated)), updated)
   assert.deepEqual(updated[0].referenceMovie, referenceMovie)
 })
+
+test('recent similarity searches distinguish remakes that share a title', () => {
+  const original = {
+    title: 'Suspiria',
+    year: 1977,
+    country: 'Italy',
+    genres: ['Horror'],
+    themes: ['witchcraft'],
+    dimensions: { atmosphere: 95 },
+    summary: 'The original film.',
+    source: 'tmdb',
+    source_id: '11906',
+  }
+  const remake = { ...original, year: 2018, source_id: '361292' }
+  const query = 'Like Suspiria, but show me a different movie with similar DNA'
+  const first = updateRecentSearches([], query, 'vibe', original)
+  const both = updateRecentSearches(first, query, 'vibe', remake)
+  const replayed = updateRecentSearches(both, query, 'vibe', original)
+
+  assert.deepEqual(both.map(({ referenceMovie }) => referenceMovie.year), [2018, 1977])
+  assert.deepEqual(replayed.map(({ referenceMovie }) => referenceMovie.year), [1977, 2018])
+  assert.deepEqual(parseRecentSearches(JSON.stringify(replayed)), replayed)
+})

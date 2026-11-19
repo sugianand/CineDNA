@@ -62,6 +62,16 @@ function normalizeSearch(entry) {
   return { query, mode: entry.mode }
 }
 
+export function getRecentSearchKey({ query, referenceMovie }) {
+  const normalizedQuery = query.toLowerCase()
+  if (!referenceMovie) return JSON.stringify([normalizedQuery])
+
+  const { source, source_id: sourceId, year } = referenceMovie
+  return JSON.stringify(sourceId
+    ? [normalizedQuery, source, sourceId]
+    : [normalizedQuery, source, year])
+}
+
 export function parseRecentSearches(serialized) {
   try {
     const entries = JSON.parse(serialized || '[]')
@@ -84,8 +94,9 @@ export function updateRecentSearches(current, query, mode, referenceMovie = null
   })
   if (!nextSearch) return current
 
+  const nextKey = getRecentSearchKey(nextSearch)
   return [
     nextSearch,
-    ...current.filter((entry) => entry.query.toLowerCase() !== nextSearch.query.toLowerCase()),
+    ...current.filter((entry) => getRecentSearchKey(entry) !== nextKey),
   ].slice(0, MAX_RECENT_SEARCHES)
 }

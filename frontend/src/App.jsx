@@ -13,7 +13,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { parseRecentSearches, updateRecentSearches } from './searchHistory.js'
+import { getRecentSearchKey, parseRecentSearches, updateRecentSearches } from './searchHistory.js'
 import {
   getAppHomeHref,
   getMovieProfileExitHref,
@@ -436,11 +436,13 @@ function App() {
             <div>
               {recentSearches.slice(0, 3).map((item) => (
                 <button
-                  key={`${item.mode}:${item.query}`}
+                  key={getRecentSearchKey(item)}
                   onClick={() => replaySearch(item)}
                   title={`${item.query} · ${item.mode === 'title' ? 'Title search' : 'Vibe search'}`}
                 >
-                  {item.query}
+                  {item.referenceMovie?.year > 0
+                    ? `Like ${item.referenceMovie.title} (${item.referenceMovie.year})`
+                    : item.query}
                 </button>
               ))}
             </div>

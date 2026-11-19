@@ -412,8 +412,6 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
 
     movies = []
     for item in results:
-        if len(movies) >= limit:
-            break
         if not isinstance(item, dict) or not _is_usable_catalog_item(item):
             continue
         try:
@@ -421,12 +419,28 @@ def search_tmdb_movies(query: str, limit: int = 6) -> List[MovieDNA]:
         except (TypeError, ValueError):
             continue
         # TMDB can return loose keyword matches. Do not let an unrelated item
-        # consume the bounded result limit or suppress a later credible title
-        # match. This also checks original titles through search_local_movies.
+        # consume the result limit or suppress a later credible title match.
+        # This also checks original titles through search_local_movies.
         if not search_local_movies(query, [movie], limit=1):
             continue
         movies.append(movie)
-    return movies
+
+    # Rank the full (single-page) candidate pool before applying the result
+    # limit. An exact full title takes precedence over a sequel whose base
+    # title also matches (e.g. "Dune" vs "Dune: Part Two").
+    normalized_query = _normalize_title(query)
+    movies.sort(
+        key=lambda movie: (
+            any(
+                _normalize_title(candidate) == normalized_query
+                for candidate in (movie.title, movie.original_title or "")
+                if candidate
+            ),
+            title_match_score(query, movie),
+        ),
+        reverse=True,
+    )
+    return movies[:limit]
 
 
 

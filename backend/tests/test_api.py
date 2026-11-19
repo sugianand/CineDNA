@@ -486,6 +486,39 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertEqual(body["results"][0]["movie"]["title"], "Baahubali: The Beginning")
         self.assertEqual(body["results"][0]["movie"]["source"], "tmdb")
 
+    @patch("app.main.search_tmdb_movies")
+    @patch("app.main.tmdb_is_configured", return_value=True)
+    def test_title_search_keeps_exact_curated_match_ahead_of_loose_tmdb_hit(
+        self,
+        _configured,
+        search_tmdb,
+    ):
+        search_tmdb.return_value = [
+            MovieDNA(
+                title="Interstellar Beyond Time",
+                year=2026,
+                country="USA",
+                genres=["Documentary"],
+                themes=["space"],
+                dimensions={"narrative_complexity": 65},
+                summary="A loose external title match.",
+                source="tmdb",
+                source_id="123456",
+            )
+        ]
+
+        response = self.client.post(
+            "/api/search",
+            json={"query": "Interstellar", "limit": 1, "mode": "title"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        search_tmdb.assert_called_once_with("Interstellar", 1)
+        body = response.json()
+        self.assertEqual(len(body["results"]), 1)
+        self.assertEqual(body["results"][0]["movie"]["title"], "Interstellar")
+        self.assertEqual(body["results"][0]["movie"]["source"], "cinedna")
+
     def test_vibe_query_does_not_require_tmdb(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

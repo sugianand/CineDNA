@@ -383,6 +383,17 @@ class CineDNAAPITests(unittest.TestCase):
         response = self.client.post("/api/search", json={"query": " \n\t "})
         self.assertEqual(response.status_code, 422)
 
+    @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_search_limit_rejects_coerced_numbers(self, _configured):
+        for limit in (True, "6", 6.0):
+            with self.subTest(limit=limit):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": "Interstellar", "limit": limit},
+                )
+
+                self.assertEqual(response.status_code, 422)
+
     def test_short_vibe_search_rejected(self):
         response = self.client.post(
             "/api/search",

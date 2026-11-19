@@ -451,6 +451,52 @@ class TMDBProfileTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
     @patch("app.services.tmdb.httpx.get")
+    def test_title_search_ranks_later_exact_match_before_limit(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                {"id": 11, "title": "Dune: Part Two", "release_date": "2024-03-01"},
+                {"id": 12, "title": "Dune: Part One", "release_date": "2021-10-22"},
+                {"id": 13, "title": "Dune", "release_date": "1984-12-14"},
+            ]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("Dune", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Dune"])
+        get.assert_called_once()
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
+    def test_title_search_prioritizes_exact_original_title(self, get):
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "results": [
+                {
+                    "id": 21,
+                    "title": "The Quiet Sea: The Return",
+                    "release_date": "2021-01-01",
+                },
+                {
+                    "id": 22,
+                    "title": "Ocean Story",
+                    "original_title": "The Quiet Sea",
+                    "release_date": "2020-01-01",
+                },
+            ]
+        }
+        get.return_value = response
+
+        movies = search_tmdb_movies("The Quiet Sea", limit=1)
+
+        self.assertEqual([movie.title for movie in movies], ["Ocean Story"])
+        self.assertEqual(movies[0].source_id, "22")
+
+    @patch.dict(os.environ, {"TMDB_READ_TOKEN": "test-token"})
+    @patch("app.services.tmdb.httpx.get")
     def test_catalog_items_require_a_stable_profile_identity(self, get):
         response = Mock()
         response.raise_for_status.return_value = None

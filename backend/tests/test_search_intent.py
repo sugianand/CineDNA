@@ -513,6 +513,8 @@ class SearchIntentTests(unittest.TestCase):
     def test_compound_year_boundaries_preserve_both_limits(self):
         cases = (
             ("movies from 2010 or later but before 2019", 2010, 2018),
+            ("movies from 2015 but before 2020", 2015, 2019),
+            ("films from 2015 and no later than 2020", 2015, 2020),
             ("movies after 2010 but 2019 or earlier", 2011, 2019),
             ("movies on or after 2010 and on or before 2018", 2010, 2018),
         )

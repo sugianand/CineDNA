@@ -795,6 +795,14 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         strictest_before = min(before_years)
         max_year = min(max_year or strictest_before, strictest_before)
 
+    if min_year is None and max_year is not None:
+        from_years = _matching_years(
+            query,
+            (r"\bfrom\s+((?:19|20)\d{2})\b",),
+        )
+        if from_years:
+            min_year = max(from_years)
+
     exact_patterns = (
         r"\b(?:movies?|films?)\s+"
         r"(?:(?:released|made|produced)\s+)?(?:from\s+|in\s+)?"

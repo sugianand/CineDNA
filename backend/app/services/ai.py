@@ -738,7 +738,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"(?:present|now|today|current|date)\b",
         r"\bbetween\s+((?:19|20)\d{2})\s+and\s+"
         r"(?:the\s+)?(?:present|now|today)\b",
-        r"\b(?:not\s+before|no\s+earlier\s+than|on\s+or\s+after|at\s+least|"
+        r"\b(?:not\s+(?:(?:released|made)\s+)?before|no\s+earlier\s+than|"
+        r"on\s+or\s+after|at\s+least|"
         r"(?:no|not)\s+older\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
@@ -749,7 +750,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
         r"\b(?:up\s+to|through)\s+((?:19|20)\d{2})\b",
-        r"\b(?:not\s+after|no\s+later\s+than|on\s+or\s+before|at\s+most|"
+        r"\b(?:not\s+(?:(?:released|made)\s+)?after|no\s+later\s+than|"
+        r"on\s+or\s+before|at\s+most|"
         r"(?:no|not)\s+newer\s+than)\s+"
         r"((?:19|20)\d{2})\b",
     )
@@ -762,7 +764,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         )
 
     after_pattern = (
-        r"(?<!not )(?<!no )(?<!or )\b(?:after|post|newer\s+than)\s+"
+        r"(?<!not )(?<!no )(?<!or )(?<!not released )(?<!not made )"
+        r"\b(?:after|post|newer\s+than)\s+"
         r"((?:19|20)\d{2})\b"
     )
     after_years = [
@@ -780,7 +783,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         min_year = max(min_year or 0, *since_years)
 
     before_pattern = (
-        r"(?<!not )(?<!no )(?<!or )\b(?:before|pre|older\s+than)\s+"
+        r"(?<!not )(?<!no )(?<!or )(?<!not released )(?<!not made )"
+        r"\b(?:before|pre|older\s+than)\s+"
         r"((?:19|20)\d{2})\b"
     )
     before_years = [

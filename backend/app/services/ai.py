@@ -741,6 +741,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"\b(?:not\s+(?:(?:released|made)\s+)?before|no\s+earlier\s+than|"
         r"on\s+or\s+after|at\s+least|"
         r"(?:no|not)\s+older\s+than)\s+"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b",
     )
     inclusive_min_years = _matching_years(query, inclusive_min_patterns)
@@ -753,6 +754,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"\b(?:not\s+(?:(?:released|made)\s+)?after|no\s+later\s+than|"
         r"on\s+or\s+before|at\s+most|"
         r"(?:no|not)\s+newer\s+than)\s+"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b",
     )
     inclusive_max_years = _matching_years(query, inclusive_max_patterns)
@@ -766,6 +768,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     after_pattern = (
         r"(?<!not )(?<!no )(?<!or )(?<!not released )(?<!not made )"
         r"\b(?:after|post|newer\s+than)\s+"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b"
     )
     after_years = [
@@ -777,7 +780,10 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
 
     since_years = _matching_years(
         query,
-        (r"\bsince\s+((?:19|20)\d{2})\b",),
+        (
+            r"\bsince\s+(?:(?:the\s+)?year\s+)?"
+            r"((?:19|20)\d{2})\b",
+        ),
     )
     if since_years:
         min_year = max(min_year or 0, *since_years)
@@ -785,6 +791,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     before_pattern = (
         r"(?<!not )(?<!no )(?<!or )(?<!not released )(?<!not made )"
         r"\b(?:before|pre|older\s+than)\s+"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b"
     )
     before_years = [
@@ -798,7 +805,10 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     if min_year is None and max_year is not None:
         from_years = _matching_years(
             query,
-            (r"\bfrom\s+((?:19|20)\d{2})\b",),
+            (
+                r"\bfrom\s+(?:(?:the\s+)?year\s+)?"
+                r"((?:19|20)\d{2})\b",
+            ),
         )
         if from_years:
             min_year = max(from_years)

@@ -796,9 +796,11 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         max_year = min(max_year or strictest_before, strictest_before)
 
     exact_patterns = (
-        r"\b(?:movies?|films?)\s+(?:released\s+)?(?:from\s+|in\s+)?"
+        r"\b(?:movies?|films?)\s+"
+        r"(?:(?:released|made|produced)\s+)?(?:from\s+|in\s+)?"
         r"((?:19|20)\d{2})\b",
-        r"\breleased\s+(?:in\s+)?((?:19|20)\d{2})\b",
+        r"\b(?:released|made|produced)\s+"
+        r"(?:in\s+)?((?:19|20)\d{2})\b",
         r"\b((?:19|20)\d{2})\s+(?:movies?|films?)\b",
     )
     if min_year is None and max_year is None:
@@ -1046,3 +1048,4 @@ def build_match_reason(movie: MovieDNA, intent: SearchIntent) -> str:
         reasons.append(f"released in {intent.max_year} or earlier")
 
     return "; ".join(reasons) or "overall Movie DNA similarity"
+

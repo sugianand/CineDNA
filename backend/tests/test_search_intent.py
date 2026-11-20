@@ -424,6 +424,8 @@ class SearchIntentTests(unittest.TestCase):
             ("movies from the 2000’s", 2000, 2009),
             ("movies from the 2010s", 2010, 2019),
             ("movies released in 2015", 2015, 2015),
+            ("movies made in 2015", 2015, 2015),
+            ("films produced in 2015", 2015, 2015),
             ("movies from 2015", 2015, 2015),
             ("films from 2015", 2015, 2015),
             ("film in 2015", 2015, 2015),
@@ -431,6 +433,8 @@ class SearchIntentTests(unittest.TestCase):
             ("2015 films", 2015, 2015),
             ("movies released 2015", 2015, 2015),
             ("released 2015 movies", 2015, 2015),
+            ("made in 2015 movies", 2015, 2015),
+            ("produced 2015 films", 2015, 2015),
             ("movies between 2014 and 2018", 2014, 2018),
             ("movies between 2018 and 2014", 2014, 2018),
             ("movies from 2014 to 2018", 2014, 2018),
@@ -1452,3 +1456,4 @@ class SearchIntentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

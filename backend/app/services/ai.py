@@ -1048,4 +1048,3 @@ def build_match_reason(movie: MovieDNA, intent: SearchIntent) -> str:
         reasons.append(f"released in {intent.max_year} or earlier")
 
     return "; ".join(reasons) or "overall Movie DNA similarity"
-

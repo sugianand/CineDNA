@@ -705,15 +705,23 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     max_year = None
 
     range_patterns = (
-        r"\bbetween\s+((?:19|20)\d{2})\s+(?:and\s+|to\s+)?"
+        r"\bbetween\s+(?:(?:the\s+)?year\s+)?"
+        r"((?:19|20)\d{2})\s+(?:and\s+|to\s+)?"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2}|\d{2})\b",
         r"\b(?:(?:movies?|films?)\s+)?(?:released\s+)?from\s+"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2}|\d{2})\b",
         r"\b(?:movies?|films?)\s+(?:released\s+)?"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2}|\d{2})\b",
-        r"\b(?:released\s+)?((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"\b(?:released\s+)?(?:(?:the\s+)?year\s+)?"
+        r"((?:19|20)\d{2})\s+(?:(?:to|through|until)\s+)?"
+        r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2}|\d{2})\s+(?:movies?|films?)\b",
     )
     range_match = next(

@@ -480,6 +480,8 @@ class SearchIntentTests(unittest.TestCase):
             ("movies from 2015-current", 2015, None),
             ("films released 2015 through today", 2015, None),
             ("movies between 2015 and now", 2015, None),
+            ("movies between 2015 and current", 2015, None),
+            ("movies between 2015 and the current year", 2015, None),
             ("movies not before 2015", 2015, None),
             ("movies no earlier than the year 2015", 2015, None),
             ("movies not released before 2015", 2015, None),

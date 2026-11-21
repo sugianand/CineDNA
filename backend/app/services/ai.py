@@ -750,13 +750,17 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
 
     inclusive_max_patterns = (
         r"\b((?:19|20)\d{2})\s+(?:or|and)\s+(?:earlier|older)\b",
-        r"\b(?:up\s+to|through)\s+((?:19|20)\d{2})\b",
         r"\b(?:not\s+(?:(?:released|made)\s+)?after|no\s+later\s+than|"
         r"on\s+or\s+before|at\s+most|"
         r"(?:no|not)\s+newer\s+than)\s+"
         r"(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b",
     )
+    if not range_match:
+        inclusive_max_patterns += (
+            r"\b(?:up\s+to|through|until)\s+"
+            r"(?:(?:the\s+)?year\s+)?((?:19|20)\d{2})\b",
+        )
     inclusive_max_years = _matching_years(query, inclusive_max_patterns)
     if inclusive_max_years:
         strictest_max = min(inclusive_max_years)

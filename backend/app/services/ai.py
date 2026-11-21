@@ -737,7 +737,7 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"(?:(?:to|through|until)\s+)?(?:the\s+)?"
         r"(?:present|now|today|current|date)\b",
         r"\bbetween\s+((?:19|20)\d{2})\s+and\s+"
-        r"(?:the\s+)?(?:present|now|today)\b",
+        r"(?:the\s+)?(?:present|now|today|date|current(?:\s+year)?)\b",
         r"\b(?:not\s+(?:(?:released|made)\s+)?before|no\s+earlier\s+than|"
         r"on\s+or\s+after|at\s+least|"
         r"(?:no|not)\s+older\s+than)\s+"

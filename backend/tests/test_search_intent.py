@@ -1159,6 +1159,30 @@ class SearchIntentTests(unittest.TestCase):
                     )
                 )
 
+    def test_free_suffix_excludes_preferences(self):
+        cases = (
+            ("violence-free movies", "action", "action"),
+            ("a romance-free comedy", "romance", "romance"),
+            ("a horror-free mystery", "horror", None),
+        )
+
+        for query, excluded_theme, dimension in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertIn(excluded_theme, intent.exclude_themes)
+                self.assertNotIn(excluded_theme, intent.include_themes)
+                if dimension is not None:
+                    self.assertEqual(intent.target_dimensions[dimension], 10)
+                self.assertTrue(
+                    all(
+                        excluded_theme
+                        not in " ".join(movie.genres + movie.themes).lower()
+                        for movie, _score in ranked
+                    )
+                )
+
     def test_less_modifier_does_not_add_positive_genre_preference(self):
         action_movie = MovieDNA(
             title="Loud Escape",

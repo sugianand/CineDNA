@@ -588,6 +588,8 @@ def _is_negated(query: str, term: str) -> bool:
     ):
         return True
     escaped = re.escape(normalized_term).replace(r"\ ", r"\s+")
+    if re.search(rf"\b{escaped}\s+free\b", query):
+        return True
     pattern = (
         rf"\b{NEGATION_PREFIX}\s+"
         rf"(?:(?:a|an|any|too\s+much|from)\s+)?{escaped}\b"

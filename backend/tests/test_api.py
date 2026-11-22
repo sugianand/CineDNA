@@ -1212,6 +1212,8 @@ class CineDNAAPITests(unittest.TestCase):
             "movies 2015",
             "2015 films",
             "movies released 2015",
+            "movies that came out in 2015",
+            "films that came out during the year 2015",
         ):
             with self.subTest(query=query), patch(
                 "app.main.tmdb_is_configured", return_value=True

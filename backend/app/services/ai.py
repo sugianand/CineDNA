@@ -833,6 +833,8 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         r"\b(?:released|made|produced)\s+"
         r"(?:(?:in|during)\s+)?(?:(?:the\s+)?year\s+)?"
         r"((?:19|20)\d{2})\b",
+        r"\bcame\s+out\s+(?:(?:in|during)\s+)?"
+        r"(?:(?:the\s+)?year\s+)?((?:19|20)\d{2})\b",
         r"\b((?:19|20)\d{2})\s+(?:movies?|films?)\b",
     )
     if min_year is None and max_year is None:

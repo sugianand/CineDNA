@@ -778,6 +778,19 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertNotIn("action", body["intent"]["exclude_themes"])
         self.assertTrue(body["results"])
 
+    def test_auto_mode_keeps_not_very_as_a_soft_preference(self):
+        response = self.client.post(
+            "/api/search",
+            json={"query": "a thriller that is not very scary", "limit": 6},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 40)
+        self.assertNotIn("horror", body["intent"]["include_themes"])
+        self.assertNotIn("horror", body["intent"]["exclude_themes"])
+        self.assertTrue(body["results"])
+
     def test_auto_mode_routes_feel_good_description_to_vibe_search(self):
         for query in ("feel-good movie", "something lighter"):
             with self.subTest(query=query), patch(

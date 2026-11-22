@@ -501,7 +501,10 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
 
 def _soft_preference_target(query: str, term: str) -> int | None:
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
-    if re.search(rf"\bnot\s+too(?:\s+much)?\s+{escaped}\b", query):
+    if re.search(
+        rf"\bnot\s+(?:too(?:\s+much)?|very)\s+{escaped}\b",
+        query,
+    ):
         return 40
     low_prefix = "|".join(
         re.escape(prefix).replace(r"\ ", r"\s+")

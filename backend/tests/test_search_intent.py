@@ -1362,6 +1362,23 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("action", intent.include_themes)
         self.assertIn("thriller", intent.include_themes)
 
+    def test_not_very_is_a_soft_preference(self):
+        cases = (
+            ("a thriller that is not very scary", "darkness", "horror"),
+            ("a movie that is not very dark", "darkness", None),
+            ("not very violent movies", "action", "action"),
+            ("a mystery that is not very intense", "emotional_intensity", None),
+        )
+
+        for query, dimension, theme in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.target_dimensions[dimension], 40)
+                if theme is not None:
+                    self.assertNotIn(theme, intent.include_themes)
+                    self.assertNotIn(theme, intent.exclude_themes)
+
     def test_negation_carries_across_coordinated_theme_list(self):
         intent = parse_search_intent("no horror or thriller movies", MOVIES)
 

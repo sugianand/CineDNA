@@ -776,6 +776,8 @@ class SearchIntentTests(unittest.TestCase):
             "minimal violence movies",
             "hardly any action",
             "barely any violence",
+            "not much action",
+            "not a lot of violence",
         ):
             with self.subTest(query=query):
                 intent = parse_search_intent(query, MOVIES)
@@ -787,6 +789,8 @@ class SearchIntentTests(unittest.TestCase):
         for query, dimension, theme in (
             ("hardly any romance", "romance", "romance"),
             ("barely any humor", "humor", "comedy"),
+            ("not much romance", "romance", "romance"),
+            ("not a lot of humor", "humor", "comedy"),
         ):
             with self.subTest(query=query):
                 intent = parse_search_intent(query, MOVIES)

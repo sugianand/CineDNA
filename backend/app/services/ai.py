@@ -29,7 +29,8 @@ MILD_PREFIXES = (
     "somewhat", "slightly", "kind of", "kinda",
 )
 LOW_PREFERENCE_PREFIXES = (
-    "hardly any", "barely any", "low", "minimal", "minimum", "very little",
+    "not a lot of", "not much", "hardly any", "barely any",
+    "low", "minimal", "minimum", "very little",
 )
 COMPACT_NEGATED_TERMS = ("nonviolent",)
 POSITIVE_TRAIT_TARGET = 75

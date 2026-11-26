@@ -175,9 +175,10 @@ COUNTRY_ALIASES = {
 }
 
 NEGATION_PREFIX = (
-    r"(?:without|no|non|neither|avoid(?:ing)?|exclud(?:e|ing)|not|except|"
+    r"(?:without|no|non|neither|avoid(?:ing)?|exclud(?:e|ing)|"
+    r"skip(?:ping)?|leave\s+out|not|except|"
     r"other\s+than|outside(?:\s+of)?|anything\s+but|"
-    r"(?:do\s+not|don\s+t)\s+(?:want|like))"
+    r"(?:do\s+not|don\s+t)\s+(?:want|like|include|show(?:\s+me)?))"
 )
 
 

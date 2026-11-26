@@ -609,6 +609,27 @@ class CineDNAAPITests(unittest.TestCase):
         )
 
     @patch("app.main.tmdb_is_configured", return_value=False)
+    def test_auto_mode_honors_actionable_exclusion_phrases(self, _configured):
+        for query in ("don't show me horror", "skip horror", "leave out horror"):
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 20},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(body["intent"]["exclude_themes"], ["horror"])
+                self.assertNotIn("horror", body["intent"]["include_themes"])
+                self.assertTrue(body["results"])
+                self.assertTrue(
+                    all(
+                        "Horror" not in result["movie"]["genres"]
+                        for result in body["results"]
+                    )
+                )
+
+    @patch("app.main.tmdb_is_configured", return_value=False)
     def test_auto_mode_honors_outside_country_exclusions(self, _configured):
         response = self.client.post(
             "/api/search",

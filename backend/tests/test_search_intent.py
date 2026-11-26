@@ -1163,6 +1163,10 @@ class SearchIntentTests(unittest.TestCase):
             ("Anything but comedy", "comedy"),
             ("I do not like romance", "romance"),
             ("Movies other than romance", "romance"),
+            ("Don't show me horror", "horror"),
+            ("Do not include action", "action"),
+            ("Skip romance", "romance"),
+            ("Leave out comedy", "comedy"),
         )
 
         for query, excluded_theme in cases:
@@ -1178,6 +1182,11 @@ class SearchIntentTests(unittest.TestCase):
                         for movie, _score in ranked
                     )
                 )
+
+        country_intent = parse_search_intent("Leave out Indian movies", MOVIES)
+
+        self.assertEqual(country_intent.preferred_countries, [])
+        self.assertEqual(country_intent.excluded_countries, ["India"])
 
     def test_free_suffix_excludes_preferences(self):
         cases = (

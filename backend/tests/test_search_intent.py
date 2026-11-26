@@ -771,13 +771,29 @@ class SearchIntentTests(unittest.TestCase):
                 self.assertEqual(excluded.target_dimensions["action"], 10)
 
     def test_low_and_compact_nonviolent_preferences_reduce_action(self):
-        for query in ("low violence movies", "minimal violence movies"):
+        for query in (
+            "low violence movies",
+            "minimal violence movies",
+            "hardly any action",
+            "barely any violence",
+        ):
             with self.subTest(query=query):
                 intent = parse_search_intent(query, MOVIES)
 
                 self.assertEqual(intent.include_themes, [])
                 self.assertEqual(intent.exclude_themes, [])
                 self.assertEqual(intent.target_dimensions["action"], 30)
+
+        for query, dimension, theme in (
+            ("hardly any romance", "romance", "romance"),
+            ("barely any humor", "humor", "comedy"),
+        ):
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.target_dimensions[dimension], 30)
+                self.assertNotIn(theme, intent.include_themes)
+                self.assertNotIn(theme, intent.exclude_themes)
 
         nonviolent = parse_search_intent("nonviolent movies", MOVIES)
 

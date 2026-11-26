@@ -24,7 +24,10 @@ VIOLENCE_TERMS = ("violence", "violent", "nonviolent")
 SUSPENSE_TERMS = (
     "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
 )
-MILD_PREFIXES = ("a little", "a bit", "somewhat", "slightly", "kind of", "kinda")
+MILD_PREFIXES = (
+    "a little bit", "a tiny bit", "a little", "a bit",
+    "somewhat", "slightly", "kind of", "kinda",
+)
 LOW_PREFERENCE_PREFIXES = ("low", "minimal", "minimum", "very little")
 COMPACT_NEGATED_TERMS = ("nonviolent",)
 POSITIVE_TRAIT_TARGET = 75

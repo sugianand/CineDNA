@@ -1375,6 +1375,21 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("comedy", intent.exclude_themes)
         self.assertNotIn("comedy", intent.include_themes)
 
+    def test_bit_modifiers_are_soft_preferences(self):
+        cases = (
+            ("a little bit scary", "darkness", "horror"),
+            ("a little bit funny", "humor", "comedy"),
+            ("a tiny bit romantic", "romance", "romance"),
+        )
+
+        for query, dimension, theme in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(intent.target_dimensions[dimension], 60)
+                self.assertNotIn(theme, intent.include_themes)
+                self.assertNotIn(theme, intent.exclude_themes)
+
     def test_not_too_much_is_a_soft_preference(self):
         intent = parse_search_intent(
             "A tense thriller with not too much action",

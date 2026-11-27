@@ -87,6 +87,18 @@ h1 { font-family: 'Playfair Display', serif; font-size: clamp(66px, 12vw, 130px)
 .intent-card { padding: 18px 22px; border-radius: 15px; border: 1px solid #292b35; background: rgba(19,20,28,.78); }
 .intent-card span, .section-kicker { color: #a896ff; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
 .intent-card p { margin: 7px 0 0; color: #c7c5ce; }
+.intent-highlights { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.intent-highlight {
+  padding: 6px 9px;
+  border: 1px solid #373449;
+  border-radius: 999px;
+  color: #d8d2f8;
+  background: #191822;
+  font-size: 12px;
+  line-height: 1;
+}
+.intent-highlight-target { border-color: #443969; background: #211b33; }
+.intent-highlight-exclude { border-color: #613944; color: #f5bac5; background: #2a181e; }
 
 .results-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-top: 12px; }
 .results-heading h2 { margin: 6px 0 0; font-size: clamp(24px, 4vw, 36px); letter-spacing: -.03em; }

@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   getApiSearchMode,
   getEmptyResultsCopy,
+  getIntentHighlights,
   getResponseMode,
   MAX_SEARCH_QUERY_LENGTH,
   validateSearchQuery,
@@ -46,6 +47,62 @@ test('catalog responses render as title results', () => {
   assert.equal(getResponseMode('vibe', 'cinedna-title-catalog'), 'title')
   assert.equal(getResponseMode('vibe', 'tmdb-catalog+heuristic-dna'), 'title')
   assert.equal(getResponseMode('vibe', 'rule-based-v0.1'), 'vibe')
+})
+
+test('intent highlights summarize filters before strongest DNA targets', () => {
+  const highlights = getIntentHighlights({
+    target_dimensions: { humor: 45, darkness: 80, emotional_intensity: 65 },
+    include_themes: ['dark_comedy'],
+    exclude_themes: ['horror'],
+    preferred_countries: ['India'],
+    excluded_countries: ['Japan'],
+    min_year: 2010,
+    max_year: 2019,
+  })
+
+  assert.deepEqual(highlights, [
+    { label: 'Released 2010\u20132019', kind: 'filter' },
+    { label: 'From India', kind: 'filter' },
+    { label: 'Not from Japan', kind: 'exclude' },
+    { label: 'Dark Comedy', kind: 'filter' },
+    { label: 'No Horror', kind: 'exclude' },
+    { label: 'Darkness 80', kind: 'target' },
+    { label: 'Emotional Intensity 65', kind: 'target' },
+    { label: 'Humor 45', kind: 'target' },
+  ])
+})
+
+test('intent highlights cap noisy responses and ignore malformed values', () => {
+  const highlights = getIntentHighlights({
+    target_dimensions: {
+      action: 70,
+      darkness: 60,
+      humor: 50,
+      mystery: 40,
+      romance: 30,
+      spectacle: 20,
+      invalid: 'high',
+    },
+    include_themes: [' thriller ', 'thriller', '', null],
+    preferred_countries: 'India',
+    min_year: 2020,
+  })
+
+  assert.equal(highlights.length, 8)
+  assert.deepEqual(highlights.slice(0, 2), [
+    { label: 'Released since 2020', kind: 'filter' },
+    { label: 'Thriller', kind: 'filter' },
+  ])
+  assert.equal(highlights.some(({ label }) => label.includes('Invalid')), false)
+})
+
+test('intent highlights explain exact and upper-bound release years', () => {
+  assert.deepEqual(getIntentHighlights({ min_year: 1999, max_year: 1999 }), [
+    { label: 'Released 1999', kind: 'filter' },
+  ])
+  assert.deepEqual(getIntentHighlights({ max_year: 1970 }), [
+    { label: 'Released through 1970', kind: 'filter' },
+  ])
 })
 
 test('empty vibe results explain which strict constraints can be widened', () => {

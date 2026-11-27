@@ -23,6 +23,7 @@ import {
 import {
   getApiSearchMode,
   getEmptyResultsCopy,
+  getIntentHighlights,
   getResponseMode,
   MAX_SEARCH_QUERY_LENGTH,
   validateSearchQuery,
@@ -370,6 +371,9 @@ function App() {
   const emptyResultsCopy = response
     ? getEmptyResultsCopy(responseMode, response.intent)
     : null
+  const intentHighlights = responseMode === 'vibe' && response
+    ? getIntentHighlights(response.intent)
+    : []
 
   return (
     <main className="app-shell">
@@ -493,6 +497,15 @@ function App() {
           <div className="intent-card">
             <span>{responseMode === 'title' ? 'Title search summary' : 'How we interpreted your search'}</span>
             <p>{response.intent.explanation}</p>
+            {intentHighlights.length > 0 && (
+              <ul className="intent-highlights" aria-label="Interpreted search details">
+                {intentHighlights.map(({ label, kind }) => (
+                  <li className={`intent-highlight intent-highlight-${kind}`} key={`${kind}-${label}`}>
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="results-heading">

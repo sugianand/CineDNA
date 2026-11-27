@@ -25,8 +25,9 @@ SUSPENSE_TERMS = (
     "suspense", "suspenseful", "tense", "thrilling", "edge of my seat", "edge-of-my-seat",
 )
 MILD_PREFIXES = (
-    "a little bit", "a tiny bit", "a little", "a bit",
-    "somewhat", "slightly", "kind of", "kinda",
+    "a little bit of", "a tiny bit of", "a little bit", "a tiny bit",
+    "a touch of", "a hint of", "a bit of", "a little", "a bit",
+    "somewhat", "slightly", "mildly", "kind of", "kinda",
 )
 LOW_PREFERENCE_PREFIXES = (
     "not a lot of", "not much", "hardly any", "barely any",

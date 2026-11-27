@@ -812,18 +812,27 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertNotIn("horror", body["intent"]["exclude_themes"])
         self.assertTrue(body["results"])
 
-    def test_auto_mode_keeps_bit_modifier_as_a_soft_preference(self):
-        response = self.client.post(
-            "/api/search",
-            json={"query": "a little bit scary", "limit": 6},
+    def test_auto_mode_keeps_mild_quantity_modifier_as_a_soft_preference(self):
+        cases = (
+            ("a little bit scary", "darkness", "horror"),
+            ("a bit of action", "action", "action"),
+            ("a hint of humor", "humor", "comedy"),
+            ("a touch of mystery", "mystery", "mystery"),
         )
 
-        self.assertEqual(response.status_code, 200)
-        body = response.json()
-        self.assertEqual(body["intent"]["target_dimensions"]["darkness"], 60)
-        self.assertNotIn("horror", body["intent"]["include_themes"])
-        self.assertNotIn("horror", body["intent"]["exclude_themes"])
-        self.assertTrue(body["results"])
+        for query, dimension, theme in cases:
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 6},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(body["intent"]["target_dimensions"][dimension], 60)
+                self.assertNotIn(theme, body["intent"]["include_themes"])
+                self.assertNotIn(theme, body["intent"]["exclude_themes"])
+                self.assertTrue(body["results"])
 
     def test_auto_mode_keeps_scarcity_phrase_as_a_low_preference(self):
         for query in ("hardly any action", "not much action", "not a lot of action"):

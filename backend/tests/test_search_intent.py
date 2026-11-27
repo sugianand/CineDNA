@@ -1404,11 +1404,17 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("comedy", intent.exclude_themes)
         self.assertNotIn("comedy", intent.include_themes)
 
-    def test_bit_modifiers_are_soft_preferences(self):
+    def test_mild_quantity_modifiers_are_soft_preferences(self):
         cases = (
             ("a little bit scary", "darkness", "horror"),
             ("a little bit funny", "humor", "comedy"),
             ("a tiny bit romantic", "romance", "romance"),
+            ("a bit of action", "action", "action"),
+            ("a little bit of romance", "romance", "romance"),
+            ("a tiny bit of romance", "romance", "romance"),
+            ("a touch of mystery", "mystery", "mystery"),
+            ("a hint of humor", "humor", "comedy"),
+            ("mildly scary", "darkness", "horror"),
         )
 
         for query, dimension, theme in cases:

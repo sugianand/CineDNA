@@ -31,6 +31,7 @@ MILD_PREFIXES = (
 )
 LOW_PREFERENCE_PREFIXES = (
     "not a lot of", "not much", "hardly any", "barely any",
+    "without a lot of", "without much",
     "low", "minimal", "minimum", "very little",
 )
 COMPACT_NEGATED_TERMS = ("nonviolent",)
@@ -509,10 +510,11 @@ def _apply_modifier(query: str, keyword: str, current: int) -> int:
 
 def _soft_preference_target(query: str, term: str) -> int | None:
     escaped = re.escape(_normalize_text(term)).replace(r"\ ", r"\s+")
-    if re.search(
-        rf"\bnot\s+(?:too(?:\s+much)?|very)\s+{escaped}\b",
-        query,
-    ):
+    moderate_pattern = (
+        rf"\b(?:not\s+(?:too(?:\s+much)?|very)|"
+        rf"without\s+too\s+much)\s+{escaped}\b"
+    )
+    if re.search(moderate_pattern, query):
         return 40
     low_prefix = "|".join(
         re.escape(prefix).replace(r"\ ", r"\s+")

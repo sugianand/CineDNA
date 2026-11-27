@@ -799,6 +799,30 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertNotIn("action", body["intent"]["exclude_themes"])
         self.assertTrue(body["results"])
 
+    def test_auto_mode_keeps_without_quantity_as_a_soft_preference(self):
+        cases = (
+            ("a thriller without much action", 30),
+            ("a thriller without a lot of action", 30),
+            ("a thriller without too much action", 40),
+        )
+
+        for query, expected_target in cases:
+            with self.subTest(query=query):
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 6},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(
+                    body["intent"]["target_dimensions"]["action"],
+                    expected_target,
+                )
+                self.assertNotIn("action", body["intent"]["include_themes"])
+                self.assertNotIn("action", body["intent"]["exclude_themes"])
+                self.assertTrue(body["results"])
+
     def test_auto_mode_keeps_not_very_as_a_soft_preference(self):
         response = self.client.post(
             "/api/search",

@@ -1436,6 +1436,25 @@ class SearchIntentTests(unittest.TestCase):
         self.assertNotIn("action", intent.include_themes)
         self.assertIn("thriller", intent.include_themes)
 
+    def test_without_quantity_is_a_soft_preference(self):
+        cases = (
+            ("a thriller without much action", 30),
+            ("a thriller without a lot of action", 30),
+            ("a thriller without too much action", 40),
+        )
+
+        for query, expected_target in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+
+                self.assertEqual(
+                    intent.target_dimensions["action"],
+                    expected_target,
+                )
+                self.assertNotIn("action", intent.exclude_themes)
+                self.assertNotIn("action", intent.include_themes)
+                self.assertIn("thriller", intent.include_themes)
+
     def test_not_very_is_a_soft_preference(self):
         cases = (
             ("a thriller that is not very scary", "darkness", "horror"),

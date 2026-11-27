@@ -29,6 +29,11 @@ import {
   validateSearchQuery,
 } from './searchRouting.js'
 import { createRequestTracker } from './requestTracker.js'
+import {
+  focusFirstDialogControl,
+  handleDialogKeyDown,
+  restoreDialogFocus,
+} from './dialogFocus.js'
 
 const API = import.meta.env.VITE_API_URL || ''
 const RECENT_SEARCHES_KEY = 'cinedna:recent-searches'
@@ -99,6 +104,8 @@ function App() {
   const searchRequests = useRef(null)
   const profileRequests = useRef(null)
   const searchInput = useRef(null)
+  const profilePanel = useRef(null)
+  const profileReturnFocus = useRef(null)
 
   if (searchRequests.current === null) {
     searchRequests.current = createRequestTracker()
@@ -172,23 +179,37 @@ function App() {
 
   useEffect(() => () => searchRequests.current.cancel(), [])
 
+  const profileOpen = Boolean(selected || profileLoading || profileError)
+  const profileState = selected
+    ? 'profile'
+    : profileLoading
+      ? 'loading'
+      : profileError
+        ? 'error'
+        : 'closed'
+
   useEffect(() => {
-    if (!selected) return undefined
+    if (!profileOpen) return undefined
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') closeMovie()
-    }
-
-    window.addEventListener('keydown', closeOnEscape)
+    const returnFocus = profileReturnFocus.current
 
     return () => {
       document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', closeOnEscape)
+      profileReturnFocus.current = null
+      requestAnimationFrame(() => restoreDialogFocus(returnFocus))
     }
-  }, [selected])
+  }, [profileOpen])
+
+  useEffect(() => {
+    if (profileState === 'closed') return undefined
+
+    const focusFrame = requestAnimationFrame(() => {
+      focusFirstDialogControl(profilePanel.current)
+    })
+    return () => cancelAnimationFrame(focusFrame)
+  }, [profileState])
 
   useEffect(() => {
     let active = true
@@ -204,6 +225,7 @@ function App() {
         return
       }
       const nextController = requestTracker.start()
+      rememberProfileFocus()
       setProfileLoading(true)
       setProfileError('')
       try {
@@ -238,6 +260,7 @@ function App() {
   }, [])
 
   function openMovie(movie, score, why) {
+    rememberProfileFocus()
     profileRequests.current.cancel()
     const target = getMovieProfileHref(movie, window.location.search)
     window.history.pushState(null, '', target)
@@ -252,6 +275,12 @@ function App() {
     setSelected(null)
     setProfileError('')
     setProfileLoading(false)
+  }
+
+  function rememberProfileFocus() {
+    if (profilePanel.current) return
+    const active = document.activeElement
+    if (active && active !== document.body) profileReturnFocus.current = active
   }
 
   function rememberSearch(searchQuery, searchMode, referenceMovie = null) {
@@ -663,7 +692,14 @@ function App() {
 
       {!selected && (profileLoading || profileError) && (
         <div className="profile-backdrop">
-          <section className="profile-panel" role="dialog" aria-modal="true" aria-label="Movie details">
+          <section
+            ref={profilePanel}
+            className="profile-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Movie details"
+            onKeyDown={(event) => handleDialogKeyDown(event, event.currentTarget, closeMovie)}
+          >
             <button className="profile-close" aria-label="Close movie details" onClick={closeMovie}>
               <X size={20} />
             </button>
@@ -684,10 +720,12 @@ function App() {
           }}
         >
           <section
+            ref={profilePanel}
             className="profile-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="movie-dna-title"
+            onKeyDown={(event) => handleDialogKeyDown(event, event.currentTarget, closeMovie)}
           >
             <button className="profile-close" aria-label="Close Movie DNA profile" onClick={closeMovie}>
               <X size={20} />

@@ -586,6 +586,34 @@ class SearchIntentTests(unittest.TestCase):
                     for movie, _score in ranked
                 ))
 
+    def test_inclusive_relative_year_boundaries_do_not_become_exact_years(self):
+        current_year = date.today().year
+        cases = (
+            ("movies not before last year", current_year - 1, None),
+            ("movies no earlier than last year", current_year - 1, None),
+            ("movies at least the previous year", current_year - 1, None),
+            ("movies from last year or later", current_year - 1, None),
+            ("movies from last year onwards", current_year - 1, None),
+            ("movies not after last year", None, current_year - 1),
+            ("movies no later than last year", None, current_year - 1),
+            ("movies at most the previous year", None, current_year - 1),
+            ("last year or earlier movies", None, current_year - 1),
+            ("last year and older movies", None, current_year - 1),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+                self.assertTrue(all(
+                    (min_year is None or movie.year >= min_year)
+                    and (max_year is None or movie.year <= max_year)
+                    for movie, _score in ranked
+                ))
+
     def test_compound_year_boundaries_preserve_both_limits(self):
         cases = (
             ("movies from 2010 or later but before 2019", 2010, 2018),

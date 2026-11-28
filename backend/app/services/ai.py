@@ -737,17 +737,32 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         )
         if relative_year_match:
             prefix = query[:relative_year_match.start()].rstrip()
+            suffix = query[relative_year_match.end():].lstrip()
             year = current_year if relative_year_match.group(1) else current_year - 1
-            if re.search(r"\b(?:since|on\s+or\s+after)(?:\s+the)?\s*$", prefix):
-                min_year = year
-            elif re.search(r"\b(?:after|newer\s+than)(?:\s+the)?\s*$", prefix):
-                min_year = year + 1
-            elif re.search(
-                r"\b(?:through|until|up\s+to|on\s+or\s+before)"
-                r"(?:\s+the)?\s*$",
+            if re.search(
+                r"\b(?:since|on\s+or\s+after|"
+                r"not\s+(?:(?:released|made)\s+)?before|"
+                r"no\s+earlier\s+than|at\s+least|"
+                r"(?:no|not)\s+older\s+than)(?:\s+the)?\s*$",
                 prefix,
+            ) or re.match(
+                r"^(?:(?:or|and)\s+)?(?:later|newer|onwards?)\b",
+                suffix,
+            ):
+                min_year = year
+            elif re.search(
+                r"\b(?:through|until|up\s+to|on\s+or\s+before|"
+                r"not\s+(?:(?:released|made)\s+)?after|"
+                r"no\s+later\s+than|at\s+most|"
+                r"(?:no|not)\s+newer\s+than)(?:\s+the)?\s*$",
+                prefix,
+            ) or re.match(
+                r"^(?:(?:or|and)\s+)?(?:earlier|older)\b",
+                suffix,
             ):
                 max_year = year
+            elif re.search(r"\b(?:after|newer\s+than)(?:\s+the)?\s*$", prefix):
+                min_year = year + 1
             elif re.search(r"\b(?:before|older\s+than)(?:\s+the)?\s*$", prefix):
                 max_year = year - 1
             elif not re.search(r"\b(?:and|to)(?:\s+the)?\s*$", prefix):

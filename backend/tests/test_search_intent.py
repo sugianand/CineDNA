@@ -560,6 +560,32 @@ class SearchIntentTests(unittest.TestCase):
                     )
                 )
 
+    def test_relative_release_boundaries_follow_the_calendar_year(self):
+        current_year = date.today().year
+        cases = (
+            ("movies before last year", None, current_year - 2),
+            ("movies older than the previous year", None, current_year - 2),
+            ("movies through last year", None, current_year - 1),
+            ("movies until the current year", None, current_year),
+            ("movies after last year", current_year, None),
+            ("movies newer than the previous year", current_year, None),
+            ("movies since last year", current_year - 1, None),
+            ("movies on or after the previous year", current_year - 1, None),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+                self.assertTrue(all(
+                    (min_year is None or movie.year >= min_year)
+                    and (max_year is None or movie.year <= max_year)
+                    for movie, _score in ranked
+                ))
+
     def test_compound_year_boundaries_preserve_both_limits(self):
         cases = (
             ("movies from 2010 or later but before 2019", 2010, 2018),

@@ -1287,6 +1287,35 @@ class CineDNAAPITests(unittest.TestCase):
                     )
                 )
 
+    def test_auto_mode_routes_relative_year_boundaries_to_vibe_search(self):
+        current_year = date.today().year
+        cases = (
+            ("movies before last year", None, current_year - 2),
+            ("movies through last year", None, current_year - 1),
+            ("movies after last year", current_year, None),
+            ("movies since last year", current_year - 1, None),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 20},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                body = response.json()
+                self.assertEqual(body["intent"]["min_year"], min_year)
+                self.assertEqual(body["intent"]["max_year"], max_year)
+                self.assertTrue(all(
+                    (min_year is None or result["movie"]["year"] >= min_year)
+                    and (max_year is None or result["movie"]["year"] <= max_year)
+                    for result in body["results"]
+                ))
+
     def test_auto_mode_routes_abbreviated_decade_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(
             "app.main.search_tmdb_movies"

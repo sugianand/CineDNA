@@ -737,12 +737,20 @@ def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
         )
         if relative_year_match:
             prefix = query[:relative_year_match.start()].rstrip()
-            is_range_endpoint = re.search(
-                r"\b(?:and|to|through|until)(?:\s+the)?\s*$",
+            year = current_year if relative_year_match.group(1) else current_year - 1
+            if re.search(r"\b(?:since|on\s+or\s+after)(?:\s+the)?\s*$", prefix):
+                min_year = year
+            elif re.search(r"\b(?:after|newer\s+than)(?:\s+the)?\s*$", prefix):
+                min_year = year + 1
+            elif re.search(
+                r"\b(?:through|until|up\s+to|on\s+or\s+before)"
+                r"(?:\s+the)?\s*$",
                 prefix,
-            )
-            if not is_range_endpoint:
-                year = current_year if relative_year_match.group(1) else current_year - 1
+            ):
+                max_year = year
+            elif re.search(r"\b(?:before|older\s+than)(?:\s+the)?\s*$", prefix):
+                max_year = year - 1
+            elif not re.search(r"\b(?:and|to)(?:\s+the)?\s*$", prefix):
                 min_year = year
                 max_year = year
 

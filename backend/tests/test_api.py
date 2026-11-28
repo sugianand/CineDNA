@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import date
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -1255,6 +1256,36 @@ class CineDNAAPITests(unittest.TestCase):
         self.assertTrue(
             all(2010 <= result["movie"]["year"] <= 2019 for result in body["results"])
         )
+
+    def test_auto_mode_routes_relative_year_requests_to_vibe_search(self):
+        current_year = date.today().year
+        cases = (
+            ("movies from this year", current_year, current_year),
+            ("movies from last year", current_year - 1, current_year - 1),
+            ("movies from the past 5 years", current_year - 4, current_year),
+            ("movies in the last 10 years", current_year - 9, current_year),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query), patch(
+                "app.main.tmdb_is_configured", return_value=True
+            ), patch("app.main.search_tmdb_movies") as search_tmdb:
+                response = self.client.post(
+                    "/api/search",
+                    json={"query": query, "limit": 20},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                search_tmdb.assert_not_called()
+                body = response.json()
+                self.assertEqual(body["intent"]["min_year"], min_year)
+                self.assertEqual(body["intent"]["max_year"], max_year)
+                self.assertTrue(
+                    all(
+                        min_year <= result["movie"]["year"] <= max_year
+                        for result in body["results"]
+                    )
+                )
 
     def test_auto_mode_routes_abbreviated_decade_to_vibe_search(self):
         with patch("app.main.tmdb_is_configured", return_value=True), patch(

@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 
 from app.data.movies import MOVIES
 from app.models import MovieDNA, SearchIntent
@@ -530,6 +531,31 @@ class SearchIntentTests(unittest.TestCase):
                     all(
                         (min_year is None or movie.year >= min_year)
                         and (max_year is None or movie.year <= max_year)
+                        for movie, _score in ranked
+                    )
+                )
+
+    def test_relative_release_periods_follow_the_calendar_year(self):
+        current_year = date.today().year
+        cases = (
+            ("movies from this year", current_year, current_year),
+            ("films from the current year", current_year, current_year),
+            ("movies from last year", current_year - 1, current_year - 1),
+            ("films from the previous year", current_year - 1, current_year - 1),
+            ("movies from the past 5 years", current_year - 4, current_year),
+            ("movies in the last 10 years", current_year - 9, current_year),
+        )
+
+        for query, min_year, max_year in cases:
+            with self.subTest(query=query):
+                intent = parse_search_intent(query, MOVIES)
+                ranked = rank_movies(MOVIES, intent, limit=20)
+
+                self.assertEqual(intent.min_year, min_year)
+                self.assertEqual(intent.max_year, max_year)
+                self.assertTrue(
+                    all(
+                        min_year <= movie.year <= max_year
                         for movie, _score in ranked
                     )
                 )

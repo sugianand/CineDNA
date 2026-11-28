@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from datetime import date
 from difflib import SequenceMatcher
 from functools import lru_cache
 from typing import Dict, List, Tuple
@@ -718,6 +719,32 @@ def _matching_years(query: str, patterns: Tuple[str, ...]) -> List[int]:
 def _extract_year_range(query: str) -> Tuple[int | None, int | None]:
     min_year = None
     max_year = None
+
+    current_year = date.today().year
+    rolling_year_match = re.search(
+        r"\b(?:from|in|during)\s+(?:the\s+)?"
+        r"(?:last|past)\s+([1-9]\d?)\s+years?\b",
+        query,
+    )
+    if rolling_year_match:
+        year_count = int(rolling_year_match.group(1))
+        min_year = current_year - year_count + 1
+        max_year = current_year
+    else:
+        relative_year_match = re.search(
+            r"\b(?:(this|current)|(last|previous))\s+year\b",
+            query,
+        )
+        if relative_year_match:
+            prefix = query[:relative_year_match.start()].rstrip()
+            is_range_endpoint = re.search(
+                r"\b(?:and|to|through|until)(?:\s+the)?\s*$",
+                prefix,
+            )
+            if not is_range_endpoint:
+                year = current_year if relative_year_match.group(1) else current_year - 1
+                min_year = year
+                max_year = year
 
     range_patterns = (
         r"\bbetween\s+(?:(?:the\s+)?year\s+)?"
